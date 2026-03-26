@@ -1,0 +1,57 @@
+# =========================
+# FRONTEND (Node.js / React / Vite)
+# =========================
+# Thư mục chứa thư viện (cực nặng, không bao giờ push lên Git)
+frontend/node_modules/
+
+# Thư mục chứa code đã build ra thành phẩm
+frontend/dist/
+frontend/build/
+
+# Các file log lỗi của npm
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Các file chứa biến môi trường (mật khẩu, API keys...)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# =========================
+# BACKEND (.NET Core / C#)
+# =========================
+# Thư mục chứa file thực thi và file tạm sau khi biên dịch (cực nặng và sinh ra tự động)
+Backend/bin/
+Backend/obj/
+
+# File cấu hình riêng của từng cá nhân (không dùng chung cho team)
+*.user
+*.userosscache
+*.sln.docstates
+
+# Thư mục ẩn của Visual Studio hoặc Rider sinh ra
+.vs/
+.idea/
+
+# Bỏ qua file chứa secret hoặc chuỗi kết nối local (nếu bạn có tạo riêng)
+appsettings.Development.json
+appsettings.Local.json
+
+# =========================
+# CÔNG CỤ & HỆ ĐIỀU HÀNH
+# =========================
+# MacOS rác
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows rác
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Thư mục ẩn của VS Code
+.vscode/
