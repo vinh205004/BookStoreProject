@@ -1,0 +1,25 @@
+﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace BookStore.API.Models
+{
+    [Table("Authors")]
+    public class Author
+    {
+        [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        public int AuthorId { get; set; }
+
+        [Required(ErrorMessage = "Tên tác giả là bắt buộc")]
+        [MaxLength(150)]
+        public string Name { get; set; } = string.Empty;
+
+        public string Biography { get; set; } = string.Empty; // Tiểu sử tác giả
+
+        public string ImageUrl { get; set; } = string.Empty; // Ảnh chân dung
+        public bool IsActive { get; set; } = true;
+
+        // Navigation property: Một tác giả có thể có nhiều sách
+        public ICollection<Book> Books { get; set; } = new List<Book>();
+    }
+}
