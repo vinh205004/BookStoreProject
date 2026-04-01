@@ -47,7 +47,7 @@ namespace BookStore.API.Services
                     OrderItemId = oi.OrderItemId,
                     BookId = oi.BookId,
                     BookTitle = oi.Book?.Title ?? "Sách không tồn tại",
-                    ImageUrl = oi.Book?.ImageUrl ?? "",
+                    ImageUrl = oi.Book?.BookImages.FirstOrDefault()?.ImageUrl ?? "",
                     Quantity = oi.Quantity,
                     UnitPrice = oi.UnitPrice
                 }).ToList()

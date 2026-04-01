@@ -8,6 +8,7 @@ namespace BookStore.API.Services
         Task<BookDto?> GetBookByIdAsync(int id);
         Task<BookDto> CreateBookAsync(BookCreateDto dto);
         Task<bool> UpdateBookAsync(int id, BookUpdateDto dto);
-        Task<bool> DeleteBookAsync(int id); // Xóa mềm (Ẩn sách)
+        Task<bool> DeleteBookAsync(int id); // Xóa mềm
+        Task<bool> RestoreBookAsync(int id);
     }
 }

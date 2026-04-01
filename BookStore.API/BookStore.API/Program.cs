@@ -36,6 +36,9 @@ namespace BookStore.API
             builder.Services.AddScoped<IUserService, UserService>();
             builder.Services.AddScoped<IOrderRepository, OrderRepository>();
             builder.Services.AddScoped<IOrderService, OrderService>();
+            builder.Services.AddScoped<PhotoService>();
+            builder.Services.AddScoped<IPublisherRepository, PublisherRepository>();
+            builder.Services.AddScoped<IPublisherService, PublisherService>();
 
             // 2. Cấu hình xác thực JWT
             builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -84,7 +87,40 @@ namespace BookStore.API
     });
             });
 
+            // Cấu hình CORS cho phép Frontend gọi API
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("AllowAll",
+                    b => b.AllowAnyOrigin()
+                          .AllowAnyMethod()
+                          .AllowAnyHeader());
+            });
+
             var app = builder.Build();
+            
+            app.UseCors("AllowAll");
+            using (var scope = app.Services.CreateScope())
+            {
+                var context = scope.ServiceProvider.GetRequiredService<BookStore.API.Data.AppDbContext>();
+
+                if (!context.Users.Any(u => u.Role == "Admin"))
+                {
+                    var adminUser = new BookStore.API.Models.User
+                    {
+                        Username = "admin_tientho",
+                        FullName = "Quản Trị Viên",
+                        Email = "admin@tientho.vn",
+                        PasswordHash = BCrypt.Net.BCrypt.HashPassword("Admin@123"),
+                        PhoneNumber = "0987654321",
+                        Address = "Hà Nội",
+                        Role = "Admin",
+                        IsLocked = false,
+                        CreatedAt = DateTime.UtcNow
+                    };
+                    context.Users.Add(adminUser);
+                    context.SaveChanges();
+                }
+            }
 
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
@@ -94,6 +130,7 @@ namespace BookStore.API
             }
 
             app.UseHttpsRedirection();
+            
             app.UseAuthentication();
             app.UseAuthorization();
 

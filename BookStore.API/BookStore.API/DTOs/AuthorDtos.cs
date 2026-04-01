@@ -9,6 +9,7 @@ namespace BookStore.API.DTOs
         public string Biography { get; set; } = string.Empty;
         public string ImageUrl { get; set; } = string.Empty;
         public bool IsActive { get; set; }
+        public int BookCount { get; set; }
     }
 
     public class AuthorCreateDto

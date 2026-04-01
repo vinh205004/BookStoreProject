@@ -7,7 +7,7 @@ namespace BookStore.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize(Roles = "Admin")] // Đặt Authorize ở mức class để áp dụng cho mọi hàm bên dưới
+    [Authorize(Roles = "Admin")] // Đặt Authorize ở mức class áp dụng cho mọi hàm bên dưới
     public class VouchersController : ControllerBase
     {
         private readonly IVoucherService _voucherService;

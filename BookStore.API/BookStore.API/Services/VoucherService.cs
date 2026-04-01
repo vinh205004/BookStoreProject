@@ -17,8 +17,11 @@ namespace BookStore.API.Services
             {
                 VoucherId = v.VoucherId,
                 Code = v.Code,
+                DiscountType = v.DiscountType,
                 DiscountAmount = v.DiscountAmount,
                 MinOrderValue = v.MinOrderValue,
+                Quantity = v.Quantity,
+                UsedCount = v.UsedCount,
                 ExpirationDate = v.ExpirationDate,
                 IsActive = v.IsActive
             });
@@ -33,8 +36,11 @@ namespace BookStore.API.Services
             {
                 VoucherId = v.VoucherId,
                 Code = v.Code,
+                DiscountType = v.DiscountType,
                 DiscountAmount = v.DiscountAmount,
                 MinOrderValue = v.MinOrderValue,
+                Quantity = v.Quantity,
+                UsedCount = v.UsedCount,
                 ExpirationDate = v.ExpirationDate,
                 IsActive = v.IsActive
             };
@@ -54,8 +60,11 @@ namespace BookStore.API.Services
             var newVoucher = new Voucher
             {
                 Code = dto.Code.ToUpper(), // Chuẩn hóa mã viết hoa
+                DiscountType = dto.DiscountType,
                 DiscountAmount = dto.DiscountAmount,
                 MinOrderValue = dto.MinOrderValue,
+                Quantity = dto.Quantity,
+                UsedCount = 0, // Mặc định 0 khi tạo mới
                 ExpirationDate = dto.ExpirationDate,
                 IsActive = true // Mặc định tạo ra là hoạt động
             };
@@ -66,9 +75,12 @@ namespace BookStore.API.Services
             {
                 VoucherId = newVoucher.VoucherId,
                 Code = newVoucher.Code,
+                DiscountType = newVoucher.DiscountType,
                 DiscountAmount = newVoucher.DiscountAmount,
                 MinOrderValue = newVoucher.MinOrderValue,
-                ExpirationDate = newVoucher.ExpirationDate,
+                Quantity = newVoucher.Quantity,
+                UsedCount = newVoucher.UsedCount,
+                ExpirationDate = newVoucher.ExpirationDate.ToUniversalTime(),
                 IsActive = newVoucher.IsActive
             };
         }
@@ -86,9 +98,11 @@ namespace BookStore.API.Services
                 throw new Exception("Mã Voucher này đã được sử dụng cho chương trình khác!");
 
             voucher.Code = dto.Code.ToUpper();
+            voucher.DiscountType = dto.DiscountType;
             voucher.DiscountAmount = dto.DiscountAmount;
             voucher.MinOrderValue = dto.MinOrderValue;
-            voucher.ExpirationDate = dto.ExpirationDate;
+            voucher.Quantity = dto.Quantity;
+            voucher.ExpirationDate = dto.ExpirationDate.ToUniversalTime();
             voucher.IsActive = dto.IsActive;
 
             await _repo.UpdateAsync(voucher);
@@ -100,7 +114,6 @@ namespace BookStore.API.Services
             var voucher = await _repo.GetByIdAsync(id);
             if (voucher == null) return false;
 
-            // Xóa mềm: Chuyển trạng thái thành false
             voucher.IsActive = false;
             await _repo.UpdateAsync(voucher);
             return true;

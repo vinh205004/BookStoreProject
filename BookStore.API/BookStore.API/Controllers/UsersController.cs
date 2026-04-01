@@ -7,7 +7,7 @@ namespace BookStore.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize(Roles = "Admin")] // Chặn toàn bộ, chỉ Admin được vào
+    [Authorize(Roles = "Admin")] // chỉ Admin được vào
     public class UsersController : ControllerBase
     {
         private readonly IUserService _userService;

@@ -9,6 +9,5 @@ namespace BookStore.API.Repositories
         Task<bool> HasBooksAsync(int id); // Kiểm tra tác giả có sách không
         Task AddAsync(Author author);
         Task UpdateAsync(Author author);
-        Task DeleteAsync(Author author);
     }
 }

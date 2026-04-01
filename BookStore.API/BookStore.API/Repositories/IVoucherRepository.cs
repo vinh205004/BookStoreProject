@@ -6,7 +6,7 @@ namespace BookStore.API.Repositories
     {
         Task<IEnumerable<Voucher>> GetAllAsync();
         Task<Voucher?> GetByIdAsync(int id);
-        Task<Voucher?> GetByCodeAsync(string code); // Thêm hàm tìm theo mã
+        Task<Voucher?> GetByCodeAsync(string code);
         Task AddAsync(Voucher voucher);
         Task UpdateAsync(Voucher voucher);
     }

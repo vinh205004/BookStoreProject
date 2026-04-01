@@ -46,7 +46,7 @@ namespace BookStore.API.Services
             {
                 Name = dto.Name,
                 Description = dto.Description,
-                IsActive = true // Mặc định tạo ra là hoạt động
+                IsActive = true // Mặc định hoạt động
             };
 
             await _repo.AddAsync(newCategory);
@@ -65,7 +65,7 @@ namespace BookStore.API.Services
             var category = await _repo.GetByIdAsync(id);
             if (category == null) return false;
 
-            // Kiểm tra xem tên mới có bị trùng với danh mục khác không
+            // Kiểm tra xem tên mới có bị trùng
             var existing = await _repo.GetByNameAsync(dto.Name);
             if (existing != null && existing.CategoryId != id)
                 throw new Exception("Tên danh mục này đã được sử dụng!");
@@ -83,8 +83,18 @@ namespace BookStore.API.Services
             var category = await _repo.GetByIdAsync(id);
             if (category == null) return false;
 
-            // Thay vì xóa vật lý, ta ẩn nó đi (Soft Delete)
+            //Soft Delete
             category.IsActive = false;
+            await _repo.UpdateAsync(category);
+            return true;
+        }
+
+        public async Task<bool> RestoreCategoryAsync(int id)
+        {
+            var category = await _repo.GetByIdAsync(id);
+            if (category == null) return false;
+
+            category.IsActive = true; // Khôi phục lại
             await _repo.UpdateAsync(category);
             return true;
         }

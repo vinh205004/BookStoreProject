@@ -21,7 +21,6 @@ namespace BookStore.API.Models
         // Dùng để ẩn/hiện danh mục thay vì xóa cứng
         public bool IsActive { get; set; } = true;
 
-        // Navigation property: Một danh mục có nhiều cuốn sách
         public ICollection<Book> Books { get; set; } = new List<Book>();
     }
 }

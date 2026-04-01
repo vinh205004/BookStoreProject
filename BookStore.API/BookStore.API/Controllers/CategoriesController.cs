@@ -74,5 +74,14 @@ namespace BookStore.API.Controllers
             if (!success) return NotFound(new { message = "Không tìm thấy danh mục" });
             return Ok(new { message = "Đã xóa (ẩn) danh mục thành công!" });
         }
+        //Khôi phục danh mục đã xóa (ẩn đi)
+        [Authorize(Roles = "Admin")]
+        [HttpPut("{id}/restore")]
+        public async Task<IActionResult> Restore(int id)
+        {
+            var success = await _categoryService.RestoreCategoryAsync(id);
+            if (!success) return NotFound(new { message = "Không tìm thấy danh mục" });
+            return Ok(new { message = "Đã khôi phục danh mục thành công!" });
+        }
     }
 }

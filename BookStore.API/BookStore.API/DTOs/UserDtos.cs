@@ -17,7 +17,7 @@ namespace BookStore.API.DTOs
         public DateTime CreatedAt { get; set; }
     }
 
-    // DTO dùng khi Admin muốn đổi quyền (Cấp quyền Admin/Customer)
+    // dùng khi Admin muốn cấp quyền Admin/Customer
     public class UserRoleUpdateDto
     {
         [Required]

@@ -9,5 +9,6 @@ namespace BookStore.API.Services
         Task<CategoryDto> CreateCategoryAsync(CategoryCreateDto dto);
         Task<bool> UpdateCategoryAsync(int id, CategoryUpdateDto dto);
         Task<bool> DeleteCategoryAsync(int id); // Xóa mềm
+        Task<bool> RestoreCategoryAsync(int id);
     }
 }

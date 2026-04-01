@@ -75,5 +75,14 @@ namespace BookStore.API.Controllers
             if (!success) return NotFound(new { message = "Không tìm thấy sách để xóa" });
             return Ok(new { message = "Đã ẩn sách thành công!" });
         }
+        // PUT: api/Books/5/restore (Chỉ Admin)
+        [Authorize(Roles = "Admin")]
+        [HttpPut("{id}/restore")]
+        public async Task<IActionResult> Restore(int id)
+        {
+            var success = await _bookService.RestoreBookAsync(id);
+            if (!success) return NotFound(new { message = "Không tìm thấy sách" });
+            return Ok(new { message = "Đã khôi phục sách thành công!" });
+        }
     }
 }

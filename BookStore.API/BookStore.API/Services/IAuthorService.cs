@@ -9,5 +9,6 @@ namespace BookStore.API.Services
         Task<AuthorDto> CreateAuthorAsync(AuthorCreateDto dto);
         Task<bool> UpdateAuthorAsync(int id, AuthorUpdateDto dto);
         Task<bool> DeleteAuthorAsync(int id);
+        Task<bool> RestoreAuthorAsync(int id);
     }
 }

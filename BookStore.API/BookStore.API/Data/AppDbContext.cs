@@ -14,5 +14,7 @@ namespace BookStore.API.Data
         public DbSet<Voucher> Vouchers { get; set; }
         public DbSet<Order> Orders { get; set; }
         public DbSet<OrderItem> OrderItems { get; set; }
+        public DbSet<BookImage> BookImages { get; set; }
+        public DbSet<Publisher> Publishers { get; set; }
     }
 }

@@ -19,7 +19,8 @@ namespace BookStore.API.Services
                 Name = a.Name,
                 Biography = a.Biography,
                 ImageUrl = a.ImageUrl,
-                IsActive = a.IsActive
+                IsActive = a.IsActive,
+                BookCount = a.Books.Count(b => !b.IsHidden)
             });
         }
 
@@ -79,7 +80,16 @@ namespace BookStore.API.Services
 
             author.IsActive = false;
 
-            await _repo.DeleteAsync(author);
+            await _repo.UpdateAsync(author);
+            return true;
+        }
+        public async Task<bool> RestoreAuthorAsync(int id)
+        {
+            var category = await _repo.GetByIdAsync(id);
+            if (category == null) return false;
+
+            category.IsActive = true; // Khôi phục lại
+            await _repo.UpdateAsync(category);
             return true;
         }
     }

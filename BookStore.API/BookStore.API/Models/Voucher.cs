@@ -1,5 +1,4 @@
-﻿using System;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace BookStore.API.Models
@@ -13,18 +12,21 @@ namespace BookStore.API.Models
 
         [Required]
         [MaxLength(50)]
-        public string Code { get; set; } = string.Empty; // Mã nhập (VD: TIENTHO50K)
+        public string Code { get; set; } = string.Empty; // Mã nhập
 
-        [Required]
-        [Column(TypeName = "decimal(18,2)")]
-        public decimal DiscountAmount { get; set; } // Số tiền được giảm
+        [MaxLength(20)]
+        public string DiscountType { get; set; } = "Direct"; // "Direct" (VNĐ) hoặc "Percentage" (%)
 
-        [Column(TypeName = "decimal(18,2)")]
-        public decimal MinOrderValue { get; set; } = 0; // Đơn hàng tối thiểu để áp dụng
+        public decimal DiscountAmount { get; set; } // Số tiền hoặc phần trăm được giảm
 
-        [Required]
-        public DateTime ExpirationDate { get; set; } // Hạn sử dụng
+        public decimal MinOrderValue { get; set; } // Đơn hàng tối thiểu
 
-        public bool IsActive { get; set; } = true; // Trạng thái voucher (Admin có thể tắt sớm)
+        public int Quantity { get; set; } // Số lượng mã phát hành
+
+        public int UsedCount { get; set; } = 0; // Số lượt đã sử dụng
+
+        public DateTime ExpirationDate { get; set; } // Ngày hết hạn
+
+        public bool IsActive { get; set; } = true; // Trạng thái (Thùng rác)
     }
 }

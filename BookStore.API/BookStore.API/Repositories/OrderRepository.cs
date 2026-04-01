@@ -24,7 +24,7 @@ namespace BookStore.API.Repositories
             return await _context.Orders
                 .Include(o => o.User)
                 .Include(o => o.OrderItems)
-                    .ThenInclude(oi => oi.Book)
+                    .ThenInclude(oi => oi.Book).ThenInclude(b => b.BookImages)
                 .FirstOrDefaultAsync(o => o.OrderId == id);
         }
 

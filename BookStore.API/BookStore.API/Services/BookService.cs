@@ -24,11 +24,12 @@ namespace BookStore.API.Services
                 Title = b.Title,
                 AuthorId = b.AuthorId,
                 AuthorName = b.Author?.Name ?? "Không xác định",
-                Publisher = b.Publisher,
+                PublisherId = b.PublisherId,
+                PublisherName = b.Publisher != null ? b.Publisher.Name : "",
                 Description = b.Description,
                 Price = b.Price,
                 Stock = b.Stock,
-                ImageUrl = b.ImageUrl,
+                ImageUrls = b.BookImages.Select(img => img.ImageUrl).ToList(),
                 IsHidden = b.IsHidden,
                 CategoryId = b.CategoryId,
                 CategoryName = b.Category?.Name ?? "Không xác định"
@@ -46,11 +47,11 @@ namespace BookStore.API.Services
                 Title = b.Title,
                 AuthorId = b.AuthorId,
                 AuthorName = b.Author?.Name ?? "Không xác định",
-                Publisher = b.Publisher,
+                PublisherId = b.PublisherId,
                 Description = b.Description,
                 Price = b.Price,
                 Stock = b.Stock,
-                ImageUrl = b.ImageUrl,
+                ImageUrls = b.BookImages.Select(img => img.ImageUrl).ToList(),
                 IsHidden = b.IsHidden,
                 CategoryId = b.CategoryId,
                 CategoryName = b.Category?.Name ?? "Không xác định"
@@ -68,11 +69,11 @@ namespace BookStore.API.Services
             {
                 Title = dto.Title,
                 AuthorId = dto.AuthorId,
-                Publisher = dto.Publisher,
+                PublisherId = dto.PublisherId,
                 Description = dto.Description,
                 Price = dto.Price,
                 Stock = dto.Stock,
-                ImageUrl = dto.ImageUrl,
+                BookImages = dto.ImageUrls.Select(url => new BookImage { ImageUrl = url }).ToList(),
                 CategoryId = dto.CategoryId,
                 IsHidden = false,
                 CreatedAt = DateTime.UtcNow
@@ -80,7 +81,7 @@ namespace BookStore.API.Services
 
             await _bookRepo.AddAsync(newBook);
 
-            return await GetBookByIdAsync(newBook.BookId); // Tái sử dụng hàm GetById để lấy DTO có kèm CategoryName
+            return await GetBookByIdAsync(newBook.BookId); 
         }
 
         public async Task<bool> UpdateBookAsync(int id, BookUpdateDto dto)
@@ -88,7 +89,6 @@ namespace BookStore.API.Services
             var book = await _bookRepo.GetByIdAsync(id);
             if (book == null) return false;
 
-            // Kiểm tra CategoryId có hợp lệ không nếu bị thay đổi
             if (book.CategoryId != dto.CategoryId)
             {
                 var category = await _categoryRepo.GetByIdAsync(dto.CategoryId);
@@ -98,11 +98,11 @@ namespace BookStore.API.Services
 
             book.Title = dto.Title;
             book.AuthorId = dto.AuthorId;
-            book.Publisher = dto.Publisher;
+            book.PublisherId = dto.PublisherId;
             book.Description = dto.Description;
             book.Price = dto.Price;
             book.Stock = dto.Stock;
-            book.ImageUrl = dto.ImageUrl;
+            book.BookImages = dto.ImageUrls.Select(url => new BookImage { ImageUrl = url, BookId = book.BookId }).ToList();
             book.CategoryId = dto.CategoryId;
             book.IsHidden = dto.IsHidden;
             book.UpdatedAt = DateTime.UtcNow;
@@ -117,6 +117,17 @@ namespace BookStore.API.Services
             if (book == null) return false;
 
             book.IsHidden = true; // Xóa mềm
+            book.UpdatedAt = DateTime.UtcNow;
+
+            await _bookRepo.UpdateAsync(book);
+            return true;
+        }
+        public async Task<bool> RestoreBookAsync(int id)
+        {
+            var book = await _bookRepo.GetByIdAsync(id);
+            if (book == null) return false;
+
+            book.IsHidden = false; // Khôi phục (bỏ ẩn)
             book.UpdatedAt = DateTime.UtcNow;
 
             await _bookRepo.UpdateAsync(book);

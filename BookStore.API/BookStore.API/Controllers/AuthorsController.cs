@@ -78,5 +78,14 @@ namespace BookStore.API.Controllers
                 return BadRequest(new { error = ex.Message });
             }
         }
+
+        [Authorize(Roles = "Admin")]
+        [HttpPut("{id}/restore")]
+        public async Task<IActionResult> Restore(int id)
+        {
+            var success = await _authorService.RestoreAuthorAsync(id);
+            if (!success) return NotFound(new { message = "Không tìm thấy danh mục" });
+            return Ok(new { message = "Đã khôi phục danh mục thành công!" });
+        }
     }
 }

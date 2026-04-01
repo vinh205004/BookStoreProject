@@ -72,20 +72,14 @@ namespace BookStore.API.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("ImageUrl")
-                        .IsRequired()
-                        .HasColumnType("text");
-
                     b.Property<bool>("IsHidden")
                         .HasColumnType("boolean");
 
                     b.Property<decimal>("Price")
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<string>("Publisher")
-                        .IsRequired()
-                        .HasMaxLength(150)
-                        .HasColumnType("character varying(150)");
+                    b.Property<int>("PublisherId")
+                        .HasColumnType("integer");
 
                     b.Property<int>("Stock")
                         .HasColumnType("integer");
@@ -104,7 +98,31 @@ namespace BookStore.API.Migrations
 
                     b.HasIndex("CategoryId");
 
+                    b.HasIndex("PublisherId");
+
                     b.ToTable("Books");
+                });
+
+            modelBuilder.Entity("BookStore.API.Models.BookImage", b =>
+                {
+                    b.Property<int>("BookImageId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("BookImageId"));
+
+                    b.Property<int>("BookId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ImageUrl")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("BookImageId");
+
+                    b.HasIndex("BookId");
+
+                    b.ToTable("BookImages");
                 });
 
             modelBuilder.Entity("BookStore.API.Models.Category", b =>
@@ -205,6 +223,30 @@ namespace BookStore.API.Migrations
                     b.ToTable("OrderItems");
                 });
 
+            modelBuilder.Entity("BookStore.API.Models.Publisher", b =>
+                {
+                    b.Property<int>("PublisherId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("PublisherId"));
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("PublisherId");
+
+                    b.ToTable("Publishers");
+                });
+
             modelBuilder.Entity("BookStore.API.Models.User", b =>
                 {
                     b.Property<int>("UserId")
@@ -271,7 +313,12 @@ namespace BookStore.API.Migrations
                         .HasColumnType("character varying(50)");
 
                     b.Property<decimal>("DiscountAmount")
-                        .HasColumnType("decimal(18,2)");
+                        .HasColumnType("numeric");
+
+                    b.Property<string>("DiscountType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
 
                     b.Property<DateTime>("ExpirationDate")
                         .HasColumnType("timestamp with time zone");
@@ -280,7 +327,13 @@ namespace BookStore.API.Migrations
                         .HasColumnType("boolean");
 
                     b.Property<decimal>("MinOrderValue")
-                        .HasColumnType("decimal(18,2)");
+                        .HasColumnType("numeric");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("UsedCount")
+                        .HasColumnType("integer");
 
                     b.HasKey("VoucherId");
 
@@ -301,9 +354,28 @@ namespace BookStore.API.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("BookStore.API.Models.Publisher", "Publisher")
+                        .WithMany("Books")
+                        .HasForeignKey("PublisherId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.Navigation("Author");
 
                     b.Navigation("Category");
+
+                    b.Navigation("Publisher");
+                });
+
+            modelBuilder.Entity("BookStore.API.Models.BookImage", b =>
+                {
+                    b.HasOne("BookStore.API.Models.Book", "Book")
+                        .WithMany("BookImages")
+                        .HasForeignKey("BookId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Book");
                 });
 
             modelBuilder.Entity("BookStore.API.Models.Order", b =>
@@ -341,6 +413,11 @@ namespace BookStore.API.Migrations
                     b.Navigation("Books");
                 });
 
+            modelBuilder.Entity("BookStore.API.Models.Book", b =>
+                {
+                    b.Navigation("BookImages");
+                });
+
             modelBuilder.Entity("BookStore.API.Models.Category", b =>
                 {
                     b.Navigation("Books");
@@ -349,6 +426,11 @@ namespace BookStore.API.Migrations
             modelBuilder.Entity("BookStore.API.Models.Order", b =>
                 {
                     b.Navigation("OrderItems");
+                });
+
+            modelBuilder.Entity("BookStore.API.Models.Publisher", b =>
+                {
+                    b.Navigation("Books");
                 });
 #pragma warning restore 612, 618
         }

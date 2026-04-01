@@ -11,7 +11,8 @@ namespace BookStore.API.DTOs
         [Required(ErrorMessage = "Phải chọn tác giả")]
         public int AuthorId { get; set; }
 
-        public string Publisher { get; set; } = string.Empty;
+        public int PublisherId { get; set; }
+        public string PublisherName { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
 
         [Required]
@@ -22,7 +23,7 @@ namespace BookStore.API.DTOs
         [Range(0, int.MaxValue, ErrorMessage = "Số lượng tồn kho không hợp lệ")]
         public int Stock { get; set; }
 
-        public string ImageUrl { get; set; } = string.Empty;
+        public List<string> ImageUrls { get; set; } = new List<string>();
 
         [Required(ErrorMessage = "Phải chọn danh mục cho sách")]
         public int CategoryId { get; set; }

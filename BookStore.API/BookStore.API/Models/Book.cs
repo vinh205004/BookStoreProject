@@ -20,21 +20,23 @@ namespace BookStore.API.Models
         public int AuthorId { get; set; }
         public Author? Author { get; set; }
 
-        [MaxLength(150)]
-        public string Publisher { get; set; } = string.Empty; // Nhà xuất bản
+        public int PublisherId { get; set; }
 
-        public string Description { get; set; } = string.Empty; // Chứa mô tả dài
+        [ForeignKey("PublisherId")]
+        public Publisher? Publisher { get; set; }
+
+        public string Description { get; set; } = string.Empty;
 
         [Required]
-        [Column(TypeName = "decimal(18,2)")] // Định dạng tiền tệ
+        [Column(TypeName = "decimal(18,2)")] // Định dạng tiền
         public decimal Price { get; set; }
 
         [Required]
         public int Stock { get; set; } = 0; // Số lượng tồn kho
 
-        public string ImageUrl { get; set; } = string.Empty; // Đường dẫn ảnh bìa sách
+        public ICollection<BookImage> BookImages { get; set; } = new List<BookImage>();
 
-        public bool IsHidden { get; set; } = false; // Phục vụ Use case Ẩn sách khỏi cửa hàng
+        public bool IsHidden { get; set; } = false; // Ẩn sách khỏi cửa hàng
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? UpdatedAt { get; set; } // Cho phép null, cập nhật khi Admin sửa sách

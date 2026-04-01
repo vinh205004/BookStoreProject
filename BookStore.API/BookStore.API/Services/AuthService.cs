@@ -30,7 +30,7 @@ namespace BookStore.API.Services
             if (await _context.Users.AnyAsync(u => u.Username == dto.Username))
                 throw new Exception("Tên đăng nhập này đã có người sử dụng!");
 
-            // 3. Tạo User mới, map đầy đủ các trường từ DTO sang Model
+            // 3. Tạo User mới
             var user = new User
             {
                 Username = dto.Username,
@@ -56,7 +56,7 @@ namespace BookStore.API.Services
             if (user == null)
                 throw new Exception("Tài khoản không tồn tại!");
 
-            // 2. Kiểm tra mật khẩu (so sánh pass nhập vào với pass đã Hash trong DB)
+            // 2. Kiểm tra mật khẩu
             if (!BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash))
                 throw new Exception("Mật khẩu không chính xác!");
 
@@ -64,13 +64,13 @@ namespace BookStore.API.Services
             return GenerateJwtToken(user);
         }
 
-        // Hàm nội bộ hỗ trợ tạo Token
+        // Hàm tạo Token
         private string GenerateJwtToken(User user)
         {
             var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]!));
             var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
 
-            // Nhét thông tin (Claims) vào trong token
+            // Nhét thông tin vào trong token
             var claims = new[]
             {
                 new Claim(JwtRegisteredClaimNames.Sub, user.Email),

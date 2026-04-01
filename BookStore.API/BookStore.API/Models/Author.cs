@@ -16,10 +16,10 @@ namespace BookStore.API.Models
 
         public string Biography { get; set; } = string.Empty; // Tiểu sử tác giả
 
-        public string ImageUrl { get; set; } = string.Empty; // Ảnh chân dung
+        public string ImageUrl { get; set; } = string.Empty;
         public bool IsActive { get; set; } = true;
 
-        // Navigation property: Một tác giả có thể có nhiều sách
+        // Một tác giả có thể có nhiều sách
         public ICollection<Book> Books { get; set; } = new List<Book>();
     }
 }

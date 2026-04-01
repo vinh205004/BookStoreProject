@@ -11,7 +11,7 @@ namespace BookStore.API.Repositories
 
         public async Task<IEnumerable<Author>> GetAllAsync()
         {
-            return await _context.Authors.ToListAsync();
+            return await _context.Authors.Include(a => a.Books).ToListAsync();
         }
 
         public async Task<Author?> GetByIdAsync(int id)
@@ -36,10 +36,6 @@ namespace BookStore.API.Repositories
             await _context.SaveChangesAsync();
         }
 
-        public async Task DeleteAsync(Author author)
-        {
-            _context.Authors.Remove(author);
-            await _context.SaveChangesAsync();
-        }
+        
     }
 }

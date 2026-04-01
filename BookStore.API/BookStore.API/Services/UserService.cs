@@ -50,7 +50,7 @@ namespace BookStore.API.Services
             var user = await _repo.GetByIdAsync(id);
             if (user == null) return false;
 
-            // Đảo ngược trạng thái hiện tại (Đang true thành false, đang false thành true)
+            // Đảo ngược trạng thái
             user.IsLocked = !user.IsLocked;
 
             await _repo.UpdateAsync(user);

@@ -8,6 +8,6 @@ namespace BookStore.API.Services
         Task<VoucherDto?> GetVoucherByIdAsync(int id);
         Task<VoucherDto> CreateVoucherAsync(VoucherCreateDto dto);
         Task<bool> UpdateVoucherAsync(int id, VoucherUpdateDto dto);
-        Task<bool> DeleteVoucherAsync(int id); // Xóa mềm (Tắt voucher)
+        Task<bool> DeleteVoucherAsync(int id); // Xóa mềm
     }
 }

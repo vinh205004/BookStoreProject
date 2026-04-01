@@ -192,6 +192,29 @@
         }
       }
     },
+    "/api/Authors/{id}/restore": {
+      "put": {
+        "tags": [
+          "Authors"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/Books": {
       "get": {
         "tags": [
@@ -296,6 +319,29 @@
         }
       },
       "delete": {
+        "tags": [
+          "Books"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Books/{id}/restore": {
+      "put": {
         "tags": [
           "Books"
         ],
@@ -442,6 +488,29 @@
         }
       }
     },
+    "/api/Categories/{id}/restore": {
+      "put": {
+        "tags": [
+          "Categories"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/Orders": {
       "get": {
         "tags": [
@@ -508,6 +577,186 @@
             "application/*+json": {
               "schema": {
                 "$ref": "#/components/schemas/OrderUpdateStatusDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Publishers": {
+      "get": {
+        "tags": [
+          "Publishers"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Publishers"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublisherCreateDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublisherCreateDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublisherCreateDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Publishers/{id}": {
+      "get": {
+        "tags": [
+          "Publishers"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Publishers"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublisherUpdateDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublisherUpdateDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublisherUpdateDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Publishers"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Publishers/{id}/restore": {
+      "put": {
+        "tags": [
+          "Publishers"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Uploads/image": {
+      "post": {
+        "tags": [
+          "Uploads"
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              },
+              "encoding": {
+                "file": {
+                  "style": "form"
+                }
               }
             }
           }
@@ -813,7 +1062,11 @@
             "type": "integer",
             "format": "int32"
           },
-          "publisher": {
+          "publisherId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "publisherName": {
             "type": "string",
             "nullable": true
           },
@@ -832,8 +1085,11 @@
             "type": "integer",
             "format": "int32"
           },
-          "imageUrl": {
-            "type": "string",
+          "imageUrls": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
             "nullable": true
           },
           "categoryId": {
@@ -862,7 +1118,11 @@
             "type": "integer",
             "format": "int32"
           },
-          "publisher": {
+          "publisherId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "publisherName": {
             "type": "string",
             "nullable": true
           },
@@ -881,8 +1141,11 @@
             "type": "integer",
             "format": "int32"
           },
-          "imageUrl": {
-            "type": "string",
+          "imageUrls": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
             "nullable": true
           },
           "categoryId": {
@@ -966,6 +1229,45 @@
         },
         "additionalProperties": false
       },
+      "PublisherCreateDto": {
+        "required": [
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "maxLength": 100,
+            "minLength": 1,
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "PublisherUpdateDto": {
+        "required": [
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "maxLength": 100,
+            "minLength": 1,
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "isActive": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
       "RegisterDto": {
         "required": [
           "email",
@@ -1022,7 +1324,9 @@
         "required": [
           "code",
           "discountAmount",
-          "expirationDate"
+          "discountType",
+          "expirationDate",
+          "quantity"
         ],
         "type": "object",
         "properties": {
@@ -1031,15 +1335,28 @@
             "minLength": 1,
             "type": "string"
           },
+          "discountType": {
+            "maxLength": 20,
+            "minLength": 1,
+            "type": "string"
+          },
           "discountAmount": {
+            "maximum": 1000000000,
             "minimum": 1,
             "type": "number",
             "format": "double"
           },
           "minOrderValue": {
+            "maximum": 1000000000,
             "minimum": 0,
             "type": "number",
             "format": "double"
+          },
+          "quantity": {
+            "maximum": 10000000,
+            "minimum": 1,
+            "type": "integer",
+            "format": "int32"
           },
           "expirationDate": {
             "type": "string",
@@ -1052,7 +1369,9 @@
         "required": [
           "code",
           "discountAmount",
-          "expirationDate"
+          "discountType",
+          "expirationDate",
+          "quantity"
         ],
         "type": "object",
         "properties": {
@@ -1061,15 +1380,28 @@
             "minLength": 1,
             "type": "string"
           },
+          "discountType": {
+            "maxLength": 20,
+            "minLength": 1,
+            "type": "string"
+          },
           "discountAmount": {
+            "maximum": 1000000000,
             "minimum": 1,
             "type": "number",
             "format": "double"
           },
           "minOrderValue": {
+            "maximum": 1000000000,
             "minimum": 0,
             "type": "number",
             "format": "double"
+          },
+          "quantity": {
+            "maximum": 10000000,
+            "minimum": 1,
+            "type": "integer",
+            "format": "int32"
           },
           "expirationDate": {
             "type": "string",
