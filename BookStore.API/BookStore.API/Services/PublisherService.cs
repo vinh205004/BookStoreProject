@@ -1,6 +1,7 @@
 ﻿using BookStore.API.DTOs;
 using BookStore.API.Models;
 using BookStore.API.Repositories;
+using BookStore.API.Utilities;
 
 namespace BookStore.API.Services
 {
@@ -22,7 +23,7 @@ namespace BookStore.API.Services
             });
         }
 
-        public async Task<PublisherDto?> GetPublisherByIdAsync(int id)
+        public async Task<PublisherDto?> GetPublisherByIdAsync(string id)
         {
             var c = await _repo.GetByIdAsync(id);
             if (c == null) return null;
@@ -43,8 +44,7 @@ namespace BookStore.API.Services
                 throw new Exception("Tên nhà xuất bản này đã tồn tại!");
 
             var newPublisher = new Publisher
-            {
-                Name = dto.Name,
+            {                PublisherId = IdGenerator.GeneratePublisherId(),                Name = dto.Name,
                 Description = dto.Description,
                 IsActive = true // Mặc định là hoạt động
             };
@@ -60,7 +60,7 @@ namespace BookStore.API.Services
             };
         }
 
-        public async Task<bool> UpdatePublisherAsync(int id, PublisherUpdateDto dto)
+        public async Task<bool> UpdatePublisherAsync(string id, PublisherUpdateDto dto)
         {
             var Publisher = await _repo.GetByIdAsync(id);
             if (Publisher == null) return false;
@@ -78,7 +78,7 @@ namespace BookStore.API.Services
             return true;
         }
 
-        public async Task<bool> DeletePublisherAsync(int id)
+        public async Task<bool> DeletePublisherAsync(string id)
         {
             var Publisher = await _repo.GetByIdAsync(id);
             if (Publisher == null) return false;
@@ -88,7 +88,7 @@ namespace BookStore.API.Services
             return true;
         }
 
-        public async Task<bool> RestorePublisherAsync(int id)
+        public async Task<bool> RestorePublisherAsync(string id)
         {
             var Publisher = await _repo.GetByIdAsync(id);
             if (Publisher == null) return false;

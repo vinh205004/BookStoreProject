@@ -2,6 +2,7 @@
 using BookStore.API.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace BookStore.API.Controllers
 {
@@ -25,7 +26,7 @@ namespace BookStore.API.Controllers
         }
 
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetById(int id)
+        public async Task<IActionResult> GetById(string id)
         {
             var user = await _userService.GetUserByIdAsync(id);
             if (user == null) return NotFound(new { message = "Không tìm thấy người dùng" });
@@ -34,20 +35,37 @@ namespace BookStore.API.Controllers
 
         // Endpoint để Khóa / Mở khóa
         [HttpPut("{id}/toggle-lock")]
-        public async Task<IActionResult> ToggleLock(int id)
+        public async Task<IActionResult> ToggleLock(string id)
         {
-            var success = await _userService.ToggleLockUserAsync(id);
-            if (!success) return NotFound(new { message = "Không tìm thấy người dùng" });
-            return Ok(new { message = "Đã cập nhật trạng thái khóa tài khoản!" });
+            // Lấy ID của user hiện tại từ JWT token
+            var userIdClaim = User.FindFirst("UserId");
+            if (userIdClaim == null)
+                return Unauthorized(new { message = "Không thể xác định user hiện tại" });
+
+            try
+            {
+                var success = await _userService.ToggleLockUserAsync(id, userIdClaim.Value);
+                if (!success) return NotFound(new { message = "Không tìm thấy người dùng" });
+                return Ok(new { message = "Đã cập nhật trạng thái khóa tài khoản!" });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
         }
 
         // Endpoint để thay đổi quyền
         [HttpPut("{id}/role")]
-        public async Task<IActionResult> ChangeRole(int id, [FromBody] UserRoleUpdateDto dto)
+        public async Task<IActionResult> ChangeRole(string id, [FromBody] UserRoleUpdateDto dto)
         {
+            // Lấy ID của user hiện tại từ JWT token
+            var userIdClaim = User.FindFirst("UserId");
+            if (userIdClaim == null)
+                return Unauthorized(new { message = "Không thể xác định user hiện tại" });
+
             try
             {
-                var success = await _userService.ChangeUserRoleAsync(id, dto);
+                var success = await _userService.ChangeUserRoleAsync(id, dto, userIdClaim.Value);
                 if (!success) return NotFound(new { message = "Không tìm thấy người dùng" });
                 return Ok(new { message = "Cập nhật quyền thành công!" });
             }

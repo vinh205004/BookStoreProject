@@ -1,6 +1,7 @@
 ﻿using BookStore.API.DTOs;
 using BookStore.API.Models;
 using BookStore.API.Repositories;
+using BookStore.API.Utilities;
 
 namespace BookStore.API.Services
 {
@@ -27,7 +28,7 @@ namespace BookStore.API.Services
             });
         }
 
-        public async Task<VoucherDto?> GetVoucherByIdAsync(int id)
+        public async Task<VoucherDto?> GetVoucherByIdAsync(string id)
         {
             var v = await _repo.GetByIdAsync(id);
             if (v == null) return null;
@@ -59,6 +60,7 @@ namespace BookStore.API.Services
 
             var newVoucher = new Voucher
             {
+                VoucherId = IdGenerator.GenerateVoucherId(),
                 Code = dto.Code.ToUpper(), // Chuẩn hóa mã viết hoa
                 DiscountType = dto.DiscountType,
                 DiscountAmount = dto.DiscountAmount,
@@ -85,7 +87,7 @@ namespace BookStore.API.Services
             };
         }
 
-        public async Task<bool> UpdateVoucherAsync(int id, VoucherUpdateDto dto)
+        public async Task<bool> UpdateVoucherAsync(string id, VoucherUpdateDto dto)
         {
             var voucher = await _repo.GetByIdAsync(id);
             if (voucher == null) return false;
@@ -109,7 +111,7 @@ namespace BookStore.API.Services
             return true;
         }
 
-        public async Task<bool> DeleteVoucherAsync(int id)
+        public async Task<bool> DeleteVoucherAsync(string id)
         {
             var voucher = await _repo.GetByIdAsync(id);
             if (voucher == null) return false;

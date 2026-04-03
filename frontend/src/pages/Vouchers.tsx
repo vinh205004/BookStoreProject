@@ -1,18 +1,18 @@
-import React, { useState, useEffect } from 'react';
-import { Plus, Edit, Trash2, ArchiveRestore, List, TicketPercent } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Plus, Edit, Trash2, ArchiveRestore, List, TicketPercent, Search } from 'lucide-react';
 import { toast } from 'react-toastify';
 import axiosClient from '../api/axiosClient';
 import type { Voucher } from '../types';
 import Modal from '../components/ui/Modal';
+import Button from '../components/ui/Button';
 
 export default function Vouchers() {
   const [vouchers, setVouchers] = useState<Voucher[]>([]);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [loading, setLoading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const [showTrash, setShowTrash] = useState(false);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
   
   // State cho Form
   const [code, setCode] = useState('');
@@ -22,20 +22,20 @@ export default function Vouchers() {
   const [quantity, setQuantity] = useState<number>(1);
   const [expirationDate, setExpirationDate] = useState('');
 
-  useEffect(() => { fetchVouchers(); }, []);
-
-  const fetchVouchers = async () => {
+  const fetchVouchers = useCallback(async () => {
     try {
-      setLoading(true);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const data: any = await axiosClient.get('/Vouchers');
       setVouchers(data);
     } catch {
-      toast.error('Lỗi khi tải danh sách Voucher!');
-    } finally {
-      setLoading(false);
+      toast.error('Lỗi khi tải danh sách voucher!');
     }
-  };
+  }, []);
+
+  useEffect(() => { 
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchVouchers(); 
+  }, [fetchVouchers]);
 
   const handleOpenModal = (v?: Voucher) => {
     if (v) {
@@ -45,7 +45,6 @@ export default function Vouchers() {
       setDiscountAmount(v.discountAmount);
       setMinOrderValue(v.minOrderValue);
       setQuantity(v.quantity);
-      // Format datetime string from DB to work with <input type="datetime-local">
       const dateObj = new Date(v.expirationDate);
       // Chỉnh offset timezone VN
       dateObj.setMinutes(dateObj.getMinutes() - dateObj.getTimezoneOffset());
@@ -95,7 +94,7 @@ export default function Vouchers() {
     }
   };
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = async (id: string) => {
     if (window.confirm('Khóa Voucher này (Người dùng sẽ không thể nhập được nữa)?')) {
       try {
         await axiosClient.delete(`/Vouchers/${id}`);
@@ -108,7 +107,7 @@ export default function Vouchers() {
     }
   };
 
-  const handleRestore = async (id: number) => {
+  const handleRestore = async (id: string) => {
     if (window.confirm('Mở khóa lại Voucher này?')) {
       try {
         await axiosClient.put(`/Vouchers/${id}/restore`);
@@ -123,41 +122,69 @@ export default function Vouchers() {
 
   const activeVouchers = vouchers.filter(v => v.isActive);
   const trashVouchers = vouchers.filter(v => !v.isActive);
-  const displayData = showTrash ? trashVouchers : activeVouchers;
+  
+  // TÌM KIẾM
+  const filteredActive = activeVouchers.filter(v => 
+    v.code.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+  const filteredTrash = trashVouchers.filter(v => 
+    v.code.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+  
+  const displayData = showTrash ? filteredTrash : filteredActive;
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-      <div className="flex justify-between items-center mb-6 border-b border-slate-100 pb-4">
-        <div className="flex gap-4">
-          <button onClick={() => setShowTrash(false)} className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${!showTrash ? 'bg-orange-100 text-orange-700' : 'text-slate-500 hover:bg-slate-50'}`}>
+    <div className="bg-white shadow-sm p-4 sm:p-6">
+      {/* HEADER */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 border-b border-slate-100 pb-4 gap-3">
+        <h2 className="text-lg sm:text-xl font-bold text-slate-800 flex items-center gap-2">
+          <TicketPercent className="text-orange-500 flex-shrink-0" size={24} /> Quản lý Voucher
+        </h2>
+      </div>
+
+      {/* TÌM KIẾM */}
+      <div className="mb-6 flex gap-2">
+        <div className="flex-1 relative">
+          <Search size={18} className="absolute left-3 top-3 text-slate-400" />
+          <input 
+            type="text" 
+            placeholder="Tìm kiếm theo mã voucher..." 
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full border border-slate-300 px-4 py-2 pl-10 focus:ring-2 focus:ring-orange-500 outline-none"
+          />
+        </div>
+      </div>
+
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 border-b border-slate-100 pb-4 gap-3">
+        <div className="flex gap-2 sm:gap-4 overflow-x-auto w-full sm:w-auto">
+          <button onClick={() => setShowTrash(false)} className={`flex items-center gap-2 px-3 sm:px-4 py-2 font-medium text-sm transition-colors whitespace-nowrap ${!showTrash ? 'bg-orange-100 text-orange-700' : 'text-slate-500 hover:bg-slate-50'}`}>
             <List size={20} /> Mã đang phát hành ({activeVouchers.length})
           </button>
-          <button onClick={() => setShowTrash(true)} className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${showTrash ? 'bg-red-100 text-red-700' : 'text-slate-500 hover:bg-slate-50'}`}>
+          <button onClick={() => setShowTrash(true)} className={`flex items-center gap-2 px-3 sm:px-4 py-2 font-medium text-sm transition-colors whitespace-nowrap ${showTrash ? 'bg-red-100 text-red-700' : 'text-slate-500 hover:bg-slate-50'}`}>
             <Trash2 size={20} /> Mã đã khóa ({trashVouchers.length})
           </button>
         </div>
         {!showTrash && (
-          <button onClick={() => handleOpenModal()} className="bg-orange-500 hover:bg-orange-600 text-black px-4 py-2 rounded-lg font-medium flex items-center gap-2">
-            <Plus size={20} /> Tạo Voucher
-          </button>
+          <Button icon={<Plus size={20} />} onClick={() => handleOpenModal()}>Tạo Voucher</Button>
         )}
       </div>
 
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto -mx-4 sm:mx-0">
         <table className="w-full text-left border-collapse">
           <thead>
-            <tr className="bg-slate-50 border-b border-slate-200 text-sm text-slate-600 uppercase">
-              <th className="p-4 font-semibold">Mã Code</th>
-              <th className="p-4 font-semibold">Mức giảm</th>
-              <th className="p-4 font-semibold">Điều kiện đơn</th>
-              <th className="p-4 font-semibold">Đã dùng</th>
-              <th className="p-4 font-semibold">Hạn sử dụng</th>
-              <th className="p-4 font-semibold text-center">Thao tác</th>
+            <tr className="bg-slate-50 border-b border-slate-200 text-xs sm:text-sm text-slate-600 uppercase">
+              <th className="p-3 sm:p-4 font-semibold">Mã Code</th>
+              <th className="p-3 sm:p-4 font-semibold">Mức giảm</th>
+              <th className="p-3 sm:p-4 font-semibold hidden sm:table-cell">Điều kiện đơn</th>
+              <th className="p-3 sm:p-4 font-semibold">Đã dùng</th>
+              <th className="p-3 sm:p-4 font-semibold hidden sm:table-cell">Hạn sử dụng</th>
+              <th className="p-3 sm:p-4 font-semibold text-center">Thao tác</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-200 text-slate-700">
             {displayData.length === 0 ? (
-              <tr><td colSpan={6} className="p-8 text-center text-slate-500">Chưa có mã giảm giá nào.</td></tr>
+              <tr><td colSpan={5} className="p-8 text-center text-slate-500">Chưa có mã giảm giá nào.</td></tr>
             ) : (
               displayData.map((v) => {
                 // Kiểm tra xem mã đã quá hạn chưa
@@ -165,18 +192,18 @@ export default function Vouchers() {
                 
                 return (
                   <tr key={v.voucherId} className="hover:bg-slate-50">
-                    <td className="p-4">
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md border border-orange-200 bg-orange-50 text-orange-700 font-bold font-mono text-sm tracking-wider">
+                    <td className="p-3 sm:p-4">
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md border border-orange-200 bg-orange-50 text-orange-700 font-bold font-mono text-xs sm:text-sm tracking-wider">
                         <TicketPercent size={16} /> {v.code}
                       </span>
                     </td>
-                    <td className="p-4 font-bold text-red-500">
+                    <td className="p-3 sm:p-4 font-bold text-red-500 text-xs sm:text-base">
                       {v.discountType === 'Percentage' 
                         ? `-${v.discountAmount}%` 
                         : `-${v.discountAmount.toLocaleString('vi-VN')} đ`}
                     </td>
-                    <td className="p-4 text-sm">Từ {v.minOrderValue.toLocaleString('vi-VN')} đ</td>
-                    <td className="p-4">
+                    <td className="p-3 sm:p-4 text-xs sm:text-base hidden sm:table-cell">Từ {v.minOrderValue.toLocaleString('vi-VN')} đ</td>
+                    <td className="p-3 sm:p-4">
                       <span className="font-semibold">{v.usedCount}</span> / {v.quantity}
                     </td>
                     <td className="p-4">
@@ -192,9 +219,7 @@ export default function Vouchers() {
                           <button onClick={() => handleDelete(v.voucherId)} className="text-red-500 hover:text-red-700 mt-2"><Trash2 size={18} /></button>
                         </>
                       ) : (
-                        <button onClick={() => handleRestore(v.voucherId)} className="flex items-center gap-1 px-3 py-1.5 bg-green-100 text-green-700 hover:bg-green-200 rounded-md text-sm font-medium transition-colors mt-2">
-                          <ArchiveRestore size={16} /> Mở khóa
-                        </button>
+                        <Button variant="success" size="sm" icon={<ArchiveRestore size={16} />} onClick={() => handleRestore(v.voucherId)}>Mở khóa</Button>
                       )}
                     </td>
                   </tr>
@@ -211,7 +236,7 @@ export default function Vouchers() {
           <div className="col-span-2">
             <label className="block text-sm font-medium text-slate-700 mb-1">Mã Code (Khách hàng sẽ nhập) <span className="text-red-500">*</span></label>
             <input type="text" required value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} 
-              className="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-orange-500 outline-none font-mono font-bold text-orange-700" 
+              className="w-full border border-slate-300 px-4 py-2 focus:ring-2 focus:ring-orange-500 outline-none font-mono font-bold text-orange-700" 
               placeholder="VD: TIENTHO50K" />
           </div>
           
@@ -240,7 +265,7 @@ export default function Vouchers() {
               {discountType === 'Percentage' ? 'Phần trăm giảm (%)' : 'Số tiền giảm (VNĐ)'} <span className="text-red-500">*</span>
             </label>
             <input type="number" required value={discountAmount} onChange={(e) => setDiscountAmount(Number(e.target.value))} 
-              className="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-orange-500 outline-none" 
+              className="w-full border border-slate-300 px-4 py-2 focus:ring-2 focus:ring-orange-500 outline-none" 
               min={0} 
               max={discountType === 'Percentage' ? 100 : undefined}
               placeholder={discountType === 'Percentage' ? 'VD: 10 (=10%)' : 'VD: 50000'} />
@@ -248,23 +273,23 @@ export default function Vouchers() {
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Đơn tối thiểu áp dụng (VNĐ) <span className="text-red-500">*</span></label>
             <input type="number" required value={minOrderValue} onChange={(e) => setMinOrderValue(Number(e.target.value))} 
-              className="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-orange-500 outline-none" min={0} />
+              className="w-full border border-slate-300 px-4 py-2 focus:ring-2 focus:ring-orange-500 outline-none" min={0} />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Tổng số lượng mã phát hành <span className="text-red-500">*</span></label>
             <input type="number" required value={quantity} onChange={(e) => setQuantity(Number(e.target.value))} 
-              className="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-orange-500 outline-none" min={1} />
+              className="w-full border border-slate-300 px-4 py-2 focus:ring-2 focus:ring-orange-500 outline-none" min={1} />
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Ngày giờ hết hạn <span className="text-red-500">*</span></label>
             <input type="datetime-local" required value={expirationDate} onChange={(e) => setExpirationDate(e.target.value)} 
-              className="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-orange-500 outline-none" />
+              className="w-full border border-slate-300 px-4 py-2 focus:ring-2 focus:ring-orange-500 outline-none" />
           </div>
 
           <div className="col-span-2 flex justify-end gap-3 mt-4 border-t pt-4">
-            <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2 bg-slate-100 hover:bg-slate-200 rounded-lg">Hủy</button>
-            <button type="submit" className="px-4 py-2 text-black bg-orange-500 hover:bg-orange-600 rounded-lg">Lưu Voucher</button>
+            <Button type="button" variant="secondary" onClick={() => setIsModalOpen(false)}>Hủy</Button>
+            <Button type="submit" variant="primary">Lưu Voucher</Button>
           </div>
         </form>
       </Modal>

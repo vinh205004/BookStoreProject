@@ -14,7 +14,7 @@ namespace BookStore.API.Repositories
             return await _context.Publishers.ToListAsync();
         }
 
-        public async Task<Publisher?> GetByIdAsync(int id)
+        public async Task<Publisher?> GetByIdAsync(string id)
         {
             return await _context.Publishers.FindAsync(id);
         }

@@ -6,7 +6,7 @@ namespace BookStore.API.DTOs
     // DTO để trả thông tin User về cho Admin xem
     public class UserDto
     {
-        public int UserId { get; set; }
+        public string UserId { get; set; } = string.Empty;
         public string Username { get; set; } = string.Empty;
         public string FullName { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;

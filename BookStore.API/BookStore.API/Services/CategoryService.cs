@@ -1,6 +1,7 @@
 ﻿using BookStore.API.DTOs;
 using BookStore.API.Models;
 using BookStore.API.Repositories;
+using BookStore.API.Utilities;
 
 namespace BookStore.API.Services
 {
@@ -22,7 +23,7 @@ namespace BookStore.API.Services
             });
         }
 
-        public async Task<CategoryDto?> GetCategoryByIdAsync(int id)
+        public async Task<CategoryDto?> GetCategoryByIdAsync(string id)
         {
             var c = await _repo.GetByIdAsync(id);
             if (c == null) return null;
@@ -43,8 +44,7 @@ namespace BookStore.API.Services
                 throw new Exception("Tên danh mục này đã tồn tại!");
 
             var newCategory = new Category
-            {
-                Name = dto.Name,
+            {                CategoryId = IdGenerator.GenerateCategoryId(),                Name = dto.Name,
                 Description = dto.Description,
                 IsActive = true // Mặc định hoạt động
             };
@@ -60,7 +60,7 @@ namespace BookStore.API.Services
             };
         }
 
-        public async Task<bool> UpdateCategoryAsync(int id, CategoryUpdateDto dto)
+        public async Task<bool> UpdateCategoryAsync(string id, CategoryUpdateDto dto)
         {
             var category = await _repo.GetByIdAsync(id);
             if (category == null) return false;
@@ -78,7 +78,7 @@ namespace BookStore.API.Services
             return true;
         }
 
-        public async Task<bool> DeleteCategoryAsync(int id)
+        public async Task<bool> DeleteCategoryAsync(string id)
         {
             var category = await _repo.GetByIdAsync(id);
             if (category == null) return false;
@@ -89,7 +89,7 @@ namespace BookStore.API.Services
             return true;
         }
 
-        public async Task<bool> RestoreCategoryAsync(int id)
+        public async Task<bool> RestoreCategoryAsync(string id)
         {
             var category = await _repo.GetByIdAsync(id);
             if (category == null) return false;

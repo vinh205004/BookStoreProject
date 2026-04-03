@@ -18,7 +18,7 @@ namespace BookStore.API.Repositories
                 .ToListAsync();
         }
 
-        public async Task<Order?> GetByIdAsync(int id)
+        public async Task<Order?> GetByIdAsync(string id)
         {
             // Lấy chi tiết đơn hàng, kèm User, kèm OrderItems và thông tin Book trong từng Item
             return await _context.Orders

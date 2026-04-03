@@ -17,16 +17,25 @@ namespace BookStore.API.Services
                 OrderId = o.OrderId,
                 CustomerName = o.User?.FullName ?? "Khách vãng lai",
                 CustomerEmail = o.User?.Email ?? "",
+                CustomerPhone = o.PhoneNumber,
                 OrderDate = o.OrderDate,
                 TotalAmount = o.TotalAmount,
                 Status = o.Status,
                 ShippingAddress = o.ShippingAddress,
-                PhoneNumber = o.PhoneNumber,
-                Note = o.Note
+                Note = o.Note,
+                OrderItems = o.OrderItems.Select(oi => new OrderItemDto
+                {
+                    OrderItemId = oi.OrderItemId,
+                    BookId = oi.BookId,
+                    BookTitle = oi.Book?.Title ?? "Sách không tồn tại",
+                    ImageUrl = oi.Book?.BookImages.FirstOrDefault()?.ImageUrl ?? "",
+                    Quantity = oi.Quantity,
+                    UnitPrice = oi.UnitPrice
+                }).ToList()
             });
         }
 
-        public async Task<OrderDto?> GetOrderByIdAsync(int id)
+        public async Task<OrderDto?> GetOrderByIdAsync(string id)
         {
             var o = await _repo.GetByIdAsync(id);
             if (o == null) return null;
@@ -36,13 +45,13 @@ namespace BookStore.API.Services
                 OrderId = o.OrderId,
                 CustomerName = o.User?.FullName ?? "Khách vãng lai",
                 CustomerEmail = o.User?.Email ?? "",
+                CustomerPhone = o.PhoneNumber,
                 OrderDate = o.OrderDate,
                 TotalAmount = o.TotalAmount,
                 Status = o.Status,
                 ShippingAddress = o.ShippingAddress,
-                PhoneNumber = o.PhoneNumber,
                 Note = o.Note,
-                Items = o.OrderItems.Select(oi => new OrderItemDto
+                OrderItems = o.OrderItems.Select(oi => new OrderItemDto
                 {
                     OrderItemId = oi.OrderItemId,
                     BookId = oi.BookId,
@@ -54,13 +63,13 @@ namespace BookStore.API.Services
             };
         }
 
-        public async Task<bool> UpdateOrderStatusAsync(int id, OrderUpdateStatusDto dto)
+        public async Task<bool> UpdateOrderStatusAsync(string id, OrderUpdateStatusDto dto)
         {
             var order = await _repo.GetByIdAsync(id);
             if (order == null) return false;
 
             // Kiểm tra trạng thái hợp lệ
-            var validStatuses = new List<string> { "Chờ xử lý", "Đang giao", "Đã giao", "Đã hủy" };
+            var validStatuses = new List<string> { "Pending", "Processing", "Shipped", "Delivered", "Cancelled" };
             if (!validStatuses.Contains(dto.Status))
                 throw new Exception("Trạng thái đơn hàng không hợp lệ!");
 

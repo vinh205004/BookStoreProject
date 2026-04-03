@@ -8,8 +8,7 @@ namespace BookStore.API.Models
     public class User
     {
         [Key]
-        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public int UserId { get; set; }
+        public string UserId { get; set; } = string.Empty;
 
         [Required]
         [MaxLength(100)]

@@ -7,8 +7,7 @@ namespace BookStore.API.Models
     public class Author
     {
         [Key]
-        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public int AuthorId { get; set; }
+        public string AuthorId { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "Tên tác giả là bắt buộc")]
         [MaxLength(150)]

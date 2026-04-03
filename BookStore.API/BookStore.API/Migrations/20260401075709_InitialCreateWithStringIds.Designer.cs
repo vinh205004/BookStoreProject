@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace BookStore.API.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260326163333_AddOrderTables")]
-    partial class AddOrderTables
+    [Migration("20260401075709_InitialCreateWithStringIds")]
+    partial class InitialCreateWithStringIds
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -27,11 +27,8 @@ namespace BookStore.API.Migrations
 
             modelBuilder.Entity("BookStore.API.Models.Author", b =>
                 {
-                    b.Property<int>("AuthorId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("AuthorId"));
+                    b.Property<string>("AuthorId")
+                        .HasColumnType("text");
 
                     b.Property<string>("Biography")
                         .IsRequired()
@@ -56,17 +53,16 @@ namespace BookStore.API.Migrations
 
             modelBuilder.Entity("BookStore.API.Models.Book", b =>
                 {
-                    b.Property<int>("BookId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
+                    b.Property<string>("BookId")
+                        .HasColumnType("text");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("BookId"));
+                    b.Property<string>("AuthorId")
+                        .IsRequired()
+                        .HasColumnType("text");
 
-                    b.Property<int>("AuthorId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("CategoryId")
-                        .HasColumnType("integer");
+                    b.Property<string>("CategoryId")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -75,23 +71,32 @@ namespace BookStore.API.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("ImageUrl")
-                        .IsRequired()
-                        .HasColumnType("text");
-
                     b.Property<bool>("IsHidden")
                         .HasColumnType("boolean");
+
+                    b.Property<decimal?>("Length")
+                        .HasColumnType("numeric");
+
+                    b.Property<string>("LengthUnit")
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<int?>("PageCount")
+                        .HasColumnType("integer");
 
                     b.Property<decimal>("Price")
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<string>("Publisher")
+                    b.Property<string>("PublisherId")
                         .IsRequired()
-                        .HasMaxLength(150)
-                        .HasColumnType("character varying(150)");
+                        .HasColumnType("text");
 
                     b.Property<int>("Stock")
                         .HasColumnType("integer");
+
+                    b.Property<string>("TargetAudience")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<string>("Title")
                         .IsRequired()
@@ -101,22 +106,44 @@ namespace BookStore.API.Migrations
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<decimal?>("Width")
+                        .HasColumnType("numeric");
+
                     b.HasKey("BookId");
 
                     b.HasIndex("AuthorId");
 
                     b.HasIndex("CategoryId");
 
+                    b.HasIndex("PublisherId");
+
                     b.ToTable("Books");
+                });
+
+            modelBuilder.Entity("BookStore.API.Models.BookImage", b =>
+                {
+                    b.Property<string>("ImageId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("BookId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("ImageUrl")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("ImageId");
+
+                    b.HasIndex("BookId");
+
+                    b.ToTable("BookImages");
                 });
 
             modelBuilder.Entity("BookStore.API.Models.Category", b =>
                 {
-                    b.Property<int>("CategoryId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("CategoryId"));
+                    b.Property<string>("CategoryId")
+                        .HasColumnType("text");
 
                     b.Property<string>("Description")
                         .IsRequired()
@@ -138,11 +165,8 @@ namespace BookStore.API.Migrations
 
             modelBuilder.Entity("BookStore.API.Models.Order", b =>
                 {
-                    b.Property<int>("OrderId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("OrderId"));
+                    b.Property<string>("OrderId")
+                        .HasColumnType("text");
 
                     b.Property<string>("Note")
                         .IsRequired()
@@ -169,8 +193,9 @@ namespace BookStore.API.Migrations
                     b.Property<decimal>("TotalAmount")
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<int>("UserId")
-                        .HasColumnType("integer");
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.HasKey("OrderId");
 
@@ -181,17 +206,16 @@ namespace BookStore.API.Migrations
 
             modelBuilder.Entity("BookStore.API.Models.OrderItem", b =>
                 {
-                    b.Property<int>("OrderItemId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
+                    b.Property<string>("OrderItemId")
+                        .HasColumnType("text");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("OrderItemId"));
+                    b.Property<string>("BookId")
+                        .IsRequired()
+                        .HasColumnType("text");
 
-                    b.Property<int>("BookId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("OrderId")
-                        .HasColumnType("integer");
+                    b.Property<string>("OrderId")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<int>("Quantity")
                         .HasColumnType("integer");
@@ -208,13 +232,31 @@ namespace BookStore.API.Migrations
                     b.ToTable("OrderItems");
                 });
 
+            modelBuilder.Entity("BookStore.API.Models.Publisher", b =>
+                {
+                    b.Property<string>("PublisherId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("PublisherId");
+
+                    b.ToTable("Publishers");
+                });
+
             modelBuilder.Entity("BookStore.API.Models.User", b =>
                 {
-                    b.Property<int>("UserId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("UserId"));
+                    b.Property<string>("UserId")
+                        .HasColumnType("text");
 
                     b.Property<string>("Address")
                         .IsRequired()
@@ -262,11 +304,8 @@ namespace BookStore.API.Migrations
 
             modelBuilder.Entity("BookStore.API.Models.Voucher", b =>
                 {
-                    b.Property<int>("VoucherId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("VoucherId"));
+                    b.Property<string>("VoucherId")
+                        .HasColumnType("text");
 
                     b.Property<string>("Code")
                         .IsRequired()
@@ -274,7 +313,12 @@ namespace BookStore.API.Migrations
                         .HasColumnType("character varying(50)");
 
                     b.Property<decimal>("DiscountAmount")
-                        .HasColumnType("decimal(18,2)");
+                        .HasColumnType("numeric");
+
+                    b.Property<string>("DiscountType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
 
                     b.Property<DateTime>("ExpirationDate")
                         .HasColumnType("timestamp with time zone");
@@ -283,7 +327,13 @@ namespace BookStore.API.Migrations
                         .HasColumnType("boolean");
 
                     b.Property<decimal>("MinOrderValue")
-                        .HasColumnType("decimal(18,2)");
+                        .HasColumnType("numeric");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("UsedCount")
+                        .HasColumnType("integer");
 
                     b.HasKey("VoucherId");
 
@@ -304,9 +354,28 @@ namespace BookStore.API.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("BookStore.API.Models.Publisher", "Publisher")
+                        .WithMany("Books")
+                        .HasForeignKey("PublisherId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.Navigation("Author");
 
                     b.Navigation("Category");
+
+                    b.Navigation("Publisher");
+                });
+
+            modelBuilder.Entity("BookStore.API.Models.BookImage", b =>
+                {
+                    b.HasOne("BookStore.API.Models.Book", "Book")
+                        .WithMany("BookImages")
+                        .HasForeignKey("BookId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Book");
                 });
 
             modelBuilder.Entity("BookStore.API.Models.Order", b =>
@@ -344,6 +413,11 @@ namespace BookStore.API.Migrations
                     b.Navigation("Books");
                 });
 
+            modelBuilder.Entity("BookStore.API.Models.Book", b =>
+                {
+                    b.Navigation("BookImages");
+                });
+
             modelBuilder.Entity("BookStore.API.Models.Category", b =>
                 {
                     b.Navigation("Books");
@@ -352,6 +426,11 @@ namespace BookStore.API.Migrations
             modelBuilder.Entity("BookStore.API.Models.Order", b =>
                 {
                     b.Navigation("OrderItems");
+                });
+
+            modelBuilder.Entity("BookStore.API.Models.Publisher", b =>
+                {
+                    b.Navigation("Books");
                 });
 #pragma warning restore 612, 618
         }

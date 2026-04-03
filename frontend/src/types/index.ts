@@ -1,11 +1,11 @@
 export interface Category {
-  categoryId: number;
+  categoryId: string;
   name: string;
   description: string;
   isActive: boolean;
 }
 export interface Author {
-  authorId: number;
+  authorId: string;
   name: string;
   biography: string;
   imageUrl: string;
@@ -13,28 +13,33 @@ export interface Author {
   bookCount?: number;
 }
 export interface Book {
-  bookId: number;
+  bookId: string;
   title: string;
   price: number;
   stock: number;
   isHidden: boolean;
-  authorId: number;
+  authorId: string;
   authorName: string;
-  categoryId: number;
+  categoryId: string;
   categoryName: string; 
   imageUrls: string[]; 
   description: string;
-  publisherId: number;
+  publisherId: string;
   publisherName: string;
+  targetAudience?: string;
+  length?: number;
+  width?: number;
+  lengthUnit?: string;
+  pageCount?: number;
 }
 export interface Publisher {
-  publisherId: number;
+  publisherId: string;
   name: string;
   description: string;
   isActive: boolean;
 }
 export interface Voucher {
-  voucherId: number;
+  voucherId: string;
   code: string;
   discountType: 'Direct' | 'Percentage';
   discountAmount: number;
@@ -43,4 +48,35 @@ export interface Voucher {
   usedCount: number;
   expirationDate: string;
   isActive: boolean;
+}
+export interface OrderItem {
+  orderItemId: string;
+  bookId: string;
+  bookTitle: string;
+  imageUrl: string;
+  quantity: number;
+  unitPrice: number;
+}
+
+export interface Order {
+  orderId: string;
+  customerName: string;
+  customerPhone: string;
+  shippingAddress: string;
+  totalAmount: number;
+  status: string;
+  orderDate: string;
+  orderItems: OrderItem[];
+}
+
+export interface User {
+  userId: string;
+  username: string;
+  fullName: string;
+  email: string;
+  phoneNumber: string;
+  address: string;
+  role: string;
+  isLocked: boolean;
+  createdAt: string;
 }

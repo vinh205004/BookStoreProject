@@ -26,7 +26,7 @@ namespace BookStore.API.Services
             });
         }
 
-        public async Task<UserDto?> GetUserByIdAsync(int id)
+        public async Task<UserDto?> GetUserByIdAsync(string id)
         {
             var u = await _repo.GetByIdAsync(id);
             if (u == null) return null;
@@ -45,8 +45,12 @@ namespace BookStore.API.Services
             };
         }
 
-        public async Task<bool> ToggleLockUserAsync(int id)
+        public async Task<bool> ToggleLockUserAsync(string id, string currentUserId)
         {
+            // Không cho phép admin khóa/mở khóa chính mình
+            if (id == currentUserId)
+                throw new Exception("Bạn không thể khóa/mở khóa tài khoản của chính mình!");
+
             var user = await _repo.GetByIdAsync(id);
             if (user == null) return false;
 
@@ -57,8 +61,12 @@ namespace BookStore.API.Services
             return true;
         }
 
-        public async Task<bool> ChangeUserRoleAsync(int id, UserRoleUpdateDto dto)
+        public async Task<bool> ChangeUserRoleAsync(string id, UserRoleUpdateDto dto, string currentUserId)
         {
+            // Không cho phép admin thay đổi quyền của chính mình
+            if (id == currentUserId)
+                throw new Exception("Bạn không thể thay đổi quyền của chính mình!");
+
             var user = await _repo.GetByIdAsync(id);
             if (user == null) return false;
 

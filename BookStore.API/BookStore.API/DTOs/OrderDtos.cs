@@ -6,8 +6,8 @@ namespace BookStore.API.DTOs
 {
     public class OrderItemDto
     {
-        public int OrderItemId { get; set; }
-        public int BookId { get; set; }
+        public string OrderItemId { get; set; } = string.Empty;
+        public string BookId { get; set; } = string.Empty;
         public string BookTitle { get; set; } = string.Empty;
         public string ImageUrl { get; set; } = string.Empty;
         public int Quantity { get; set; }
@@ -16,17 +16,17 @@ namespace BookStore.API.DTOs
 
     public class OrderDto
     {
-        public int OrderId { get; set; }
+        public string OrderId { get; set; } = string.Empty;
         public string CustomerName { get; set; } = string.Empty;
         public string CustomerEmail { get; set; } = string.Empty;
+        public string CustomerPhone { get; set; } = string.Empty;
         public DateTime OrderDate { get; set; }
         public decimal TotalAmount { get; set; }
         public string Status { get; set; } = string.Empty;
         public string ShippingAddress { get; set; } = string.Empty;
-        public string PhoneNumber { get; set; } = string.Empty;
         public string Note { get; set; } = string.Empty;
 
-        public List<OrderItemDto> Items { get; set; } = new List<OrderItemDto>();
+        public List<OrderItemDto> OrderItems { get; set; } = new List<OrderItemDto>();
     }
 
     public class OrderUpdateStatusDto

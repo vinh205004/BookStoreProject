@@ -15,7 +15,7 @@ namespace BookStore.API.Repositories
             return await _context.Books.Include(b => b.Category).Include(b => b.Author).Include(b => b.BookImages).Include(b => b.Publisher).ToListAsync();
         }
 
-        public async Task<Book?> GetByIdAsync(int id)
+        public async Task<Book?> GetByIdAsync(string id)
         {
             return await _context.Books.Include(b => b.Category).Include(b => b.Author).Include(b => b.BookImages).Include(b => b.Publisher)
                                        .FirstOrDefaultAsync(b => b.BookId == id);

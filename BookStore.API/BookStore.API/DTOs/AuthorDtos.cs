@@ -4,7 +4,7 @@ namespace BookStore.API.DTOs
 {
     public class AuthorDto
     {
-        public int AuthorId { get; set; }
+        public string AuthorId { get; set; } = string.Empty;
         public string Name { get; set; } = string.Empty;
         public string Biography { get; set; } = string.Empty;
         public string ImageUrl { get; set; } = string.Empty;

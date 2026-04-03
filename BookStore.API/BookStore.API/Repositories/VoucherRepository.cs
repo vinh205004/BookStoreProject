@@ -14,7 +14,7 @@ namespace BookStore.API.Repositories
             return await _context.Vouchers.ToListAsync();
         }
 
-        public async Task<Voucher?> GetByIdAsync(int id)
+        public async Task<Voucher?> GetByIdAsync(string id)
         {
             return await _context.Vouchers.FindAsync(id);
         }

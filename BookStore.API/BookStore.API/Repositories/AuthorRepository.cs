@@ -14,12 +14,12 @@ namespace BookStore.API.Repositories
             return await _context.Authors.Include(a => a.Books).ToListAsync();
         }
 
-        public async Task<Author?> GetByIdAsync(int id)
+        public async Task<Author?> GetByIdAsync(string id)
         {
             return await _context.Authors.FindAsync(id);
         }
 
-        public async Task<bool> HasBooksAsync(int id)
+        public async Task<bool> HasBooksAsync(string id)
         {
             return await _context.Books.AnyAsync(b => b.AuthorId == id);
         }

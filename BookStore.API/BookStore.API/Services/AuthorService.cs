@@ -1,6 +1,7 @@
 ﻿using BookStore.API.DTOs;
 using BookStore.API.Models;
 using BookStore.API.Repositories;
+using BookStore.API.Utilities;
 
 namespace BookStore.API.Services
 {
@@ -24,7 +25,7 @@ namespace BookStore.API.Services
             });
         }
 
-        public async Task<AuthorDto?> GetAuthorByIdAsync(int id)
+        public async Task<AuthorDto?> GetAuthorByIdAsync(string id)
         {
             var a = await _repo.GetByIdAsync(id);
             if (a == null) return null;
@@ -43,6 +44,7 @@ namespace BookStore.API.Services
         {
             var newAuthor = new Author
             {
+                AuthorId = IdGenerator.GenerateAuthorId(),
                 Name = dto.Name,
                 Biography = dto.Biography,
                 ImageUrl = dto.ImageUrl
@@ -59,7 +61,7 @@ namespace BookStore.API.Services
             };
         }
 
-        public async Task<bool> UpdateAuthorAsync(int id, AuthorUpdateDto dto)
+        public async Task<bool> UpdateAuthorAsync(string id, AuthorUpdateDto dto)
         {
             var author = await _repo.GetByIdAsync(id);
             if (author == null) return false;
@@ -73,7 +75,7 @@ namespace BookStore.API.Services
             return true;
         }
 
-        public async Task<bool> DeleteAuthorAsync(int id)
+        public async Task<bool> DeleteAuthorAsync(string id)
         {
             var author = await _repo.GetByIdAsync(id);
             if (author == null) return false;
@@ -83,7 +85,7 @@ namespace BookStore.API.Services
             await _repo.UpdateAsync(author);
             return true;
         }
-        public async Task<bool> RestoreAuthorAsync(int id)
+        public async Task<bool> RestoreAuthorAsync(string id)
         {
             var category = await _repo.GetByIdAsync(id);
             if (category == null) return false;

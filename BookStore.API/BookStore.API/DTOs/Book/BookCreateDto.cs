@@ -9,9 +9,9 @@ namespace BookStore.API.DTOs
         public string Title { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "Phải chọn tác giả")]
-        public int AuthorId { get; set; }
+        public string AuthorId { get; set; } = string.Empty;
 
-        public int PublisherId { get; set; }
+        public string PublisherId { get; set; } = string.Empty;
         public string PublisherName { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
 
@@ -26,6 +26,13 @@ namespace BookStore.API.DTOs
         public List<string> ImageUrls { get; set; } = new List<string>();
 
         [Required(ErrorMessage = "Phải chọn danh mục cho sách")]
-        public int CategoryId { get; set; }
+        public string CategoryId { get; set; } = string.Empty;
+
+        // New book properties
+        public string? TargetAudience { get; set; }
+        public decimal? Length { get; set; }
+        public decimal? Width { get; set; }
+        public string? LengthUnit { get; set; }
+        public int? PageCount { get; set; }
     }
 }

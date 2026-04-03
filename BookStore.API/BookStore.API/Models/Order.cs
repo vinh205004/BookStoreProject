@@ -9,11 +9,10 @@ namespace BookStore.API.Models
     public class Order
     {
         [Key]
-        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public int OrderId { get; set; }
+        public string OrderId { get; set; } = string.Empty;
 
         [Required]
-        public int UserId { get; set; }
+        public string UserId { get; set; } = string.Empty;
         [ForeignKey("UserId")]
         public User? User { get; set; }
 
@@ -25,7 +24,7 @@ namespace BookStore.API.Models
 
         [Required]
         [MaxLength(50)]
-        public string Status { get; set; } = "Chờ xử lý"; // Các trạng thái: Chờ xử lý, Đang giao, Đã giao, Đã hủy
+        public string Status { get; set; } = "Pending"; // Các trạng thái: Pending, Processing, Shipped, Delivered, Cancelled
 
         [Required]
         [MaxLength(255)]

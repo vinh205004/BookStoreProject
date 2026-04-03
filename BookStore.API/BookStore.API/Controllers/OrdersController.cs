@@ -25,7 +25,7 @@ namespace BookStore.API.Controllers
         }
 
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetById(int id)
+        public async Task<IActionResult> GetById(string id)
         {
             var order = await _orderService.GetOrderByIdAsync(id);
             if (order == null) return NotFound(new { message = "Không tìm thấy đơn hàng" });
@@ -33,7 +33,7 @@ namespace BookStore.API.Controllers
         }
 
         [HttpPut("{id}/status")]
-        public async Task<IActionResult> UpdateStatus(int id, [FromBody] OrderUpdateStatusDto dto)
+        public async Task<IActionResult> UpdateStatus(string id, [FromBody] OrderUpdateStatusDto dto)
         {
             try
             {

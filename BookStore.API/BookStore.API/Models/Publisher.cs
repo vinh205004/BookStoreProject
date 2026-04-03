@@ -7,8 +7,7 @@ namespace BookStore.API.Models
     public class Publisher
     {
         [Key]
-        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public int PublisherId { get; set; }
+        public string PublisherId { get; set; } = string.Empty;
 
         [Required]
         public string Name { get; set; } = string.Empty;

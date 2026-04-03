@@ -25,7 +25,7 @@ namespace BookStore.API.Controllers
         }
 
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetById(int id)
+        public async Task<IActionResult> GetById(string id)
         {
             var result = await _publisherService.GetPublisherByIdAsync(id);
             if (result == null) return NotFound(new { message = "Không tìm thấy nhà xuất bản" });
@@ -51,7 +51,7 @@ namespace BookStore.API.Controllers
         // Chỉ Admin mới được Sửa
         [Authorize(Roles = "Admin")]
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, [FromBody] PublisherUpdateDto dto)
+        public async Task<IActionResult> Update(string id, [FromBody] PublisherUpdateDto dto)
         {
             try
             {
@@ -68,7 +68,7 @@ namespace BookStore.API.Controllers
         // Chỉ Admin mới được Xóa (ẩn đi)
         [Authorize(Roles = "Admin")]
         [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(int id)
+        public async Task<IActionResult> Delete(string id)
         {
             var success = await _publisherService.DeletePublisherAsync(id);
             if (!success) return NotFound(new { message = "Không tìm thấy nhà xuất bản" });
@@ -78,7 +78,7 @@ namespace BookStore.API.Controllers
         // Khôi phục nhà xuất bản đã xóa (ẩn đi)
         [Authorize(Roles = "Admin")]
         [HttpPut("{id}/restore")]
-        public async Task<IActionResult> Restore(int id)
+        public async Task<IActionResult> Restore(string id)
         {
             var success = await _publisherService.RestorePublisherAsync(id);
             if (!success) return NotFound(new { message = "Không tìm thấy nhà xuất bản" });

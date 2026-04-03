@@ -8,13 +8,12 @@ namespace BookStore.API.Models
     public class BookImage
     {
         [Key]
-        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public int BookImageId { get; set; }
+        public string ImageId { get; set; } = string.Empty;
 
         [Required]
         public string ImageUrl { get; set; } = string.Empty;
 
-        public int BookId { get; set; }
+        public string BookId { get; set; } = string.Empty;
 
         [JsonIgnore] // Để khi GET JSON về không bị lặp vô tận (Vòng lặp tham chiếu)
         [ForeignKey("BookId")]

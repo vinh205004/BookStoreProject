@@ -5,10 +5,10 @@ namespace BookStore.API.Services
     public interface ICategoryService
     {
         Task<IEnumerable<CategoryDto>> GetAllCategoriesAsync();
-        Task<CategoryDto?> GetCategoryByIdAsync(int id);
+        Task<CategoryDto?> GetCategoryByIdAsync(string id);
         Task<CategoryDto> CreateCategoryAsync(CategoryCreateDto dto);
-        Task<bool> UpdateCategoryAsync(int id, CategoryUpdateDto dto);
-        Task<bool> DeleteCategoryAsync(int id); // Xóa mềm
-        Task<bool> RestoreCategoryAsync(int id);
+        Task<bool> UpdateCategoryAsync(string id, CategoryUpdateDto dto);
+        Task<bool> DeleteCategoryAsync(string id); // Xóa mềm
+        Task<bool> RestoreCategoryAsync(string id);
     }
 }

@@ -25,7 +25,7 @@ namespace BookStore.API.Controllers
         }
 
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetById(int id)
+        public async Task<IActionResult> GetById(string id)
         {
             var result = await _categoryService.GetCategoryByIdAsync(id);
             if (result == null) return NotFound(new { message = "Không tìm thấy danh mục" });
@@ -51,7 +51,7 @@ namespace BookStore.API.Controllers
         // Chỉ Admin mới được Sửa
         [Authorize(Roles = "Admin")]
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, [FromBody] CategoryUpdateDto dto)
+        public async Task<IActionResult> Update(string id, [FromBody] CategoryUpdateDto dto)
         {
             try
             {
@@ -68,7 +68,7 @@ namespace BookStore.API.Controllers
         // Chỉ Admin mới được Xóa (ẩn đi)
         [Authorize(Roles = "Admin")]
         [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(int id)
+        public async Task<IActionResult> Delete(string id)
         {
             var success = await _categoryService.DeleteCategoryAsync(id);
             if (!success) return NotFound(new { message = "Không tìm thấy danh mục" });
@@ -77,7 +77,7 @@ namespace BookStore.API.Controllers
         //Khôi phục danh mục đã xóa (ẩn đi)
         [Authorize(Roles = "Admin")]
         [HttpPut("{id}/restore")]
-        public async Task<IActionResult> Restore(int id)
+        public async Task<IActionResult> Restore(string id)
         {
             var success = await _categoryService.RestoreCategoryAsync(id);
             if (!success) return NotFound(new { message = "Không tìm thấy danh mục" });

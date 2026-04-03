@@ -7,16 +7,15 @@ namespace BookStore.API.Models
     public class OrderItem
     {
         [Key]
-        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public int OrderItemId { get; set; }
+        public string OrderItemId { get; set; } = string.Empty;
 
         [Required]
-        public int OrderId { get; set; }
+        public string OrderId { get; set; } = string.Empty;
         [ForeignKey("OrderId")]
         public Order? Order { get; set; }
 
         [Required]
-        public int BookId { get; set; }
+        public string BookId { get; set; } = string.Empty;
         [ForeignKey("BookId")]
         public Book? Book { get; set; }
 

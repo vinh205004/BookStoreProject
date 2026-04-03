@@ -5,10 +5,10 @@ namespace BookStore.API.Services
     public interface IAuthorService
     {
         Task<IEnumerable<AuthorDto>> GetAllAuthorsAsync();
-        Task<AuthorDto?> GetAuthorByIdAsync(int id);
+        Task<AuthorDto?> GetAuthorByIdAsync(string id);
         Task<AuthorDto> CreateAuthorAsync(AuthorCreateDto dto);
-        Task<bool> UpdateAuthorAsync(int id, AuthorUpdateDto dto);
-        Task<bool> DeleteAuthorAsync(int id);
-        Task<bool> RestoreAuthorAsync(int id);
+        Task<bool> UpdateAuthorAsync(string id, AuthorUpdateDto dto);
+        Task<bool> DeleteAuthorAsync(string id);
+        Task<bool> RestoreAuthorAsync(string id);
     }
 }

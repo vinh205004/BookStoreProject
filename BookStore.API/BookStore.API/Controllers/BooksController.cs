@@ -26,7 +26,7 @@ namespace BookStore.API.Controllers
 
         // GET: api/Books/5
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetById(int id)
+        public async Task<IActionResult> GetById(string id)
         {
             var book = await _bookService.GetBookByIdAsync(id);
             if (book == null) return NotFound(new { message = "Không tìm thấy sách" });
@@ -52,7 +52,7 @@ namespace BookStore.API.Controllers
         // PUT: api/Books/5 (Chỉ Admin)
         [Authorize(Roles = "Admin")]
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, [FromBody] BookUpdateDto dto)
+        public async Task<IActionResult> Update(string id, [FromBody] BookUpdateDto dto)
         {
             try
             {
@@ -69,7 +69,7 @@ namespace BookStore.API.Controllers
         // DELETE: api/Books/5 (Chỉ Admin)
         [Authorize(Roles = "Admin")]
         [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(int id)
+        public async Task<IActionResult> Delete(string id)
         {
             var success = await _bookService.DeleteBookAsync(id);
             if (!success) return NotFound(new { message = "Không tìm thấy sách để xóa" });
@@ -78,7 +78,7 @@ namespace BookStore.API.Controllers
         // PUT: api/Books/5/restore (Chỉ Admin)
         [Authorize(Roles = "Admin")]
         [HttpPut("{id}/restore")]
-        public async Task<IActionResult> Restore(int id)
+        public async Task<IActionResult> Restore(string id)
         {
             var success = await _bookService.RestoreBookAsync(id);
             if (!success) return NotFound(new { message = "Không tìm thấy sách" });

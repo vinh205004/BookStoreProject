@@ -10,11 +10,11 @@ import Authors from './pages/Authors';
 import Books from './pages/Books';
 import Publishers from './pages/Publishers';
 import Vouchers from './pages/Vouchers';
+import Orders from './pages/Orders';
+import Users from './pages/Users';
 
-// Các Component tạm để test giao diện
+// Component tạm để test giao diện
 const Dashboard = () => <div className="text-2xl font-bold text-slate-700">Thống kê Doanh thu</div>;
-const Orders = () => <div className="text-2xl font-bold text-slate-700">Quản lý Đơn hàng</div>;
-const Users = () => <div className="text-2xl font-bold text-slate-700">Quản lý Khách hàng</div>;
 
 function App() {
   return (

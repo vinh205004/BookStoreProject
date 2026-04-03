@@ -25,7 +25,7 @@ namespace BookStore.API.Controllers
         }
 
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetById(int id)
+        public async Task<IActionResult> GetById(string id)
         {
             var voucher = await _voucherService.GetVoucherByIdAsync(id);
             if (voucher == null) return NotFound(new { message = "Không tìm thấy Voucher" });
@@ -47,7 +47,7 @@ namespace BookStore.API.Controllers
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, [FromBody] VoucherUpdateDto dto)
+        public async Task<IActionResult> Update(string id, [FromBody] VoucherUpdateDto dto)
         {
             try
             {
@@ -62,7 +62,7 @@ namespace BookStore.API.Controllers
         }
 
         [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(int id)
+        public async Task<IActionResult> Delete(string id)
         {
             var success = await _voucherService.DeleteVoucherAsync(id);
             if (!success) return NotFound(new { message = "Không tìm thấy Voucher để vô hiệu hóa" });

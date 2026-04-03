@@ -1,6 +1,7 @@
 ﻿using BookStore.API.Data;
 using BookStore.API.Repositories;
 using BookStore.API.Services;
+using BookStore.API.Utilities;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -107,6 +108,7 @@ namespace BookStore.API
                 {
                     var adminUser = new BookStore.API.Models.User
                     {
+                        UserId = IdGenerator.GenerateUserId(),
                         Username = "admin_tientho",
                         FullName = "Quản Trị Viên",
                         Email = "admin@tientho.vn",

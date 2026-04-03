@@ -8,8 +8,7 @@ namespace BookStore.API.Models
     public class Book
     {
         [Key]
-        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public int BookId { get; set; }
+        public string BookId { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "Tên sách là bắt buộc")]
         [MaxLength(255)]
@@ -17,10 +16,10 @@ namespace BookStore.API.Models
 
         [Required(ErrorMessage = "Phải chọn tác giả cho sách")]
         [ForeignKey("Author")]
-        public int AuthorId { get; set; }
+        public string AuthorId { get; set; } = string.Empty;
         public Author? Author { get; set; }
 
-        public int PublisherId { get; set; }
+        public string PublisherId { get; set; } = string.Empty;
 
         [ForeignKey("PublisherId")]
         public Publisher? Publisher { get; set; }
@@ -44,7 +43,21 @@ namespace BookStore.API.Models
         // Khóa ngoại liên kết với bảng Category
         [Required(ErrorMessage = "Phải chọn danh mục cho sách")]
         [ForeignKey("Category")]
-        public int CategoryId { get; set; }
+        public string CategoryId { get; set; } = string.Empty;
         public Category? Category { get; set; }
+
+        // Target audience enum
+        [Required]
+        public string TargetAudience { get; set; } = "Trưởng thành"; // Options: "Nhi đồng (6-10 tuổi)", "Vị thành niên (10-17 tuổi)", "Trưởng thành (18+)"
+
+        // Dimensions
+        public decimal? Length { get; set; } // Chiều dài (chỉ số)
+        public decimal? Width { get; set; } // Chiều rộng (chỉ số)
+
+        [MaxLength(10)]
+        public string? LengthUnit { get; set; } = "cm"; // Options: "mm", "cm", "dm"
+
+        // Page count
+        public int? PageCount { get; set; } // Số trang
     }
 }

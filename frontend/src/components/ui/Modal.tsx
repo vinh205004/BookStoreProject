@@ -14,7 +14,7 @@ export default function Modal({ isOpen, onClose, title, children }: ModalProps) 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
       {/* THAY ĐỔI 1: Khóa chiều cao tối đa max-h-[90vh] và dùng flex-col */}
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-xl max-h-[90vh] flex flex-col transform transition-all">
+      <div className="bg-white shadow-2xl w-full max-w-xl max-h-[90vh] flex flex-col transform transition-all">
         
         {/* Header (Cố định không cuộn) */}
         <div className="flex justify-between items-center p-5 border-b border-slate-100 shrink-0">

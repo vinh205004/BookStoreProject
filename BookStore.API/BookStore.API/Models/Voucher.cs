@@ -7,8 +7,7 @@ namespace BookStore.API.Models
     public class Voucher
     {
         [Key]
-        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public int VoucherId { get; set; }
+        public string VoucherId { get; set; } = string.Empty;
 
         [Required]
         [MaxLength(50)]

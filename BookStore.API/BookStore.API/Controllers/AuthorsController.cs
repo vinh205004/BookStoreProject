@@ -24,7 +24,7 @@ namespace BookStore.API.Controllers
         }
 
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetById(int id)
+        public async Task<IActionResult> GetById(string id)
         {
             var author = await _authorService.GetAuthorByIdAsync(id);
             if (author == null) return NotFound(new { message = "Không tìm thấy tác giả" });
@@ -48,7 +48,7 @@ namespace BookStore.API.Controllers
 
         [Authorize(Roles = "Admin")]
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, [FromBody] AuthorUpdateDto dto)
+        public async Task<IActionResult> Update(string id, [FromBody] AuthorUpdateDto dto)
         {
             try
             {
@@ -64,7 +64,7 @@ namespace BookStore.API.Controllers
 
         [Authorize(Roles = "Admin")]
         [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(int id)
+        public async Task<IActionResult> Delete(string id)
         {
             try
             {
@@ -81,7 +81,7 @@ namespace BookStore.API.Controllers
 
         [Authorize(Roles = "Admin")]
         [HttpPut("{id}/restore")]
-        public async Task<IActionResult> Restore(int id)
+        public async Task<IActionResult> Restore(string id)
         {
             var success = await _authorService.RestoreAuthorAsync(id);
             if (!success) return NotFound(new { message = "Không tìm thấy danh mục" });

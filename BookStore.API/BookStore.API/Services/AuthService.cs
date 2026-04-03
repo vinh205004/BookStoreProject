@@ -1,6 +1,7 @@
 ﻿using BookStore.API.Data;
 using BookStore.API.DTOs;
 using BookStore.API.Models;
+using BookStore.API.Utilities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
@@ -33,6 +34,7 @@ namespace BookStore.API.Services
             // 3. Tạo User mới
             var user = new User
             {
+                UserId = IdGenerator.GenerateUserId(),
                 Username = dto.Username,
                 FullName = dto.FullName,
                 Email = dto.Email,

@@ -8,8 +8,7 @@ namespace BookStore.API.Models
     public class Category
     {
         [Key]
-        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public int CategoryId { get; set; }
+        public string CategoryId { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "Tên danh mục là bắt buộc")]
         [MaxLength(100)]
