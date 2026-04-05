@@ -59,7 +59,9 @@ export default function Publishers() {
       setShowTrash(false);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
-      toast.error(error.response?.data?.error || 'Có lỗi xảy ra!');
+      const errorMsg = error?.response?.data?.error || error?.message || 'Có lỗi xảy ra!';
+      toast.error(errorMsg);
+      console.error('Publisher submit error:', error);
     }
   };
 
@@ -69,9 +71,11 @@ export default function Publishers() {
         await axiosClient.delete(`/Publishers/${id}`);
         toast.success('Đã chuyển vào thùng rác!');
         fetchPublishers();
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (error: any) {
-        toast.error('Không thể xóa NXB này!');
+        const errorMsg = error?.response?.data?.error || error?.message || 'Không thể xóa NXB này!';
+        toast.error(errorMsg);
+        console.error('Publisher delete error:', error);
       }
     }
   };

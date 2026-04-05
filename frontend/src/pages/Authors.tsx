@@ -74,7 +74,9 @@ export default function Authors() {
       setShowTrash(false); // Lưu xong tự động về tab Danh sách
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
-      toast.error(error.response?.data?.error || 'Có lỗi xảy ra!');
+      const errorMsg = error?.response?.data?.error || error?.message || 'Có lỗi xảy ra!';
+      toast.error(errorMsg);
+      console.error('Author submit error:', error);
     }
   };
 

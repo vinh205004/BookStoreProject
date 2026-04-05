@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { UploadCloud, X, Loader2, ImagePlus } from 'lucide-react';
+import { X, Loader2, ImagePlus } from 'lucide-react';
 import { toast } from 'react-toastify';
 import axiosClient from '../../api/axiosClient';
 

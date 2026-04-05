@@ -90,7 +90,9 @@ export default function Vouchers() {
       setShowTrash(false);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
-      toast.error(error.response?.data?.error || 'Có lỗi xảy ra!');
+      const errorMsg = error?.response?.data?.error || error?.message || 'Có lỗi xảy ra!';
+      toast.error(errorMsg);
+      console.error('Voucher submit error:', error);
     }
   };
 
@@ -100,9 +102,11 @@ export default function Vouchers() {
         await axiosClient.delete(`/Vouchers/${id}`);
         toast.success('Đã khóa Voucher!');
         fetchVouchers();
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (error: any) {
-        toast.error('Không thể khóa Voucher!');
+        const errorMsg = error?.response?.data?.error || error?.message || 'Không thể khóa Voucher!';
+        toast.error(errorMsg);
+        console.error('Voucher delete error:', error);
       }
     }
   };

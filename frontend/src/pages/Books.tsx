@@ -155,7 +155,11 @@ export default function Books() {
       setShowTrash(false); // Trở về tab chính sau khi lưu
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
-      toast.error(error.response?.data?.error || 'Có lỗi xảy ra!');
+      const errorMsg = error?.response?.data?.error || 
+                      error?.message || 
+                      'Có lỗi xảy ra khi lưu sách!';
+      toast.error(errorMsg);
+      console.error('Book submit error:', error);
     }
   };
 

@@ -2,9 +2,10 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import axiosClient from '../api/axiosClient';
+import { decodeToken } from '../utils/tokenUtils';
 
 export default function Login() {
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -15,10 +16,20 @@ export default function Login() {
 
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const response: any = await axiosClient.post('/Auth/login', {
-        email,
+      const response: any = await axiosClient.post('/api/Auth/login', {
+        username,
         password,
       });
+
+      // Decode token để check role
+      const payload = decodeToken(response.token);
+      const role = payload?.['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'];
+
+      // Chỉ cho phép Admin đăng nhập
+      if (role !== 'Admin') {
+        toast.error('Chỉ admin mới có thể truy cập trang này!');
+        return;
+      }
 
       // Lưu Token vào LocalStorage
       localStorage.setItem('token', response.token);
@@ -44,14 +55,14 @@ export default function Login() {
         
         <form onSubmit={handleLogin} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Tên đăng nhập</label>
             <input
-              type="email"
+              type="text"
               required
               className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="admin@tientho.vn"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              placeholder="admin_tientho"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
             />
           </div>
           

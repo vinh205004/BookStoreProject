@@ -61,7 +61,9 @@ export default function Categories() {
       setShowTrash(false); // Lưu xong thì tự động nhảy về tab Danh sách
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
-      toast.error(error.response?.data?.error || 'Có lỗi xảy ra!');
+      const errorMsg = error?.response?.data?.error || error?.message || 'Có lỗi xảy ra!';
+      toast.error(errorMsg);
+      console.error('Category submit error:', error);
     }
   };
 
@@ -74,7 +76,9 @@ export default function Categories() {
         fetchCategories();
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (error: any) {
-        toast.error(error.response?.data?.error || 'Không thể xóa!');
+        const errorMsg = error?.response?.data?.error || error?.message || 'Không thể xóa!';
+        toast.error(errorMsg);
+        console.error('Category delete error:', error);
       }
     }
   };
