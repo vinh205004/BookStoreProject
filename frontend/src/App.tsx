@@ -4,7 +4,7 @@ import 'react-toastify/dist/ReactToastify.css';
 
 // Auth & Layout
 import ProtectedRoute from './components/ProtectedRoute';
-import Login from './pages/Auth/Login';
+import Login from './userpages/Auth/Login';
 import Register from './userpages/Auth/Register';
 
 // Admin Layout & Pages
@@ -13,9 +13,11 @@ import Categories from './pages/Categories';
 import Authors from './pages/Authors';
 import Books from './pages/Books';
 import Publishers from './pages/Publishers';
+import Banners from './pages/Banners';
 import Vouchers from './pages/Vouchers';
 import Orders from './pages/Orders';
 import Users from './pages/Users';
+import AdminDashboard from './pages/AdminDashboard';
 
 // User Layout & Pages
 import UserLayout from './layouts/UserLayout';
@@ -27,8 +29,7 @@ import CheckoutPage from './userpages/Checkout/CheckoutPage';
 import ProfilePage from './userpages/Account/ProfilePage';
 import MyOrders from './userpages/Account/MyOrders';
 
-// Component tạm để test giao diện
-const Dashboard = () => <div className="text-2xl font-bold text-slate-700">Thống kê Doanh thu</div>;
+// Component tạm để test giao điện (đã bỏ)
 
 function App() {
   return (
@@ -58,10 +59,11 @@ function App() {
         {/* Admin Routes */}
         <Route element={<ProtectedRoute />}>
           <Route path="/admin" element={<AdminLayout />}>
-            <Route index element={<Dashboard />} />
+            <Route index element={<AdminDashboard />} />
             <Route path="categories" element={<Categories />} />
             <Route path="authors" element={<Authors />} />
             <Route path="books" element={<Books />} />
+            <Route path="banners" element={<Banners />} />
             <Route path="vouchers" element={<Vouchers />} />
             <Route path="orders" element={<Orders />} />
             <Route path="users" element={<Users />} />

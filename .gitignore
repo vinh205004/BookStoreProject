@@ -55,3 +55,26 @@ Desktop.ini
 
 # Thư mục ẩn của VS Code
 .vscode/
+
+# =========================
+# FILE RÁC - DO NOT PUSH
+# =========================
+# Các file JavaScript/Node.js tạm cho sửa code
+*.js
+*.cjs
+!vite.config.ts
+!tsconfig*.json
+!eslint.config.js
+
+# Các file diff, patch, txt tạm
+*.diff
+*.patch
+*.txt
+!README.md
+
+# node_modules toàn bộ
+node_modules/
+package-lock.json
+
+# Các file build artifacts không cần
+*.patched

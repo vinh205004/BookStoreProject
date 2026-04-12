@@ -23,7 +23,10 @@ namespace BookStore.API.Services
                 MinOrderValue = v.MinOrderValue,
                 Quantity = v.Quantity,
                 UsedCount = v.UsedCount,
+                StartDate = v.StartDate,
                 ExpirationDate = v.ExpirationDate,
+                ApplicableCategoryId = v.ApplicableCategoryId,
+                ApplicableProductId = v.ApplicableProductId,
                 IsActive = v.IsActive
             });
         }
@@ -42,7 +45,10 @@ namespace BookStore.API.Services
                 MinOrderValue = v.MinOrderValue,
                 Quantity = v.Quantity,
                 UsedCount = v.UsedCount,
+                StartDate = v.StartDate,
                 ExpirationDate = v.ExpirationDate,
+                ApplicableCategoryId = v.ApplicableCategoryId,
+                ApplicableProductId = v.ApplicableProductId,
                 IsActive = v.IsActive
             };
         }
@@ -67,7 +73,10 @@ namespace BookStore.API.Services
                 MinOrderValue = dto.MinOrderValue,
                 Quantity = dto.Quantity,
                 UsedCount = 0, // Mặc định 0 khi tạo mới
+                StartDate = dto.StartDate,
                 ExpirationDate = dto.ExpirationDate,
+                ApplicableCategoryId = dto.ApplicableCategoryId,
+                ApplicableProductId = dto.ApplicableProductId,
                 IsActive = true // Mặc định tạo ra là hoạt động
             };
 
@@ -104,7 +113,10 @@ namespace BookStore.API.Services
             voucher.DiscountAmount = dto.DiscountAmount;
             voucher.MinOrderValue = dto.MinOrderValue;
             voucher.Quantity = dto.Quantity;
+            voucher.StartDate = dto.StartDate.ToUniversalTime();
             voucher.ExpirationDate = dto.ExpirationDate.ToUniversalTime();
+            voucher.ApplicableCategoryId = dto.ApplicableCategoryId;
+            voucher.ApplicableProductId = dto.ApplicableProductId;
             voucher.IsActive = dto.IsActive;
 
             await _repo.UpdateAsync(voucher);

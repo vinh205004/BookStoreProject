@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { ShoppingCart, Phone, MapPin, FileText } from 'lucide-react';
 import { toast } from 'react-toastify';
 import axiosClient from '../../api/axiosClient';
@@ -21,6 +21,7 @@ interface CartResponse {
 }
 
 export default function CheckoutPage() {
+  const location = useLocation();
   const navigate = useNavigate();
   const [cart, setCart] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -39,9 +40,14 @@ export default function CheckoutPage() {
   const loadCart = async () => {
     try {
       const cartData: CartResponse = await axiosClient.get('/cart');
-      setCart(cartData.items);
+      const selectedItemIds = location.state?.selectedItems || [];
+      const selectedCartItems = selectedItemIds.length > 0 
+        ? cartData.items.filter(item => selectedItemIds.includes(item.bookId))
+        : cartData.items;
 
-      if (cartData.items.length === 0) {
+      setCart(selectedCartItems);
+
+      if (selectedCartItems.length === 0) {
         navigate('/cart');
       }
       setLoading(false);
@@ -62,6 +68,9 @@ export default function CheckoutPage() {
 
   const totalPrice = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+
+  const appliedVoucherCode = location.state?.appliedVoucherCode;
+  const appliedDiscount = location.state?.appliedDiscount || 0;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -87,6 +96,7 @@ export default function CheckoutPage() {
           bookId: item.bookId,
           quantity: item.quantity,
         })),
+        voucherCode: appliedVoucherCode,
       };
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -224,9 +234,15 @@ export default function CheckoutPage() {
                 <span className="font-semibold text-gray-800">{totalItems}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-600">Thành tiền:</span>
+                <span className="text-gray-600">Tạm tính:</span>
                 <span className="font-bold text-orange-500">{totalPrice.toLocaleString()}₫</span>
               </div>
+              {appliedVoucherCode && appliedDiscount > 0 && (
+                <div className="flex justify-between text-green-600 mt-2">
+                  <span className="font-semibold">Giảm giá ({appliedVoucherCode}):</span>
+                  <span className="font-bold">- {appliedDiscount.toLocaleString()}₫</span>
+                </div>
+              )}
               <div className="flex justify-between">
                 <span className="text-gray-600">Vận chuyển:</span>
                 <span className="font-semibold text-gray-800">Miễn phí</span>
@@ -235,7 +251,7 @@ export default function CheckoutPage() {
 
             <div className="flex justify-between">
               <span className="font-bold text-gray-800">Tổng cộng:</span>
-              <span className="font-bold text-2xl text-orange-500">{totalPrice.toLocaleString()}₫</span>
+              <span className="font-bold text-2xl text-orange-500">{Math.max(0, totalPrice - appliedDiscount).toLocaleString()}₫</span>
             </div>
           </div>
         </div>

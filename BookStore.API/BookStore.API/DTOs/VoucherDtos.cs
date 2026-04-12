@@ -12,7 +12,10 @@ namespace BookStore.API.DTOs
         public decimal MinOrderValue { get; set; }
         public int Quantity { get; set; }
         public int UsedCount { get; set; }
+        public DateTime StartDate { get; set; }
         public DateTime ExpirationDate { get; set; }
+        public string? ApplicableCategoryId { get; set; }
+        public string? ApplicableProductId { get; set; }
         public bool IsActive { get; set; }
     }
 
@@ -38,7 +41,13 @@ namespace BookStore.API.DTOs
         public int Quantity { get; set; }
 
         [Required]
+        public DateTime StartDate { get; set; }
+
+        [Required]
         public DateTime ExpirationDate { get; set; }
+
+        public string? ApplicableCategoryId { get; set; }
+        public string? ApplicableProductId { get; set; }
     }
 
     public class VoucherUpdateDto : VoucherCreateDto

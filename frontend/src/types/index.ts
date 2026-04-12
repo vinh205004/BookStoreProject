@@ -31,6 +31,9 @@ export interface Book {
   width?: number;
   lengthUnit?: string;
   pageCount?: number;
+  discountedPrice?: number;
+  discountBadge?: string;
+  discountVoucherCode?: string;
 }
 export interface Publisher {
   publisherId: string;
@@ -46,7 +49,10 @@ export interface Voucher {
   minOrderValue: number;
   quantity: number;
   usedCount: number;
+  startDate: string;
   expirationDate: string;
+  applicableCategoryId?: string;
+  applicableProductId?: string;
   isActive: boolean;
 }
 export interface OrderItem {
@@ -78,5 +84,16 @@ export interface User {
   address: string;
   role: string;
   isLocked: boolean;
+  createdAt: string;
+}
+
+export interface Banner {
+  bannerId: string;
+  imageUrl: string;
+  title: string;
+  subtitle: string;
+  linkUrl: string;
+  isActive: boolean;
+  displayOrder: number;
   createdAt: string;
 }

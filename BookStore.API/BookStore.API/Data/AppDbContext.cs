@@ -16,5 +16,10 @@ namespace BookStore.API.Data
         public DbSet<OrderItem> OrderItems { get; set; }
         public DbSet<BookImage> BookImages { get; set; }
         public DbSet<Publisher> Publishers { get; set; }
+        public DbSet<Cart> Carts { get; set; }
+        public DbSet<CartItem> CartItems { get; set; }
+        public DbSet<Banner> Banners { get; set; }
+        public DbSet<Review> Reviews { get; set; }
+        public DbSet<ReviewReply> ReviewReplies { get; set; }
     }
 }

@@ -164,7 +164,7 @@ export default function Publishers() {
                   <td className="p-3 sm:p-4 font-semibold flex items-center gap-2 text-xs sm:text-base"><Building2 size={18} className="text-slate-400 flex-shrink-0"/> {pub.name}</td>
                   <td className="p-3 sm:p-4 hidden sm:table-cell text-xs sm:text-base">{pub.description}</td>
                   <td className="p-3 sm:p-4">
-                    <span className={`px-3 py-1 rounded-full text-xs font-bold ${pub.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                    <span className={`px-3 py-1 rounded-none text-xs font-bold ${pub.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
                       {pub.isActive ? 'Hợp tác' : 'Ngừng'}
                     </span>
                   </td>

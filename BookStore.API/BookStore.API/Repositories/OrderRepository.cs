@@ -28,6 +28,12 @@ namespace BookStore.API.Repositories
                 .FirstOrDefaultAsync(o => o.OrderId == id);
         }
 
+        public async Task AddAsync(Order order)
+        {
+            _context.Orders.Add(order);
+            await _context.SaveChangesAsync();
+        }
+
         public async Task UpdateAsync(Order order)
         {
             _context.Orders.Update(order);

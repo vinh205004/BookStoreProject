@@ -4,10 +4,10 @@ namespace BookStore.API.DTOs
 {
     public class LoginDto
     {
-        [Required, EmailAddress]
-        public string Email { get; set; } = string.Empty;
+        [Required(ErrorMessage = "Tên đăng nhập là bắt buộc")]
+        public string Username { get; set; } = string.Empty;
 
-        [Required]
+        [Required(ErrorMessage = "Mật khẩu là bắt buộc")]
         public string Password { get; set; } = string.Empty;
     }
 }

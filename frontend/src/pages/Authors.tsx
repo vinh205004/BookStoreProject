@@ -167,7 +167,7 @@ export default function Authors() {
 
         {!showTrash && (
           <Button icon={<Plus size={20} />} onClick={() => handleOpenModal()}>
-            Thêm mới
+            Thêm tác giả
           </Button>
         )}
       </div>
@@ -193,9 +193,9 @@ export default function Authors() {
                 <tr key={author.authorId} className="hover:bg-slate-50">
                   <td className="p-3 sm:p-4">
                     {author.imageUrl ? (
-                      <img src={author.imageUrl} alt={author.name} className="w-12 h-12 rounded-full object-cover border border-slate-200" />
+                      <img src={author.imageUrl} alt={author.name} className="w-12 h-12 rounded-none object-cover border border-slate-200" />
                     ) : (
-                      <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center text-slate-400">
+                      <div className="w-12 h-12 rounded-none bg-slate-100 flex items-center justify-center text-slate-400">
                         <UserCircle size={30} />
                       </div>
                     )}
@@ -204,7 +204,7 @@ export default function Authors() {
                   <td className="p-3 sm:p-4 font-medium text-blue-600 text-xs sm:text-base">{author.bookCount || 0} cuốn</td>
                   <td className="p-3 sm:p-4 truncate max-w-xs hidden sm:table-cell text-xs sm:text-base">{author.biography || <span className="text-slate-400 italic">Chưa cập nhật</span>}</td>
                   <td className="p-3 sm:p-4">
-                    <span className={`px-3 py-1 rounded-full text-xs font-bold ${author.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                    <span className={`px-3 py-1 rounded-none text-xs font-bold ${author.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
                       {author.isActive ? 'Hoạt động' : 'Đã xóa'}
                     </span>
                   </td>

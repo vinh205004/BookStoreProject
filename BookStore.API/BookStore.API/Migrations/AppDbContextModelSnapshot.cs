@@ -48,6 +48,39 @@ namespace BookStore.API.Migrations
                     b.ToTable("Authors");
                 });
 
+            modelBuilder.Entity("BookStore.API.Models.Banner", b =>
+                {
+                    b.Property<string>("BannerId")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ImageUrl")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("LinkUrl")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Subtitle")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("BannerId");
+
+                    b.ToTable("Banners");
+                });
+
             modelBuilder.Entity("BookStore.API.Models.Book", b =>
                 {
                     b.Property<string>("BookId")
@@ -135,6 +168,68 @@ namespace BookStore.API.Migrations
                     b.HasIndex("BookId");
 
                     b.ToTable("BookImages");
+                });
+
+            modelBuilder.Entity("BookStore.API.Models.Cart", b =>
+                {
+                    b.Property<string>("CartId")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<decimal>("TotalPrice")
+                        .HasColumnType("numeric");
+
+                    b.Property<int>("TotalQuantity")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("CartId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Carts");
+                });
+
+            modelBuilder.Entity("BookStore.API.Models.CartItem", b =>
+                {
+                    b.Property<string>("CartItemId")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("AddedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("BookId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("CartId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("TotalPrice")
+                        .HasColumnType("numeric");
+
+                    b.Property<decimal>("UnitPrice")
+                        .HasColumnType("numeric");
+
+                    b.HasKey("CartItemId");
+
+                    b.HasIndex("BookId");
+
+                    b.HasIndex("CartId");
+
+                    b.ToTable("CartItems");
                 });
 
             modelBuilder.Entity("BookStore.API.Models.Category", b =>
@@ -250,6 +345,68 @@ namespace BookStore.API.Migrations
                     b.ToTable("Publishers");
                 });
 
+            modelBuilder.Entity("BookStore.API.Models.Review", b =>
+                {
+                    b.Property<string>("ReviewId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("BookId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Comment")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Rating")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("ReviewId");
+
+                    b.HasIndex("BookId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Reviews");
+                });
+
+            modelBuilder.Entity("BookStore.API.Models.ReviewReply", b =>
+                {
+                    b.Property<string>("ReplyId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ReviewId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("ReplyId");
+
+                    b.HasIndex("ReviewId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("ReviewReplies");
+                });
+
             modelBuilder.Entity("BookStore.API.Models.User", b =>
                 {
                     b.Property<string>("UserId")
@@ -304,6 +461,12 @@ namespace BookStore.API.Migrations
                     b.Property<string>("VoucherId")
                         .HasColumnType("text");
 
+                    b.Property<string>("ApplicableCategoryId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ApplicableProductId")
+                        .HasColumnType("text");
+
                     b.Property<string>("Code")
                         .IsRequired()
                         .HasMaxLength(50)
@@ -328,6 +491,9 @@ namespace BookStore.API.Migrations
 
                     b.Property<int>("Quantity")
                         .HasColumnType("integer");
+
+                    b.Property<DateTime>("StartDate")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<int>("UsedCount")
                         .HasColumnType("integer");
@@ -375,6 +541,36 @@ namespace BookStore.API.Migrations
                     b.Navigation("Book");
                 });
 
+            modelBuilder.Entity("BookStore.API.Models.Cart", b =>
+                {
+                    b.HasOne("BookStore.API.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("BookStore.API.Models.CartItem", b =>
+                {
+                    b.HasOne("BookStore.API.Models.Book", "Book")
+                        .WithMany()
+                        .HasForeignKey("BookId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("BookStore.API.Models.Cart", "Cart")
+                        .WithMany("CartItems")
+                        .HasForeignKey("CartId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Book");
+
+                    b.Navigation("Cart");
+                });
+
             modelBuilder.Entity("BookStore.API.Models.Order", b =>
                 {
                     b.HasOne("BookStore.API.Models.User", "User")
@@ -405,6 +601,44 @@ namespace BookStore.API.Migrations
                     b.Navigation("Order");
                 });
 
+            modelBuilder.Entity("BookStore.API.Models.Review", b =>
+                {
+                    b.HasOne("BookStore.API.Models.Book", "Book")
+                        .WithMany("Reviews")
+                        .HasForeignKey("BookId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("BookStore.API.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Book");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("BookStore.API.Models.ReviewReply", b =>
+                {
+                    b.HasOne("BookStore.API.Models.Review", "Review")
+                        .WithMany("Replies")
+                        .HasForeignKey("ReviewId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("BookStore.API.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Review");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("BookStore.API.Models.Author", b =>
                 {
                     b.Navigation("Books");
@@ -413,6 +647,13 @@ namespace BookStore.API.Migrations
             modelBuilder.Entity("BookStore.API.Models.Book", b =>
                 {
                     b.Navigation("BookImages");
+
+                    b.Navigation("Reviews");
+                });
+
+            modelBuilder.Entity("BookStore.API.Models.Cart", b =>
+                {
+                    b.Navigation("CartItems");
                 });
 
             modelBuilder.Entity("BookStore.API.Models.Category", b =>
@@ -428,6 +669,11 @@ namespace BookStore.API.Migrations
             modelBuilder.Entity("BookStore.API.Models.Publisher", b =>
                 {
                     b.Navigation("Books");
+                });
+
+            modelBuilder.Entity("BookStore.API.Models.Review", b =>
+                {
+                    b.Navigation("Replies");
                 });
 #pragma warning restore 612, 618
         }

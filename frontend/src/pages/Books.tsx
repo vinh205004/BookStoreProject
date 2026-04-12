@@ -257,7 +257,7 @@ export default function Books() {
 
         {!showTrash && (
           <Button icon={<Plus size={20} />} onClick={() => handleOpenModal()}>
-            Thêm mới
+            Thêm sách
           </Button>
         )}
       </div>
@@ -284,9 +284,9 @@ export default function Books() {
                 <tr key={book.bookId} className="hover:bg-slate-50">
                   <td className="p-3 sm:p-4">
                     {book.imageUrls && book.imageUrls.length > 0 ? (
-                      <img src={book.imageUrls[0]} alt={book.title} className="w-14 h-20 rounded object-cover shadow border border-slate-200" />
+                      <img src={book.imageUrls[0]} alt={book.title} className="w-14 h-20 rounded-none object-cover shadow border border-slate-200" />
                     ) : (
-                      <div className="w-14 h-20 rounded bg-slate-100 flex items-center justify-center text-slate-400">
+                      <div className="w-14 h-20 rounded-none bg-slate-100 flex items-center justify-center text-slate-400">
                         <BookOpenText size={30} />
                       </div>
                     )}

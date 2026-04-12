@@ -111,14 +111,14 @@ export default function Orders() {
                     <td className="p-3 sm:p-4 hidden sm:table-cell text-xs sm:text-base">{new Date(order.orderDate).toLocaleString('vi-VN')}</td>
                     <td className="p-3 sm:p-4 font-bold text-red-500 text-xs sm:text-base">{order.totalAmount.toLocaleString('vi-VN')} đ</td>
                     <td className="p-3 sm:p-4">
-                      <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border ${statusInfo.color}`}>
+                      <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-none text-xs font-bold border ${statusInfo.color}`}>
                         {statusInfo.icon} {statusInfo.label}
                       </span>
                     </td>
                     <td className="p-3 sm:p-4 flex justify-center">
                       <button 
                         onClick={() => handleOpenDetail(order)} 
-                        className="flex items-center gap-1 bg-orange-100 hover:bg-orange-200 text-orange-700 px-3 py-1.5 rounded-lg transition-colors text-xs sm:text-sm font-medium"
+                        className="flex items-center gap-1 bg-orange-100 hover:bg-orange-200 text-orange-700 px-3 py-1.5 rounded-none transition-colors text-xs sm:text-sm font-medium"
                       >
                         <Eye size={16} /> Chi tiết
                       </button>
@@ -137,7 +137,7 @@ export default function Orders() {
           <form onSubmit={handleUpdateStatus} className="flex flex-col gap-6">
             
             {/* THÔNG TIN KHÁCH HÀNG */}
-            <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
+            <div className="bg-slate-50 p-4 rounded-none border border-slate-200">
               <h4 className="font-bold text-slate-800 mb-3 text-sm uppercase">Thông tin giao hàng</h4>
               <div className="grid grid-cols-2 gap-3 text-sm">
                 <div><span className="text-slate-500">Khách hàng:</span> <span className="font-semibold">{selectedOrder.customerName}</span></div>
@@ -150,10 +150,10 @@ export default function Orders() {
             {/* DANH SÁCH SẢN PHẨM */}
             <div>
               <h4 className="font-bold text-slate-800 mb-3 text-sm uppercase">Sản phẩm đã đặt</h4>
-              <div className="border border-slate-200 rounded-xl divide-y divide-slate-100">
+              <div className="border border-slate-200 rounded-none divide-y divide-slate-100">
                 {selectedOrder.orderItems.map((item) => (
                   <div key={item.orderItemId} className="flex items-center gap-4 p-3">
-                    <img src={item.imageUrl || 'https://via.placeholder.com/50'} alt={item.bookTitle} className="w-12 h-16 object-cover rounded border border-slate-200" />
+                    <img src={item.imageUrl || 'https://via.placeholder.com/50'} alt={item.bookTitle} className="w-12 h-16 object-cover rounded-none border border-slate-200" />
                     <div className="flex-1">
                       <div className="font-semibold text-slate-800 line-clamp-1">{item.bookTitle}</div>
                       <div className="text-sm text-slate-500">SL: {item.quantity} x {item.unitPrice.toLocaleString('vi-VN')} đ</div>

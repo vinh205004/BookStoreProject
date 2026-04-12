@@ -1,1 +1,65 @@
 @import "tailwindcss";
+
+@theme {
+  --radius-sm: 0px;
+  --radius-md: 0px;
+  --radius-lg: 0px;
+  --radius-xl: 0px;
+  --radius-2xl: 0px;
+  --radius-3xl: 0px;
+  --radius-full: 0px;
+}
+
+/* React-Select Custom Styling */
+.react-select__control {
+  border-color: rgb(203, 213, 225) !important;
+  border-radius: 0px;
+}
+
+.react-select__control:hover {
+  border-color: rgb(203, 213, 225) !important;
+}
+
+.react-select__control--is-focused {
+  border-color: rgb(203, 213, 225) !important;
+  box-shadow: 0 0 0 2px rgb(251, 146, 60) !important;
+}
+
+.react-select__option {
+  background-color: white !important;
+  color: rgb(51, 65, 85) !important;
+  cursor: pointer;
+  padding: 8px 12px !important;
+}
+
+.react-select__option:hover {
+  background-color: rgb(248, 250, 252) !important;
+}
+
+.react-select__option--is-selected {
+  background-color: rgb(251, 236, 219) !important;
+  color: rgb(194, 65, 12) !important;
+}
+
+.react-select__option--is-focused {
+  background-color: rgb(248, 250, 252) !important;
+}
+
+.react-select__multi-value {
+  background-color: rgb(251, 236, 219) !important;
+  color: rgb(194, 65, 12) !important;
+}
+
+.react-select__multi-value__label {
+  color: rgb(194, 65, 12) !important;
+}
+
+.react-select__multi-value__remove {
+  color: rgb(194, 65, 12) !important;
+  cursor: pointer;
+}
+
+.react-select__multi-value__remove:hover {
+  background-color: rgb(251, 191, 36) !important;
+  color: white !important;
+}

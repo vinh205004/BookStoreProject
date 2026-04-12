@@ -125,7 +125,7 @@ export default function Users() {
                   <td className="p-4">{user.fullName}</td>
                   <td className="p-4 text-sm">{user.email}</td>
                   <td className="p-4">
-                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold ${
+                    <span className={`inline-flex items-center px-3 py-1 rounded-none text-xs font-bold ${
                       user.role === 'Admin' 
                         ? 'bg-purple-100 text-purple-700 border border-purple-200' 
                         : 'bg-blue-100 text-blue-700 border border-blue-200'
@@ -134,7 +134,7 @@ export default function Users() {
                     </span>
                   </td>
                   <td className="p-4">
-                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold ${
+                    <span className={`inline-flex items-center px-3 py-1 rounded-none text-xs font-bold ${
                       user.isLocked
                         ? 'bg-red-100 text-red-700 border border-red-200'
                         : 'bg-green-100 text-green-700 border border-green-200'
@@ -221,7 +221,7 @@ export default function Users() {
       <Modal isOpen={isRoleModalOpen} onClose={() => setIsRoleModalOpen(false)} title={`Thay đổi quyền: ${selectedUser?.username}`}>
         {selectedUser && (
           <form onSubmit={handleChangeRole} className="flex flex-col gap-4">
-            <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
+            <div className="bg-slate-50 p-4 rounded-none border border-slate-200">
               <p className="text-sm text-slate-600 mb-2">Quyền hiện tại: <span className="font-bold text-slate-900">{selectedUser.role}</span></p>
               <label className="block text-sm font-bold text-slate-800 mb-2">Cấp quyền mới</label>
               <select 

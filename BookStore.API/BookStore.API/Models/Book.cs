@@ -34,6 +34,7 @@ namespace BookStore.API.Models
         public int Stock { get; set; } = 0; // Số lượng tồn kho
 
         public ICollection<BookImage> BookImages { get; set; } = new List<BookImage>();
+        public ICollection<Review> Reviews { get; set; } = new List<Review>();
 
         public bool IsHidden { get; set; } = false; // Ẩn sách khỏi cửa hàng
 

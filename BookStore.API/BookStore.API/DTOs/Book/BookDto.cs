@@ -19,6 +19,8 @@
         public decimal? Length { get; set; }
         public decimal? Width { get; set; }
         public string? LengthUnit { get; set; }
-        public int? PageCount { get; set; } 
+        public int? PageCount { get; set; }
+        public decimal? DiscountedPrice { get; set; }
+        public string? DiscountBadge { get; set; } 
     }
 }

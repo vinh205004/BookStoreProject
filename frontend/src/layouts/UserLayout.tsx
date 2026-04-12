@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 import axiosClient from '../api/axiosClient';
 import SearchDropdown from '../components/SearchDropdown';
 import CategoryMenu from '../components/CategoryMenu';
+import { getGuestCart } from '../utils/cartUtils';
 
 export default function UserLayout() {
   const navigate = useNavigate();
@@ -12,9 +13,12 @@ export default function UserLayout() {
 
   const updateCartCount = async () => {
     const token = localStorage.getItem('token');
-    // Nếu không có token, đừng gọi API
+    // Nếu không có token, đếm từ guest cart
     if (!token || token === 'undefined' || token === 'null') {
-      setCartCount(0);
+      const guestCart = getGuestCart();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const count = guestCart.reduce((sum: number, item: any) => sum + item.quantity, 0);
+      setCartCount(count);
       return;
     }
     try {
@@ -43,10 +47,8 @@ export default function UserLayout() {
 
   // Listen for custom cart-updated event (CHỈ update nếu đã login)
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) return; // Đừng load cart nếu chưa login
-    
-    // Callback-based updates to avoid cascading renders
+
+    // Callback
     const handleCartUpdate = () => {
       updateCartCount();
     };
@@ -64,6 +66,8 @@ export default function UserLayout() {
 
   const handleLogout = () => {
     localStorage.removeItem('token');
+    localStorage.removeItem('guestCart'); // Xóa giỏ hàng ảo khi đăng xuất
+    window.dispatchEvent(new Event('cart-updated')); // Cập nhật lại số lượng giỏ hàng
     toast.info('Đã đăng xuất khỏi hệ thống!');
     navigate('/login');
   };
@@ -87,12 +91,12 @@ export default function UserLayout() {
             <div className="flex items-center gap-2 sm:gap-4">
               <Link
                 to="/cart"
-                className="p-2 hover:bg-orange-600 rounded-lg transition relative"
+                className="p-2 hover:bg-orange-600 rounded-none transition relative"
                 title="Giỏ hàng"
               >
                 <ShoppingCart size={24} />
                 {cartCount > 0 && (
-                  <span className="absolute top-0 right-0 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                  <span className="absolute top-0 right-0 bg-red-500 text-white text-xs rounded-none w-5 h-5 flex items-center justify-center">
                     {cartCount}
                   </span>
                 )}
@@ -100,7 +104,7 @@ export default function UserLayout() {
 
               <Link
                 to="/profile"
-                className="p-2 hover:bg-orange-600 rounded-lg transition"
+                className="p-2 hover:bg-orange-600 rounded-none transition"
                 title="Tài khoản"
               >
                 <User size={24} />
@@ -108,7 +112,7 @@ export default function UserLayout() {
 
               <button
                 onClick={handleLogout}
-                className="p-2 hover:bg-orange-600 rounded-lg transition"
+                className="p-2 hover:bg-orange-600 rounded-none transition"
                 title="Đăng xuất"
               >
                 <LogOut size={24} />
@@ -126,7 +130,7 @@ export default function UserLayout() {
             <div className="flex items-center gap-4 sm:gap-8 h-12 overflow-visible">
               <Link
                 to="/"
-                className="flex items-center gap-2 text-white hover:bg-orange-700 px-3 py-2 rounded transition whitespace-nowrap"
+                className="flex items-center gap-2 text-white hover:bg-orange-700 px-3 py-2 rounded-none transition whitespace-nowrap"
               >
                 <Home size={18} />
                 <span className="hidden sm:inline">Trang chủ</span>
@@ -134,7 +138,7 @@ export default function UserLayout() {
               <CategoryMenu />
               <Link
                 to="/products"
-                className="flex items-center gap-2 text-white hover:bg-orange-700 px-3 py-2 rounded transition whitespace-nowrap"
+                className="flex items-center gap-2 text-white hover:bg-orange-700 px-3 py-2 rounded-none transition whitespace-nowrap"
               >
                 <BookOpen size={18} />
                 <span className="hidden sm:inline">Tất cả sách</span>

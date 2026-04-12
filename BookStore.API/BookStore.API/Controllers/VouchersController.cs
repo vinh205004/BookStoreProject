@@ -7,7 +7,7 @@ namespace BookStore.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize(Roles = "Admin")] // Đặt Authorize ở mức class áp dụng cho mọi hàm bên dưới
+    
     public class VouchersController : ControllerBase
     {
         private readonly IVoucherService _voucherService;
@@ -18,13 +18,29 @@ namespace BookStore.API.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> GetAll()
         {
             var vouchers = await _voucherService.GetAllVouchersAsync();
             return Ok(vouchers);
         }
 
+        [HttpGet("active")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetActiveVouchers()
+        {
+            var vouchers = await _voucherService.GetAllVouchersAsync();
+            var now = DateTime.UtcNow;
+            var activeVouchers = vouchers.Where(v => 
+                v.IsActive && 
+                (v.StartDate <= now || v.StartDate == default) && 
+                (v.ExpirationDate >= now || v.ExpirationDate == default) && 
+                (string.IsNullOrEmpty(v.ApplicableProductId) ? v.UsedCount < v.Quantity : true));
+            return Ok(activeVouchers);
+        }
+
         [HttpGet("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> GetById(string id)
         {
             var voucher = await _voucherService.GetVoucherByIdAsync(id);
@@ -32,7 +48,25 @@ namespace BookStore.API.Controllers
             return Ok(voucher);
         }
 
+        [HttpGet("public/{code}")]
+        [Authorize] 
+        public async Task<IActionResult> GetByCode(string code)
+        {
+            var rawVouchers = await _voucherService.GetAllVouchersAsync();
+            var voucher = rawVouchers.FirstOrDefault(v => v.Code.ToUpper() == code.ToUpper() && v.IsActive);
+            
+            if (voucher == null) return NotFound(new { message = "Không tồn tại mã giảm giá này!" });
+            
+            var now = DateTime.UtcNow;
+            if (now < voucher.StartDate) return BadRequest(new { message = "Mã giảm giá chưa tới thời gian bắt đầu!" });
+            if (now > voucher.ExpirationDate) return BadRequest(new { message = "Mã giảm giá đã hết hạn!" });
+            if (string.IsNullOrEmpty(voucher.ApplicableProductId) && voucher.UsedCount >= voucher.Quantity) return BadRequest(new { message = "Mã giảm giá đã hết số lượng!" });
+            
+            return Ok(voucher);
+        }
+
         [HttpPost]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Create([FromBody] VoucherCreateDto dto)
         {
             try
@@ -47,6 +81,7 @@ namespace BookStore.API.Controllers
         }
 
         [HttpPut("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Update(string id, [FromBody] VoucherUpdateDto dto)
         {
             try
@@ -62,6 +97,7 @@ namespace BookStore.API.Controllers
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Delete(string id)
         {
             var success = await _voucherService.DeleteVoucherAsync(id);

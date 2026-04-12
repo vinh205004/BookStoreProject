@@ -24,7 +24,13 @@ namespace BookStore.API.Models
 
         public int UsedCount { get; set; } = 0; // Số lượt đã sử dụng
 
+        public DateTime StartDate { get; set; } // Ngày bắt đầu
+
         public DateTime ExpirationDate { get; set; } // Ngày hết hạn
+
+        public string? ApplicableCategoryId { get; set; } // Mã danh mục áp dụng (null nếu áp dụng toàn sàn)
+
+        public string? ApplicableProductId { get; set; } // Mã sản phẩm áp dụng (null nếu áp dụng toàn sàn)
 
         public bool IsActive { get; set; } = true; // Trạng thái (Thùng rác)
     }

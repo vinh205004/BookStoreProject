@@ -159,7 +159,7 @@ export default function Categories() {
         {/* Chỉ hiện nút Thêm mới ở tab Danh sách */}
         {!showTrash && (
           <Button icon={<Plus size={20} />} onClick={() => handleOpenModal()}>
-            Thêm mới
+            Thêm danh mục
           </Button>
         )}
       </div>
@@ -184,7 +184,7 @@ export default function Categories() {
                   <td className="p-3 sm:p-4 font-semibold text-xs sm:text-base">{cat.name}</td>
                   <td className="p-3 sm:p-4 hidden sm:table-cell text-xs sm:text-base">{cat.description}</td>
                   <td className="p-3 sm:p-4">
-                    <span className={`px-2 sm:px-3 py-1 rounded-full text-xs font-bold inline-block ${cat.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                    <span className={`px-2 sm:px-3 py-1 rounded-none text-xs font-bold inline-block ${cat.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
                       {cat.isActive ? 'Hoạt động' : 'Đã xóa'}
                     </span>
                   </td>

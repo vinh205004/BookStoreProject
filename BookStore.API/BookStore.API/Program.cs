@@ -17,7 +17,11 @@ namespace BookStore.API
             var builder = WebApplication.CreateBuilder(args);
 
 
-            builder.Services.AddControllers();
+            builder.Services.AddControllers()
+                .AddJsonOptions(options =>
+                {
+                    options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
+                });
             
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
@@ -40,6 +44,19 @@ namespace BookStore.API
             builder.Services.AddScoped<PhotoService>();
             builder.Services.AddScoped<IPublisherRepository, PublisherRepository>();
             builder.Services.AddScoped<IPublisherService, PublisherService>();
+            builder.Services.AddScoped<IProductRepository, ProductRepository>();
+            builder.Services.AddScoped<IProductService, ProductService>();
+            builder.Services.AddScoped<IAccountService, AccountService>();
+            builder.Services.AddScoped<ICartService, CartService>();
+            builder.Services.AddScoped<ICartRepository, CartRepository>();
+            builder.Services.AddScoped<IBannerRepository, BannerRepository>();
+            builder.Services.AddScoped<IBannerService, BannerService>();
+            builder.Services.AddScoped<IDashboardRepository, DashboardRepository>();
+            builder.Services.AddScoped<IDashboardService, DashboardService>();
+            builder.Services.AddScoped<IReviewRepository, ReviewRepository>();
+            builder.Services.AddScoped<IReviewService, ReviewService>();
+            builder.Services.AddScoped<IReviewReplyRepository, ReviewReplyRepository>();
+            builder.Services.AddScoped<IReviewReplyService, ReviewReplyService>();
 
             // 2. Cấu hình xác thực JWT
             builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -100,6 +117,10 @@ namespace BookStore.API
             var app = builder.Build();
             
             app.UseCors("AllowAll");
+            
+            // Initialize ID Generator to fix the duplicate keys error
+            BookStore.API.Utilities.IdGenerator.Initialize(app.Services);
+
             using (var scope = app.Services.CreateScope())
             {
                 var context = scope.ServiceProvider.GetRequiredService<BookStore.API.Data.AppDbContext>();
@@ -132,7 +153,7 @@ namespace BookStore.API
             }
 
             app.UseHttpsRedirection();
-            
+
             app.UseAuthentication();
             app.UseAuthorization();
 

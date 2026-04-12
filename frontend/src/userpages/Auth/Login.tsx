@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Mail, Lock, LogIn } from 'lucide-react';
+import { Mail, Lock, LogIn, ArrowLeft } from 'lucide-react';
 import { toast } from 'react-toastify';
+import { Link } from 'react-router-dom';
 import axiosClient from '../../api/axiosClient';
 import { decodeToken } from '../../utils/tokenUtils';
+import { syncGuestCartToBackend } from '../../utils/cartUtils';
 
 export default function Login() {
   const navigate = useNavigate();
@@ -37,6 +39,12 @@ export default function Login() {
       
       localStorage.setItem('token', token);
 
+      try {
+        await syncGuestCartToBackend();
+      } catch (err) {
+        console.error('Lỗi khi đồng bộ giỏ hàng:', err);
+      }
+
       // Decode token để lấy role
       const payload = decodeToken(token);
       const role = payload?.['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'] || payload?.['role'];
@@ -63,8 +71,15 @@ export default function Login() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-50 to-blue-50 px-4">
-      <div className="w-full max-w-md">
-        <div className="bg-white rounded-lg shadow-xl p-8">
+      <div className="w-full max-w-md relative">
+        <Link 
+          to="/" 
+          className="absolute -top-12 left-0 flex items-center text-slate-600 hover:text-orange-500 transition-colors font-medium"
+        >
+          <ArrowLeft size={18} className="mr-2" />
+          Về trang chủ
+        </Link>
+        <div className="bg-white rounded-none shadow-xl p-8">
           <h1 className="text-3xl font-bold text-center mb-2 text-gray-800">Đăng Nhập</h1>
           <p className="text-center text-gray-600 mb-8">Đăng nhập vào tài khoản của bạn</p>
 

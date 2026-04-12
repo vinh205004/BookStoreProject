@@ -15,6 +15,11 @@ interface Product {
   targetAudience: string;
   pageCount: number;
   mainImageUrl: string;
+  rating?: number;
+  discountBadge?: string;
+  discountedPrice?: number;
+  discountVoucherCode?: string;
+  categoryId?: string;
 }
 
 interface Category {
@@ -322,12 +327,17 @@ export default function ProductCatalog() {
               {products.map(product => (
                 <div key={product.bookId} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition">
                   {/* Image */}
-                  <div className="aspect-square bg-gray-100 overflow-hidden">
+                  <div className="aspect-square bg-gray-100 overflow-hidden relative">
                     <img
                       src={product.mainImageUrl || '/placeholder.jpg'}
                       alt={product.title}
                       className="w-full h-full object-cover hover:scale-105 transition"
                     />
+                    {product.discountBadge && (
+                      <div className="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded text-sm font-bold">
+                        {product.discountBadge}
+                      </div>
+                    )}
                   </div>
 
                   {/* Content */}
@@ -347,7 +357,25 @@ export default function ProductCatalog() {
                     </div>
 
                     <div className="flex items-center justify-between mb-4">
-                      <span className="text-2xl font-bold text-orange-500">{product.price.toLocaleString()}₫</span>
+                      <div className="flex flex-col">
+                      {product.discountedPrice ? (
+                        <>
+                          <span className="text-2xl font-bold text-orange-500">{product.discountedPrice.toLocaleString()}₫</span>
+                          <span className="text-sm line-through text-gray-400 font-normal">{product.price.toLocaleString()}₫</span>
+                        </>
+                      ) : (
+                        <div className="flex flex-col">
+                      {product.discountedPrice ? (
+                        <>
+                          <span className="text-2xl font-bold text-orange-500">{product.discountedPrice.toLocaleString()}₫</span>
+                          <span className="text-sm line-through text-gray-400 font-normal">{product.price.toLocaleString()}₫</span>
+                        </>
+                      ) : (
+                        <span className="text-2xl font-bold text-orange-500">{product.price.toLocaleString()}₫</span>
+                      )}
+                    </div>
+                      )}
+                    </div>
                       <span className={`text-sm px-2 py-1 rounded ${product.stock > 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
                         {product.stock > 0 ? `Còn ${product.stock}` : 'Hết hàng'}
                       </span>

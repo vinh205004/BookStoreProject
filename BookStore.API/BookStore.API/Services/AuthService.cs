@@ -53,8 +53,8 @@ namespace BookStore.API.Services
 
         public async Task<string> LoginAsync(LoginDto dto)
         {
-            // 1. Tìm user theo email
-            var user = await _context.Users.SingleOrDefaultAsync(u => u.Email == dto.Email);
+            // 1. Tìm user theo username
+            var user = await _context.Users.SingleOrDefaultAsync(u => u.Username == dto.Username);
             if (user == null)
                 throw new Exception("Tài khoản không tồn tại!");
 

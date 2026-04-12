@@ -1,8 +1,10 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect, useCallback } from 'react';
 import { Plus, Edit, Trash2, ArchiveRestore, List, TicketPercent, Search } from 'lucide-react';
 import { toast } from 'react-toastify';
+import Select from 'react-select';
 import axiosClient from '../api/axiosClient';
-import type { Voucher } from '../types';
+import type { Voucher, Category, Book } from '../types';
 import Modal from '../components/ui/Modal';
 import Button from '../components/ui/Button';
 
@@ -21,16 +23,27 @@ export default function Vouchers() {
   const [minOrderValue, setMinOrderValue] = useState<number>(0);
   const [quantity, setQuantity] = useState<number>(1);
   const [expirationDate, setExpirationDate] = useState('');
+  const [applicableCategoryId, setApplicableCategoryId] = useState<string>('');
+  const [applicableProductIds, setApplicableProductIds] = useState<string[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [books, setBooks] = useState<Book[]>([]);
 
-  const fetchVouchers = useCallback(async () => {
+  const fetchData = useCallback(async () => {
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const data: any = await axiosClient.get('/Vouchers');
-      setVouchers(data);
+      const [vouchersRes, categoriesRes, booksRes] = await Promise.all([
+        axiosClient.get('/Vouchers'),
+        axiosClient.get('/Categories'),
+        axiosClient.get('/Books')
+      ]);
+      setVouchers(vouchersRes as any);
+      setCategories(categoriesRes as any);
+      setBooks(booksRes as any);
     } catch {
-      toast.error('Lỗi khi tải danh sách voucher!');
+      toast.error('Lỗi khi tải dữ liệu voucher!');
     }
   }, []);
+
+  const fetchVouchers = fetchData;
 
   useEffect(() => { 
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -46,36 +59,47 @@ export default function Vouchers() {
       setMinOrderValue(v.minOrderValue);
       setQuantity(v.quantity);
       const dateObj = new Date(v.expirationDate);
-      // Chỉnh offset timezone VN
       dateObj.setMinutes(dateObj.getMinutes() - dateObj.getTimezoneOffset());
       setExpirationDate(dateObj.toISOString().slice(0, 16));
+      setApplicableCategoryId(v.applicableCategoryId || '');
+      // Nếu có category mà không có product = áp cứng danh mục mà không tích sản phẩm
+      // Nếu có product = tích những sản phẩm đó
+      setApplicableProductIds(v.applicableProductId ? [v.applicableProductId] : []);
     } else {
       setEditingId(null);
       setCode('');
       setDiscountType('Direct');
       setDiscountAmount(0);
       setMinOrderValue(0);
-      setQuantity(10); // Mặc định 10 mã
+      setQuantity(10);
       setExpirationDate('');
+      setApplicableCategoryId('');
+      setApplicableProductIds([]);
     }
     setIsModalOpen(true);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+
+
     if (!expirationDate) {
       toast.warning('Vui lòng chọn ngày hết hạn!');
       return;
     }
 
     try {
+      // Backend expect ApplicableProductId (string), gửi product đầu tiên nếu có
       const voucherData = { 
-        code: code.toUpperCase(), // Ép mã tự động in hoa
+        code: code.toUpperCase(),
         discountType,
         discountAmount, 
         minOrderValue, 
         quantity, 
-        expirationDate: new Date(expirationDate).toISOString()
+        expirationDate: new Date(expirationDate).toISOString(),
+        applicableCategoryId: applicableCategoryId || null,
+        applicableProductId: applicableProductIds.length > 0 ? applicableProductIds[0] : null
       };
 
       if (editingId) {
@@ -278,6 +302,40 @@ export default function Vouchers() {
             <label className="block text-sm font-medium text-slate-700 mb-1">Đơn tối thiểu áp dụng (VNĐ) <span className="text-red-500">*</span></label>
             <input type="number" required value={minOrderValue} onChange={(e) => setMinOrderValue(Number(e.target.value))} 
               className="w-full border border-slate-300 px-4 py-2 focus:ring-2 focus:ring-orange-500 outline-none" min={0} />
+          </div>
+
+          <div className="col-span-2">
+            <label className="block text-sm font-medium text-slate-700 mb-1">Áp dụng cho Danh mục</label>
+            <Select 
+              options={categories.map(cat => ({ value: cat.categoryId, label: cat.name }))}
+              placeholder="Chọn danh mục (không bắt buộc)..."
+              value={applicableCategoryId 
+                ? { value: applicableCategoryId, label: categories.find(c => c.categoryId === applicableCategoryId)?.name || '' } 
+                : null
+              }
+              onChange={(selectedOption) => setApplicableCategoryId(selectedOption?.value || '')}
+              isClearable
+              classNamePrefix="react-select"
+            />
+            {applicableCategoryId && <p className="text-xs text-gray-500 mt-1">Áp dụng cho tất cả sản phẩm trong danh mục này</p>}
+          </div>
+          <div className="col-span-2">
+            <label className="block text-sm font-medium text-slate-700 mb-2">
+              Áp dụng cho Sản phẩm (Chọn nhiều)
+            </label>
+            <Select 
+              isMulti
+              options={books.map(book => ({ value: book.bookId, label: book.title }))}
+              placeholder="Gõ để tìm sản phẩm..."
+              value={applicableProductIds.map(id => {
+                const book = books.find(b => b.bookId === id);
+                return { value: id, label: book?.title || '' };
+              })}
+              onChange={(selectedOptions) => {
+                setApplicableProductIds(selectedOptions?.map(opt => opt.value) || []);
+              }}
+              classNamePrefix="react-select"
+            />
           </div>
 
           <div>

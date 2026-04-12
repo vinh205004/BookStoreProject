@@ -6,6 +6,7 @@ namespace BookStore.API.Repositories
     {
         Task<IEnumerable<Order>> GetAllAsync();
         Task<Order?> GetByIdAsync(string id);
+        Task AddAsync(Order order);
         Task UpdateAsync(Order order);
     }
 }

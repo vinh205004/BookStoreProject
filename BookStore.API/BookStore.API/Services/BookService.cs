@@ -30,7 +30,7 @@ namespace BookStore.API.Services
                 Description = b.Description,
                 Price = b.Price,
                 Stock = b.Stock,
-                ImageUrls = b.BookImages.Select(img => img.ImageUrl).ToList(),
+                ImageUrls = b.BookImages.OrderBy(img => img.ImageId).Select(img => img.ImageUrl).ToList(),
                 IsHidden = b.IsHidden,
                 CategoryId = b.CategoryId,
                 CategoryName = b.Category?.Name ?? "Không xác định",
@@ -58,7 +58,7 @@ namespace BookStore.API.Services
                 Description = b.Description,
                 Price = b.Price,
                 Stock = b.Stock,
-                ImageUrls = b.BookImages.Select(img => img.ImageUrl).ToList(),
+                ImageUrls = b.BookImages.OrderBy(img => img.ImageId).Select(img => img.ImageUrl).ToList(),
                 IsHidden = b.IsHidden,
                 CategoryId = b.CategoryId,
                 CategoryName = b.Category?.Name ?? "Không xác định",
@@ -97,7 +97,7 @@ namespace BookStore.API.Services
 
             await _bookRepo.AddAsync(newBook);
 
-            return await GetBookByIdAsync(newBook.BookId); 
+            return await GetBookByIdAsync(newBook.BookId) ?? throw new Exception("Không thể tạo sách!");
         }
 
         public async Task<bool> UpdateBookAsync(string id, BookUpdateDto dto)
@@ -153,6 +153,54 @@ namespace BookStore.API.Services
 
             await _bookRepo.UpdateAsync(book);
             return true;
+        }
+
+        // Customer search & filter
+        public async Task<IEnumerable<ProductSearchDto>> SearchBooksAsync(
+            string? searchQuery = null,
+            string? categoryId = null,
+            string? authorId = null,
+            string? publisherId = null,
+            string? targetAudience = null,
+            decimal? minPrice = null,
+            decimal? maxPrice = null)
+        {
+            return await _bookRepo.SearchBooksAsync(searchQuery, categoryId, authorId, publisherId, targetAudience, minPrice, maxPrice);
+        }
+
+        public async Task<ProductDetailDto?> GetBookDetailAsync(string bookId)
+        {
+            return await _bookRepo.GetBookDetailAsync(bookId);
+        }
+
+        public async Task<IEnumerable<string>> GetDistinctTargetAudiencesAsync()
+        {
+            return await _bookRepo.GetDistinctTargetAudiencesAsync();
+        }
+
+        public async Task<IEnumerable<ProductSearchDto>> GetFeaturedBooksAsync(int count = 10)
+        {
+            return await _bookRepo.GetFeaturedBooksAsync(count);
+        }
+
+        public async Task<IEnumerable<ProductSearchDto>> GetDiscountedBooksAsync(int count = 10)
+        {
+            return await _bookRepo.GetDiscountedBooksAsync(count);
+        }
+
+        public async Task<IEnumerable<ProductSearchDto>> GetTopSellingBooksAsync(int month, int year, int count = 10)
+        {
+            return await _bookRepo.GetTopSellingBooksAsync(month, year, count);
+        }
+
+        public async Task<IEnumerable<ProductSearchDto>> GetTopRatedBooksAsync(int count = 10)
+        {
+            return await _bookRepo.GetTopRatedBooksAsync(count);
+        }
+
+        public async Task<IEnumerable<ProductSearchDto>> GetBooksByCategoryAsync(string categoryId)
+        {
+            return await _bookRepo.GetBooksByCategoryAsync(categoryId);
         }
     }
 }

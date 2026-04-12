@@ -1,5 +1,5 @@
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, BookOpen, Layers, Users, ShoppingCart, Ticket, LogOut, UserPen, Building2, Clock, Menu, X } from 'lucide-react';
+import { LayoutDashboard, BookOpen, Layers, Users, ShoppingCart, Ticket, LogOut, UserPen, Building2, Clock, Menu, X, Image as ImageIcon } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { useState, useEffect } from 'react';
 
@@ -25,6 +25,7 @@ export default function AdminLayout() {
     { path: '/admin/vouchers', name: 'Voucher', icon: <Ticket size={20} /> },
     { path: '/admin/orders', name: 'Đơn hàng', icon: <ShoppingCart size={20} /> },
     { path: '/admin/users', name: 'Khách hàng', icon: <Users size={20} /> },
+    { path: '/admin/banners', name: 'Banners', icon: <ImageIcon size={20} /> },
   ];
 
   const handleLogout = () => {
@@ -65,7 +66,7 @@ export default function AdminLayout() {
               <Link
                 key={item.path}
                 to={item.path}
-                className={`flex items-center gap-3 px-2 lg:px-4 py-3 transition-all duration-200 rounded ${
+                className={`flex items-center gap-3 px-2 lg:px-4 py-3 transition-all duration-200 rounded-none ${
                   isActive 
                     ? 'bg-orange-600 text-black shadow-md font-semibold' 
                     : 'text-black hover:bg-orange-600 hover:text-black font-medium'
@@ -82,7 +83,7 @@ export default function AdminLayout() {
         <div className="p-2 lg:p-4 border-t border-orange-600">
           <button 
             onClick={handleLogout}
-            className="flex items-center gap-3 px-2 lg:px-4 py-3 w-full text-red-600 hover:bg-red-500 hover:text-white transition-colors font-medium rounded"
+            className="flex items-center gap-3 px-2 lg:px-4 py-3 w-full text-red-600 hover:bg-red-500 hover:text-white transition-colors font-medium rounded-none"
           >
             <LogOut size={20} />
             <span className="hidden sm:inline">Đăng xuất</span>
@@ -100,13 +101,13 @@ export default function AdminLayout() {
             {/* Toggle button */}
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0"
+              className="p-2 hover:bg-gray-100 rounded-none transition-colors flex-shrink-0"
               title={sidebarOpen ? 'Đóng sidebar' : 'Mở sidebar'}
             >
               {sidebarOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
             <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-              <div className="w-8 sm:w-9 h-8 sm:h-9 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold border border-blue-200 flex-shrink-0">
+              <div className="w-8 sm:w-9 h-8 sm:h-9 rounded-none bg-blue-100 flex items-center justify-center text-blue-600 font-bold border border-blue-200 flex-shrink-0">
                 A
               </div>
               <div className="flex flex-col min-w-0 hidden sm:block">
