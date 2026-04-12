@@ -42,7 +42,7 @@ namespace BookStore.API.Repositories
             existingCart.TotalQuantity = cart.TotalQuantity;
             existingCart.UpdatedAt = DateTime.UtcNow;
 
-            // _context.Carts.Update(existingCart); 
+            _context.Carts.Update(existingCart); 
             await _context.SaveChangesAsync();
 
             return existingCart;

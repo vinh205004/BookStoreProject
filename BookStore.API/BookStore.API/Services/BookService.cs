@@ -9,17 +9,19 @@ namespace BookStore.API.Services
     {
         private readonly IBookRepository _bookRepo;
         private readonly ICategoryRepository _categoryRepo; // Cần gọi CategoryRepo để kiểm tra danh mục có tồn tại không
+        private readonly IVoucherRepository _voucherRepo; // Để lấy thông tin giảm giá
 
-        public BookService(IBookRepository bookRepo, ICategoryRepository categoryRepo)
+        public BookService(IBookRepository bookRepo, ICategoryRepository categoryRepo, IVoucherRepository voucherRepo)
         {
             _bookRepo = bookRepo;
             _categoryRepo = categoryRepo;
+            _voucherRepo = voucherRepo;
         }
 
         public async Task<IEnumerable<BookDto>> GetAllBooksAsync()
         {
             var books = await _bookRepo.GetAllAsync();
-            return books.Select(b => new BookDto
+            var bookDtos = books.Select(b => new BookDto
             {
                 BookId = b.BookId,
                 Title = b.Title,
@@ -38,8 +40,12 @@ namespace BookStore.API.Services
                 Length = b.Length,
                 Width = b.Width,
                 LengthUnit = b.LengthUnit ?? "cm",
-                PageCount = b.PageCount
-            });
+                PageCount = b.PageCount,
+                DiscountedPrice = b.DiscountedPrice,
+                DiscountBadge = b.DiscountBadge
+            }).ToList();
+
+            return bookDtos;
         }
 
         public async Task<BookDto?> GetBookByIdAsync(string id)
@@ -47,7 +53,7 @@ namespace BookStore.API.Services
             var b = await _bookRepo.GetByIdAsync(id);
             if (b == null) return null;
 
-            return new BookDto
+            var bookDto = new BookDto
             {
                 BookId = b.BookId,
                 Title = b.Title,
@@ -66,8 +72,12 @@ namespace BookStore.API.Services
                 Length = b.Length,
                 Width = b.Width,
                 LengthUnit = b.LengthUnit ?? "cm",
-                PageCount = b.PageCount
+                PageCount = b.PageCount,
+                DiscountedPrice = b.DiscountedPrice,
+                DiscountBadge = b.DiscountBadge
             };
+
+            return bookDto;
         }
 
         public async Task<BookDto> CreateBookAsync(BookCreateDto dto)
@@ -92,7 +102,9 @@ namespace BookStore.API.Services
                 Length = dto.Length,
                 Width = dto.Width,
                 LengthUnit = dto.LengthUnit ?? "cm",
-                PageCount = dto.PageCount
+                PageCount = dto.PageCount,
+                DiscountedPrice = dto.DiscountedPrice,
+                DiscountBadge = dto.DiscountBadge
             };
 
             await _bookRepo.AddAsync(newBook);
@@ -126,6 +138,8 @@ namespace BookStore.API.Services
             book.Width = dto.Width;
             book.LengthUnit = dto.LengthUnit ?? "cm";
             book.PageCount = dto.PageCount;
+            book.DiscountedPrice = dto.DiscountedPrice;
+            book.DiscountBadge = dto.DiscountBadge;
             book.UpdatedAt = DateTime.UtcNow;
 
             await _bookRepo.UpdateAsync(book);
@@ -163,9 +177,10 @@ namespace BookStore.API.Services
             string? publisherId = null,
             string? targetAudience = null,
             decimal? minPrice = null,
-            decimal? maxPrice = null)
+            decimal? maxPrice = null,
+            bool? hasDiscount = null)
         {
-            return await _bookRepo.SearchBooksAsync(searchQuery, categoryId, authorId, publisherId, targetAudience, minPrice, maxPrice);
+            return await _bookRepo.SearchBooksAsync(searchQuery, categoryId, authorId, publisherId, targetAudience, minPrice, maxPrice, hasDiscount);
         }
 
         public async Task<ProductDetailDto?> GetBookDetailAsync(string bookId)

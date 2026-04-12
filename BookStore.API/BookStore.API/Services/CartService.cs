@@ -1,4 +1,4 @@
-using BookStore.API.DTOs;
+﻿using BookStore.API.DTOs;
 using BookStore.API.Models;
 using BookStore.API.Repositories;
 using BookStore.API.Utilities;
@@ -303,10 +303,10 @@ namespace BookStore.API.Services
                     CartItemId = ci.CartItemId,
                     BookId = ci.BookId,
                     BookTitle = ci.Book?.Title ?? string.Empty,
-                    Price = ci.UnitPrice,
-                    Quantity = ci.Quantity,
-                    ImageUrl = ci.Book?.BookImages?.FirstOrDefault()?.ImageUrl ?? string.Empty,
-                    DiscountedPrice = bookDetail?.DiscountedPrice,
+                      Price = bookDetail?.Price ?? ci.UnitPrice,
+                      Quantity = ci.Quantity,
+                      ImageUrl = ci.Book?.BookImages?.FirstOrDefault()?.ImageUrl ?? string.Empty,
+                      DiscountedPrice = bookDetail?.DiscountedPrice ?? ci.UnitPrice,
                     DiscountBadge = bookDetail?.DiscountBadge,
                     DiscountVoucherCode = bookDetail?.DiscountVoucherCode,
                     CategoryId = bookDetail?.CategoryId
@@ -329,4 +329,6 @@ namespace BookStore.API.Services
         }
     }
 }
+
+
 

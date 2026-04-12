@@ -71,10 +71,14 @@ namespace BookStore.API.Repositories
                     Stock = b.Stock,
                     AuthorName = b.Author?.Name ?? "Chưa xác định",
                     CategoryName = b.Category?.Name ?? "Chưa xác định",
+                    CategoryId = b.CategoryId,
                     PublisherName = b.Publisher?.Name ?? "",
                     TargetAudience = b.TargetAudience ?? "Trưởng thành (18+)",
                     PageCount = b.PageCount,
-                    MainImageUrl = b.BookImages.OrderBy(i => i.ImageId).FirstOrDefault()?.ImageUrl
+                    MainImageUrl = b.BookImages.OrderBy(i => i.ImageId).FirstOrDefault()?.ImageUrl,
+                    DiscountedPrice = b.DiscountedPrice,
+                    DiscountBadge = b.DiscountBadge,
+                    HasDiscount = b.DiscountedPrice.HasValue && b.DiscountedPrice > 0
                 });
         }
 
@@ -108,7 +112,9 @@ namespace BookStore.API.Repositories
                 Width = book.Width,
                 LengthUnit = book.LengthUnit ?? "cm",
                 PageCount = book.PageCount,
-                ImageUrls = book.BookImages.OrderBy(img => img.ImageId).Select(img => img.ImageUrl).ToList()
+                ImageUrls = book.BookImages.OrderBy(img => img.ImageId).Select(img => img.ImageUrl).ToList(),
+                DiscountedPrice = book.DiscountedPrice,
+                DiscountBadge = book.DiscountBadge
             };
         }
 
@@ -133,10 +139,14 @@ namespace BookStore.API.Repositories
                     Stock = b.Stock,
                     AuthorName = b.Author?.Name ?? "Chưa xác định",
                     CategoryName = b.Category?.Name ?? "Chưa xác định",
+                    CategoryId = b.CategoryId,
                     PublisherName = b.Publisher?.Name ?? "",
                     TargetAudience = b.TargetAudience ?? "Trưởng thành (18+)",
                     PageCount = b.PageCount,
-                    MainImageUrl = b.BookImages.OrderBy(i => i.ImageId).FirstOrDefault()?.ImageUrl
+                    MainImageUrl = b.BookImages.OrderBy(i => i.ImageId).FirstOrDefault()?.ImageUrl,
+                    DiscountedPrice = b.DiscountedPrice,
+                    DiscountBadge = b.DiscountBadge,
+                    HasDiscount = b.DiscountedPrice.HasValue && b.DiscountedPrice > 0
                 });
         }
 
@@ -159,10 +169,14 @@ namespace BookStore.API.Repositories
                     Stock = b.Stock,
                     AuthorName = b.Author?.Name ?? "Chưa xác định",
                     CategoryName = b.Category?.Name ?? "Chưa xác định",
+                    CategoryId = b.CategoryId,
                     PublisherName = b.Publisher?.Name ?? "",
                     TargetAudience = b.TargetAudience ?? "Trưởng thành (18+)",
                     PageCount = b.PageCount,
-                    MainImageUrl = b.BookImages.OrderBy(i => i.ImageId).FirstOrDefault()?.ImageUrl
+                    MainImageUrl = b.BookImages.OrderBy(i => i.ImageId).FirstOrDefault()?.ImageUrl,
+                    DiscountedPrice = b.DiscountedPrice,
+                    DiscountBadge = b.DiscountBadge,
+                    HasDiscount = b.DiscountedPrice.HasValue && b.DiscountedPrice > 0
                 });
         }
     }

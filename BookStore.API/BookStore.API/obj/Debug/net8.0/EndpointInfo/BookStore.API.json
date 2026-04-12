@@ -492,6 +492,13 @@
               "type": "number",
               "format": "double"
             }
+          },
+          {
+            "name": "discount",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
           }
         ],
         "responses": {
@@ -548,7 +555,7 @@
             "schema": {
               "type": "integer",
               "format": "int32",
-              "default": 10
+              "default": 0
             }
           }
         ],
@@ -2187,6 +2194,15 @@
             "type": "integer",
             "format": "int32",
             "nullable": true
+          },
+          "discountedPrice": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "discountBadge": {
+            "type": "string",
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -2265,6 +2281,15 @@
           "pageCount": {
             "type": "integer",
             "format": "int32",
+            "nullable": true
+          },
+          "discountedPrice": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "discountBadge": {
+            "type": "string",
             "nullable": true
           },
           "isHidden": {

@@ -1,5 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-explicit-any */
+﻿/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Star, ShoppingCart, ArrowLeft } from 'lucide-react';
@@ -26,10 +25,14 @@ interface ProductDetail {
   pageCount: number;
   imageUrls: string[];
   rating?: number;
+  reviewCount?: number;
+  soldQuantity?: number;
   discountBadge?: string;
   discountedPrice?: number;
   discountVoucherCode?: string;
 }
+
+import { addToGuestCart } from '../../utils/cartUtils';
 
 export default function ProductDetail() {
   const currentUserId = getCurrentUserId();
@@ -45,7 +48,6 @@ export default function ProductDetail() {
     const loadProduct = async () => {
       try {
         setLoading(true);
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const response: any = await axiosClient.get(`/Books/${id}/detail`);
         setProduct(response);
       } catch {
@@ -63,7 +65,6 @@ export default function ProductDetail() {
 
   // Tabs for Description / Reviews
   const [activeTab, setActiveTab] = useState<'description' | 'reviews'>('description');
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [reviews, setReviews] = useState<any[]>([]);
   const [loadingReviews, setLoadingReviews] = useState(false);
   const [canReview, setCanReview] = useState(false);
@@ -104,7 +105,7 @@ export default function ProductDetail() {
       }
     };
     loadReviews();
-  }, [id]);
+  }, [id, currentUserId]);
 
   const handleSubmitReview = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -133,10 +134,8 @@ export default function ProductDetail() {
       setUserRating(5);
       
       // Reload reviews
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const res: any = await axiosClient.get(`/Reviews/book/${id}`);
       setReviews(res || []);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       const msg = error?.response?.data?.error || 'Lỗi khi gửi đánh giá!';
       toast.error(msg);
@@ -256,13 +255,26 @@ export default function ProductDetail() {
   const handleAddToCart = async () => {
     if (!product) return;
 
-    try {
-      // Check stock first
-      if (quantity > product.stock) {
-        toast.warning(`Chỉ còn ${product.stock} sản phẩm trong kho!`);
-        return;
-      }
+    // Check stock first
+    if (quantity > product.stock) {
+      toast.warning(`Chỉ còn ${product.stock} sản phẩm trong kho!`);
+      return;
+    }
 
+    const token = localStorage.getItem('token');
+    if (!token || token === 'undefined' || token === 'null') {
+      const result = addToGuestCart(product, quantity);
+      if (result.success) {
+        window.dispatchEvent(new Event('cart-updated'));
+        toast.success('Đã thêm vào giỏ hàng!');
+        setQuantity(1);
+      } else {
+        toast.error(result.message || 'Lỗi khi thêm vào giỏ hàng!');
+      }
+      return;
+    }
+
+    try {
       // Call backend API to add to cart
       console.log('Adding to cart:', { bookId: product.bookId, quantity });
       await axiosClient.post('/cart/items', {
@@ -274,7 +286,6 @@ export default function ProductDetail() {
       window.dispatchEvent(new Event('cart-updated'));
       toast.success('Đã thêm vào giỏ hàng!');
       setQuantity(1);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       console.error('Add to cart error:', error);
       const errorMessage = error?.response?.data?.error || error?.message || 'Lỗi khi thêm vào giỏ hàng!';
@@ -373,9 +384,9 @@ export default function ProductDetail() {
           {/* Price */}
           <div className="mb-6">
             {product.discountedPrice ? (
-  <div className="mb-2 flex items-center gap-4">
-    <p className="text-4xl font-bold text-orange-500">{product.discountedPrice.toLocaleString()}\u20AB</p>
-    <p className="text-2xl line-through text-gray-400">{product.price.toLocaleString()}\u20AB</p>
+  <div className="mb-2 flex items-center gap-4 flex-wrap">
+    <p className="text-4xl font-bold text-orange-500">{product.discountedPrice.toLocaleString()}</p>
+    <p className="text-2xl line-through text-gray-400">{product.price.toLocaleString()}</p>
     {product.discountBadge && (
       <span className="bg-red-500 text-white font-bold px-3 py-1 rounded text-sm">
         {product.discountBadge}
@@ -383,10 +394,13 @@ export default function ProductDetail() {
     )}
   </div>
 ) : (
-  <p className="text-4xl font-bold text-orange-500 mb-2">{product.price.toLocaleString()}\u20AB</p>
+  <p className="text-4xl font-bold text-orange-500 mb-2">{product.price.toLocaleString()}</p>
 )}
-            <p className={`text-lg ${product.stock > 0 ? 'text-green-600' : 'text-red-600'} font-semibold`}>
+            <p className={`text-lg ${product.stock > 0 ? 'text-green-600' : 'text-red-600'} font-semibold mb-2`}>
               {product.stock > 0 ? `Còn ${product.stock} sản phẩm` : 'Hết hàng'}
+            </p>
+            <p className="text-sm text-gray-600">
+              {product.soldQuantity ?? 0} đã bán
             </p>
           </div>
 
@@ -724,3 +738,4 @@ export default function ProductDetail() {
     </div>
   );
 }
+

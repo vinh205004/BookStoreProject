@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { Trash2, ShoppingBag, ArrowLeft } from 'lucide-react';
 import { toast } from 'react-toastify';
 import axiosClient from '../../api/axiosClient';
+import { getGuestCart, removeFromGuestCart, updateGuestCartQuantity } from '../../utils/cartUtils';
 
 interface CartItem {
   cartItemId?: string; // Added for API reference
@@ -82,9 +83,23 @@ export default function Cart() {
     }
   };
 
-  const removeItem = async (cartItemId: string | undefined) => {
-    if (!cartItemId) {
+  const removeItem = async (cartItemId: string | undefined, bookId?: string) => {
+    if (!cartItemId && !bookId) {
       toast.error('Không thể xóa sản phẩm này');
+      return;
+    }
+
+    const token = localStorage.getItem('token');
+    if (!token || token === 'undefined' || token === 'null') {
+      if (bookId) removeFromGuestCart(bookId);
+      const guestItems = getGuestCart();
+      setCart({
+        items: guestItems,
+        totalPrice: guestItems.reduce((sum: number, item: any) => sum + ((item.discountedPrice ?? item.price) * item.quantity), 0),
+        totalItems: guestItems.reduce((sum: number, item: any) => sum + item.quantity, 0)
+      });
+      window.dispatchEvent(new Event('cart-updated'));
+      toast.info('Đã xóa sản phẩm khỏi giỏ hàng');
       return;
     }
 
@@ -106,15 +121,35 @@ export default function Cart() {
     }
   };
 
-  const updateQuantity = async (cartItemId: string | undefined, newQuantity: number) => {
-    if (!cartItemId) {
+  const updateQuantity = async (cartItemId: string | undefined, bookId: string | undefined, newQuantity: number) => {
+    if (!cartItemId && !bookId) {
       toast.error('Không thể cập nhật sản phẩm này');
       return;
     }
 
     if (newQuantity < 1) {
-      removeItem(cartItemId);
+      removeItem(cartItemId, bookId);
       return;
+    }
+
+    const token = localStorage.getItem('token');
+    if (!token || token === 'undefined' || token === 'null') {
+      if (bookId) {
+        const result = updateGuestCartQuantity(bookId, newQuantity);
+        if (!result.success) {
+          toast.error(result.message || 'Số lượng không hợp lệ');
+          return;
+        }
+        
+        const guestItems = getGuestCart();
+        setCart({
+          items: guestItems,
+          totalPrice: guestItems.reduce((sum: number, item: any) => sum + ((item.discountedPrice ?? item.price) * item.quantity), 0),
+          totalItems: guestItems.reduce((sum: number, item: any) => sum + item.quantity, 0)
+        });
+        window.dispatchEvent(new Event('cart-updated'));
+        return;
+      }
     }
 
     try {
@@ -337,7 +372,7 @@ export default function Cart() {
                   </div>
                   <div className="mb-2">
                     <span className="text-lg font-bold text-orange-500">{getPrice(item).toLocaleString()}đ</span>
-                    {item.discountedPrice && (
+                    {item.discountedPrice && item.discountedPrice < item.price && (
                       <span className="text-sm text-gray-500 line-through ml-2">{item.price?.toLocaleString()}đ</span>
                     )}
                   </div>
@@ -345,7 +380,7 @@ export default function Cart() {
                   {/* Quantity */}
                   <div className="flex items-center gap-2">
                     <button
-                      onClick={() => updateQuantity(item.cartItemId, item.quantity - 1)}
+                      onClick={() => updateQuantity(item.cartItemId, item.bookId, item.quantity - 1)}
                       className="bg-gray-200 hover:bg-gray-300 px-2 py-1 rounded text-sm transition"
                     >
                       -
@@ -353,11 +388,11 @@ export default function Cart() {
                     <input
                       type="number"
                       value={item.quantity}
-                      onChange={(e) => updateQuantity(item.cartItemId, parseInt(e.target.value) || 1)}
+                      onChange={(e) => updateQuantity(item.cartItemId, item.bookId, parseInt(e.target.value) || 1)}
                       className="w-12 px-2 py-1 border border-gray-300 rounded text-center text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
                     />
                     <button
-                      onClick={() => updateQuantity(item.cartItemId, item.quantity + 1)}
+                      onClick={() => updateQuantity(item.cartItemId, item.bookId, item.quantity + 1)}
                       className="bg-gray-200 hover:bg-gray-300 px-2 py-1 rounded text-sm transition"
                     >
                       +
@@ -370,7 +405,7 @@ export default function Cart() {
 
                 {/* Delete */}
                 <button
-                  onClick={() => removeItem(item.cartItemId)}
+                  onClick={() => removeItem(item.cartItemId, item.bookId)}
                   className="text-red-500 hover:text-red-700 transition flex-shrink-0"
                   title="Xóa"
                 >

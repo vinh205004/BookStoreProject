@@ -55,5 +55,11 @@ namespace BookStore.API.DTOs
         
         [JsonPropertyName("pageCount")]
         public int? PageCount { get; set; }
+
+        [JsonPropertyName("discountedPrice")]
+        public decimal? DiscountedPrice { get; set; }
+
+        [JsonPropertyName("discountBadge")]
+        public string? DiscountBadge { get; set; }
     }
 }

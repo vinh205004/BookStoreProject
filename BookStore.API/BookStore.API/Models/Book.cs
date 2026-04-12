@@ -60,5 +60,12 @@ namespace BookStore.API.Models
 
         // Page count
         public int? PageCount { get; set; } // Số trang
+
+        // Discount fields - Admin apply hardcoded discount per category
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal? DiscountedPrice { get; set; } // Giá sau khi giảm (do admin áp cứng)
+        
+        [MaxLength(50)]
+        public string? DiscountBadge { get; set; } // Badge hiển thị (e.g., "-20%", "-50.000đ")
     }
 }

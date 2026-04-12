@@ -33,11 +33,12 @@ namespace BookStore.API.Controllers
             [FromQuery] string? publisherId = null,
             [FromQuery] string? targetAudience = null,
             [FromQuery] decimal? minPrice = null,
-            [FromQuery] decimal? maxPrice = null)
+            [FromQuery] decimal? maxPrice = null,
+            [FromQuery] bool? discount = null)
         {
             try
             {
-                var products = await _bookService.SearchBooksAsync(searchQuery, categoryId, authorId, publisherId, targetAudience, minPrice, maxPrice);
+                var products = await _bookService.SearchBooksAsync(searchQuery, categoryId, authorId, publisherId, targetAudience, minPrice, maxPrice, discount);
                 return Ok(products);
             }
             catch (Exception ex)
@@ -76,13 +77,14 @@ namespace BookStore.API.Controllers
             }
         }
 
-        // GET: api/Books/discounted?count=10
+        // GET: api/Books/discounted
         [HttpGet("discounted")]
-        public async Task<IActionResult> GetDiscountedBooks([FromQuery] int count = 10)
+        public async Task<IActionResult> GetDiscountedBooks([FromQuery] int count = 0)
         {
             try
             {
-                var products = await _bookService.GetDiscountedBooksAsync(count);
+                // If count is 0 or not specified, get all discounted books
+                var products = await _bookService.GetDiscountedBooksAsync(count == 0 ? int.MaxValue : count);
                 return Ok(products);
             }
             catch (Exception ex)

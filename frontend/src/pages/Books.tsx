@@ -40,12 +40,26 @@ export default function Books() {
   const [width, setWidth] = useState<number>(0);
   const [lengthUnit, setLengthUnit] = useState('cm');
   const [pageCount, setPageCount] = useState<number>(0);
+  const [discountedPrice, setDiscountedPrice] = useState<number | undefined>();
+  const [discountBadge, setDiscountBadge] = useState<string>('');
 
   const fetchBooks = useCallback(async () => {
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const data: any = await axiosClient.get('/Books');
-      setBooks(data);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const booksWithTypes: Book[] = data.map((b: any) => ({
+        ...b,
+        price: parseFloat(String(b.price)),
+        stock: parseInt(String(b.stock)),
+        discountedPrice: b.discountedPrice ? parseFloat(String(b.discountedPrice)) : undefined,
+        length: b.length ? parseFloat(String(b.length)) : undefined,
+        width: b.width ? parseFloat(String(b.width)) : undefined,
+        pageCount: b.pageCount ? parseInt(String(b.pageCount)) : undefined
+      }));
+      console.log('Books fetched:', booksWithTypes);
+      console.log('Books with discounts:', booksWithTypes.filter(b => b.discountedPrice));
+      setBooks(booksWithTypes);
     } catch {
       toast.error('Lỗi khi tải danh sách sách!');
     }
@@ -89,6 +103,8 @@ export default function Books() {
       setWidth(book.width || 0);
       setLengthUnit(book.lengthUnit || 'cm');
       setPageCount(book.pageCount || 0);
+      setDiscountedPrice(book.discountedPrice);
+      setDiscountBadge(book.discountBadge || '');
     } else {
       setEditingId(null);
       setTitle('');
@@ -104,6 +120,8 @@ export default function Books() {
       setWidth(0);
       setLengthUnit('cm');
       setPageCount(0);
+      setDiscountedPrice(undefined);
+      setDiscountBadge('');
     }
     setIsModalOpen(true);
   };
@@ -140,7 +158,9 @@ export default function Books() {
         length: length || undefined,
         width: width || undefined,
         lengthUnit,
-        pageCount: pageCount || undefined
+        pageCount: pageCount || undefined,
+        discountedPrice: discountedPrice || undefined,
+        discountBadge: discountBadge || undefined
       };
 
       if (editingId) {
@@ -294,7 +314,23 @@ export default function Books() {
                   <td className="p-3 sm:p-4 font-semibold text-slate-900 truncate max-w-xs text-xs sm:text-base">{book.title}</td>
                   <td className="p-3 sm:p-4 hidden sm:table-cell text-xs sm:text-base">{book.authorName}</td>
                   <td className="p-3 sm:p-4 hidden sm:table-cell text-xs sm:text-base">{book.categoryName}</td>
-                  <td className="p-3 sm:p-4 font-bold text-slate-800 text-xs sm:text-base">{book.price.toLocaleString('vi-VN')} đ</td>
+                  <td className="p-3 sm:p-4 text-xs sm:text-base">
+                    <div className="flex flex-col gap-1">
+                      {book.discountedPrice !== undefined && book.discountedPrice !== null && book.discountedPrice < book.price ? (
+                        <>
+                          <div className="flex items-center gap-2">
+                            <span className="font-bold text-orange-500">{Number(book.discountedPrice).toLocaleString('vi-VN')} đ</span>
+                            {book.discountBadge && (
+                              <span className="inline-block bg-red-500 text-white px-2 py-0.5 text-xs font-bold rounded-none">{book.discountBadge}</span>
+                            )}
+                          </div>
+                          <span className="text-gray-400 line-through text-xs">{Number(book.price).toLocaleString('vi-VN')} đ</span>
+                        </>
+                      ) : (
+                        <span className="font-bold text-slate-800">{Number(book.price).toLocaleString('vi-VN')} đ</span>
+                      )}
+                    </div>
+                  </td>
                   <td className="p-3 sm:p-4 text-xs sm:text-base">{book.stock} cuốn</td>
                   <td className="p-3 sm:p-4 flex justify-center gap-2 sm:gap-3">
                     {!showTrash ? (
@@ -463,7 +499,11 @@ export default function Books() {
             title: 'Thông tin bán hàng',
             items: [
               { label: 'Giá', value: `${selectedBook.price.toLocaleString('vi-VN')} đ` },
-              { label: 'Kho hàng', value: `${selectedBook.stock} cuốn` }
+              { label: 'Kho hàng', value: `${selectedBook.stock} cuốn` },
+              ...(selectedBook.discountedPrice !== undefined && selectedBook.discountedPrice > 0 ? [
+                { label: 'Giá giảm', value: `${selectedBook.discountedPrice.toLocaleString('vi-VN')} đ` },
+                { label: 'Badge', value: selectedBook.discountBadge || '-' }
+              ] : [])
             ]
           },
           {

@@ -102,11 +102,16 @@ export default function CheckoutPage() {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const response: any = await axiosClient.post('/Orders', orderData);
       
-      // Clear cart using API
+      // Remove only the purchased items from cart, not all items
       try {
-        await axiosClient.delete('/cart');
-      } catch {
-        // If delete fails, just dispatch event
+        for (const item of cart) {
+          if (item.cartItemId) {
+            await axiosClient.delete(`/cart/items/${item.cartItemId}`);
+          }
+        }
+      } catch (error) {
+        console.error('Error removing items from cart:', error);
+        // If deletion fails, still proceed
       }
       
       // Dispatch custom event to update badge

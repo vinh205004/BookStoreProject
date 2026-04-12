@@ -14,6 +14,8 @@
         public int? PageCount { get; set; }
         public string? MainImageUrl { get; set; }
         public double? Rating { get; set; }
+        public int ReviewCount { get; set; } = 0;
+        public int SoldQuantity { get; set; } = 0;
         public bool HasDiscount { get; set; }
         public decimal? DiscountedPrice { get; set; }
         public string? DiscountBadge { get; set; }
@@ -40,6 +42,8 @@
         public int? PageCount { get; set; }
         public List<string> ImageUrls { get; set; } = new List<string>();
         public double? Rating { get; set; }
+        public int ReviewCount { get; set; } = 0;
+        public int SoldQuantity { get; set; } = 0;
         public decimal? DiscountedPrice { get; set; }
         public string? DiscountBadge { get; set; }
         public string? DiscountVoucherCode { get; set; }

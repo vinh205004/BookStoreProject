@@ -45,8 +45,9 @@ export const addToGuestCart = (product: any, quantity: number): { success: boole
       bookId: product.bookId,
       bookTitle: product.title,
       price: product.price,
+      discountedPrice: product.discountedPrice || product.price,
       quantity,
-      imageUrl: product.imageUrls && product.imageUrls.length > 0 ? product.imageUrls[0] : '',
+      imageUrl: product.imageUrls && product.imageUrls.length > 0 ? product.imageUrls[0] : (product.mainImageUrl || product.imageUrl || ''),
       stock: product.stock
     });
   }
@@ -68,7 +69,7 @@ export const syncGuestCartToBackend = async () => {
       console.error('Failed to sync guest cart item', err);
     }
   }
-  clearGuestCart();
+  // Giữ lại giỏ hàng ảo trong local storage cho tới khi đăng xuất theo yêu cầu
 };
 
 export const removeFromGuestCart = (bookId: string) => {

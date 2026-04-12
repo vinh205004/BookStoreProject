@@ -12,7 +12,7 @@ namespace BookStore.API.Repositories
         Task UpdateAsync(Book book);
 
         // Customer search & filter
-        Task<IEnumerable<ProductSearchDto>> SearchBooksAsync(string? searchQuery = null, string? categoryId = null, string? authorId = null, string? publisherId = null, string? targetAudience = null, decimal? minPrice = null, decimal? maxPrice = null);
+        Task<IEnumerable<ProductSearchDto>> SearchBooksAsync(string? searchQuery = null, string? categoryId = null, string? authorId = null, string? publisherId = null, string? targetAudience = null, decimal? minPrice = null, decimal? maxPrice = null, bool? hasDiscount = null);
         Task<ProductDetailDto?> GetBookDetailAsync(string bookId);
         Task<IEnumerable<string>> GetDistinctTargetAudiencesAsync();
         Task<IEnumerable<ProductSearchDto>> GetFeaturedBooksAsync(int count = 10);

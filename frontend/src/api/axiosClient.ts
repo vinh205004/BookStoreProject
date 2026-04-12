@@ -42,6 +42,10 @@ axiosClient.interceptors.response.use(
         data: error.response?.data,
         message: error.message
       });
+    } else {
+      // Auto logout on 401
+      localStorage.removeItem('token');
+      window.location.href = '/login';
     }
     
     // Reject với error object có structure nhất quán

@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+﻿import { useState, useEffect, useRef } from 'react';
 import { ArrowRight } from 'lucide-react';
 import { toast } from 'react-toastify';
 import axiosClient from '../api/axiosClient';
@@ -20,6 +20,8 @@ interface Product {
   discountBadge?: string;
   discountedPrice?: number;
   rating?: number;
+  reviewCount?: number;
+  soldQuantity?: number;
   discountVoucherCode?: string;
   categoryId?: string;
 }
@@ -46,12 +48,50 @@ export default function HomePage() {
   const [topSelling, setTopSelling] = useState<Product[]>([]);
   const [banners, setBanners] = useState<Banner[]>([]);
 
+  const discountedRef = useRef<HTMLDivElement>(null);
+  const topRatedRef = useRef<HTMLDivElement>(null);
+  const topSellingRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     fetchBanners();
     fetchDiscounted();
     fetchTopRated();
     fetchTopSelling();
     fetchCategories();
+  }, []);
+
+  useEffect(() => {
+    const handleWheel = (e: WheelEvent, ref: React.RefObject<HTMLDivElement | null>) => {
+      if (!ref.current) return;
+      
+      const scrollWidth = ref.current.scrollWidth;
+      const clientWidth = ref.current.clientWidth;
+      
+      // Only handle horizontal scroll if there's content to scroll
+      if (scrollWidth > clientWidth) {
+        e.preventDefault();
+        // Scroll horizontally based on wheel movement
+        ref.current.scrollLeft += e.deltaY > 0 ? 50 : -50;
+      }
+    };
+
+    const discountedContainer = discountedRef.current;
+    const topRatedContainer = topRatedRef.current;
+    const topSellingContainer = topSellingRef.current;
+
+    const handleWheelDiscounted = (e: WheelEvent) => handleWheel(e, discountedRef);
+    const handleWheelTopRated = (e: WheelEvent) => handleWheel(e, topRatedRef);
+    const handleWheelTopSelling = (e: WheelEvent) => handleWheel(e, topSellingRef);
+
+    discountedContainer?.addEventListener('wheel', handleWheelDiscounted, { passive: false });
+    topRatedContainer?.addEventListener('wheel', handleWheelTopRated, { passive: false });
+    topSellingContainer?.addEventListener('wheel', handleWheelTopSelling, { passive: false });
+
+    return () => {
+      discountedContainer?.removeEventListener('wheel', handleWheelDiscounted);
+      topRatedContainer?.removeEventListener('wheel', handleWheelTopRated);
+      topSellingContainer?.removeEventListener('wheel', handleWheelTopSelling);
+    };
   }, []);
 
   const fetchBanners = async () => {
@@ -68,7 +108,7 @@ export default function HomePage() {
     try {
       setLoading(true);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const response: any = await axiosClient.get('/Books/discounted?count=10');
+      const response: any = await axiosClient.get('/Books/discounted');
       setDiscounted(response);
     } catch {
       toast.error('Lỗi khi tải sản phẩm!');
@@ -108,7 +148,7 @@ export default function HomePage() {
     }
   };
 
-  const renderStars = (rating?: number) => {
+  const renderStars = (rating?: number, reviewCount?: number) => {
     if (rating === undefined || rating === null) return null;
     const stars = [];
     for (let i = 1; i <= 5; i++) {
@@ -118,7 +158,10 @@ export default function HomePage() {
             </span>
         );
     }
-    return <div className="flex mt-1">{stars}</div>;
+    return <div className="flex mt-1 items-center gap-2">
+        <div className="flex">{stars}</div>
+        {reviewCount !== undefined && <span className="text-xs text-gray-500">({reviewCount})</span>}
+    </div>;
   };
 
   return (
@@ -208,9 +251,9 @@ export default function HomePage() {
       <section id="discounted" className="py-12 sm:py-16 lg:py-20 bg-orange-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between mb-8">
-            <h2 className="text-3xl sm:text-4xl font-bold text-gray-800">10 Sản Phẩm Giảm Giá</h2>
-            <a href="/products" className="text-orange-500 hover:text-orange-600 font-bold flex items-center gap-2 transition">
-              Xem tất cả
+            <h2 className="text-3xl sm:text-4xl font-bold text-gray-800">Sản phẩm giảm giá</h2>
+            <a href="/products?discount=true" className="text-orange-500 hover:text-orange-600 font-bold flex items-center gap-2 transition">
+              Xem tất cả sản phẩm giảm giá
               <ArrowRight size={20} />
             </a>
           </div>
@@ -220,44 +263,47 @@ export default function HomePage() {
               <p className="text-gray-500">Đang tải sản phẩm...</p>
             </div>
           ) : (
-            <div className="flex overflow-x-auto gap-6 hide-scrollbar snap-x snap-mandatory pb-4" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+            <div ref={discountedRef} className="flex overflow-x-auto gap-4 snap-x snap-mandatory pb-4 scroll-smooth" style={{ scrollBehavior: 'smooth', touchAction: 'pan-x', WebkitOverflowScrolling: 'touch' }}>
               {discounted.map(product => (
                 <a
                   key={product.bookId}
                   href={"/product/" + product.bookId}
-                  className="bg-white rounded-lg shadow-md hover:shadow-lg transition group flex-none w-64 relative block snap-start shrink-0 flex flex-col"
+                  className="bg-white shadow-md hover:shadow-lg transition group flex-none w-64 relative block snap-start shrink-0 flex flex-col border-2 border-orange-500"
                 >
                   {product.discountBadge && (
-                    <div className="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded z-10 shadow-sm pointer-events-none">
+                    <div className="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-1 z-10 shadow-sm pointer-events-none">
                       {product.discountBadge}
                     </div>
                   )}
 
-                  <div className="aspect-square bg-gray-100 overflow-hidden rounded-t-lg">
+                  <div className="aspect-square bg-gray-100 overflow-hidden border-2 border-orange-500">
                     <img src={product.mainImageUrl || '/placeholder.jpg'} alt={product.title} className="w-full h-full object-cover group-hover:scale-105 transition" />
                   </div>
 
-                  <div className="p-4 flex flex-col flex-1 justify-between gap-2">
+                  <div className="p-2 flex flex-col flex-1 justify-between gap-1">
                     <div>
-                        <h3 className="font-bold text-gray-800 line-clamp-2 mb-1 group-hover:text-orange-500 transition">
-                        {product.title}
-                        </h3>
-                        <p className="text-sm text-gray-600 mb-1 line-clamp-1">{product.authorName}</p>
-                        {renderStars(product.rating)}
+                        <div className="flex items-center gap-1 mb-1">
+                          <h3 className="font-bold text-sm text-gray-800 line-clamp-1 flex-1 group-hover:text-orange-500 transition">
+                            {product.title}
+                          </h3>
+                          <span className="text-xs text-gray-600 flex-shrink-0">-</span>
+                          <p className="text-xs text-gray-600 line-clamp-1 flex-1">{product.authorName}</p>
+                        </div>
+                        {renderStars(product.rating, product.reviewCount)}
                     </div>
                     <div className="flex flex-col mt-auto">
                       {product.discountedPrice ? (
                         <div className="flex flex-col">
-                          <span className="text-xl font-bold text-orange-500">{product.discountedPrice.toLocaleString()}₫</span>
-                          <span className="text-sm line-through text-gray-400">{product.price.toLocaleString()}₫</span>
+                          <span className="text-sm font-bold text-orange-500">{product.discountedPrice.toLocaleString()}₫</span>
+                          <span className="text-xs line-through text-gray-400">{product.price.toLocaleString()}₫</span>
                         </div>
                       ) : (
-                        <span className="text-xl font-bold text-orange-500">{product.price.toLocaleString()}₫</span>
+                        <span className="text-sm font-bold text-orange-500">{product.price.toLocaleString()}₫</span>
                       )}
                     </div>
-                    <div className="flex items-end justify-between mt-2">
-                      <span></span>
-                      <span className={"text-xs px-2 py-1 rounded " + (product.stock > 0 ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700")}>
+                    <div className="flex items-end justify-between mt-1 text-xs text-gray-500">
+                      <span>{product.soldQuantity ?? 0} đã bán</span>
+                      <span className={"px-2 py-0.5 " + (product.stock > 0 ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700")}>
                         {product.stock > 0 ? "Có hàng" : "Hết"}
                       </span>
                     </div>
@@ -281,39 +327,47 @@ export default function HomePage() {
               <p className="text-gray-500">Đang tải sản phẩm...</p>
             </div>
           ) : (
-            <div className="flex overflow-x-auto gap-6 hide-scrollbar snap-x snap-mandatory pb-4" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+            <div ref={topRatedRef} className="flex overflow-x-auto gap-4 snap-x snap-mandatory pb-4 scroll-smooth" style={{ scrollBehavior: 'smooth', touchAction: 'pan-x', WebkitOverflowScrolling: 'touch' }}>
               {topRated.map(product => (
                 <a
                   key={product.bookId}
                   href={"/product/" + product.bookId}
-                  className="bg-white rounded-lg shadow-md hover:shadow-lg transition group flex-none w-64 snap-start relative border border-gray-100 flex flex-col"
+                  className="bg-white shadow-md hover:shadow-lg transition group flex-none w-64 snap-start relative border-2 border-orange-500 flex flex-col"
                 >
-                  <div className="aspect-square bg-gray-100 overflow-hidden rounded-t-lg">
+                  {product.discountBadge && (
+                    <div className="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-1 z-10 shadow-sm pointer-events-none">
+                      {product.discountBadge}
+                    </div>
+                  )}
+                  <div className="aspect-square bg-gray-100 overflow-hidden border-2 border-orange-500">
                     <img src={product.mainImageUrl || '/placeholder.jpg'} alt={product.title} className="w-full h-full object-cover group-hover:scale-105 transition" />
                   </div>
 
-                  <div className="p-4 flex flex-col flex-1 justify-between gap-2">
+                  <div className="p-2 flex flex-col flex-1 justify-between gap-1">
                     <div>
-                      <h3 className="font-bold text-gray-800 line-clamp-2 mb-1 group-hover:text-orange-500 transition">
-                        {product.title}
-                      </h3>
-                      <p className="text-sm text-gray-600 mb-1 line-clamp-1">{product.authorName}</p>
-                      {renderStars(product.rating)}
+                      <div className="flex items-center gap-1 mb-1">
+                        <h3 className="font-bold text-sm text-gray-800 line-clamp-1 flex-1 group-hover:text-orange-500 transition">
+                          {product.title}
+                        </h3>
+                        <span className="text-xs text-gray-600 flex-shrink-0">-</span>
+                        <p className="text-xs text-gray-600 line-clamp-1 flex-1">{product.authorName}</p>
+                      </div>
+                      {renderStars(product.rating, product.reviewCount)}
                     </div>
 
                     <div className="flex flex-col mt-auto">
                       {product.discountedPrice ? (
                         <div className="flex flex-col">
-                          <span className="text-xl font-bold text-orange-500">{product.discountedPrice.toLocaleString()}₫</span>
-                          <span className="text-sm line-through text-gray-400">{product.price.toLocaleString()}₫</span>
+                          <span className="text-sm font-bold text-orange-500">{product.discountedPrice.toLocaleString()}₫</span>
+                          <span className="text-xs line-through text-gray-400">{product.price.toLocaleString()}₫</span>
                         </div>
                       ) : (
-                        <span className="text-xl font-bold text-orange-500">{product.price.toLocaleString()}₫</span>
+                        <span className="text-sm font-bold text-orange-500">{product.price.toLocaleString()}₫</span>
                       )}
                     </div>
-                    <div className="flex items-end justify-between mt-2">
-                      <span></span>
-                      <span className={"text-xs px-2 py-1 rounded " + (product.stock > 0 ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700")}>
+                    <div className="flex items-end justify-between mt-1 text-xs text-gray-500">
+                      <span>{product.soldQuantity ?? 0} đã bán</span>
+                      <span className={"px-2 py-0.5 " + (product.stock > 0 ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700")}>
                         {product.stock > 0 ? "Có hàng" : "Hết"}
                       </span>
                     </div>
@@ -337,39 +391,47 @@ export default function HomePage() {
               <p className="text-gray-500">Đang tải sản phẩm...</p>
             </div>
           ) : (
-            <div className="flex overflow-x-auto gap-6 hide-scrollbar snap-x snap-mandatory pb-4" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+            <div ref={topSellingRef} className="flex overflow-x-auto gap-4 snap-x snap-mandatory pb-4 scroll-smooth" style={{ scrollBehavior: 'smooth', touchAction: 'pan-x', WebkitOverflowScrolling: 'touch' }}>
               {topSelling.map(product => (
                 <a
                   key={product.bookId}
                   href={"/product/" + product.bookId}
-                  className="bg-white rounded-lg shadow-md hover:shadow-lg transition group flex-none w-64 snap-start relative border border-gray-100 flex flex-col"
+                  className="bg-white shadow-md hover:shadow-lg transition group flex-none w-64 snap-start relative border-2 border-orange-500 flex flex-col"
                 >
-                  <div className="aspect-square bg-gray-100 overflow-hidden rounded-t-lg">
+                  {product.discountBadge && (
+                    <div className="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-1 z-10 shadow-sm pointer-events-none">
+                      {product.discountBadge}
+                    </div>
+                  )}
+                  <div className="aspect-square bg-gray-100 overflow-hidden border-2 border-orange-500">
                     <img src={product.mainImageUrl || '/placeholder.jpg'} alt={product.title} className="w-full h-full object-cover group-hover:scale-105 transition" />
                   </div>
 
-                  <div className="p-4 flex flex-col flex-1 justify-between gap-2">
+                  <div className="p-2 flex flex-col flex-1 justify-between gap-1">
                     <div>
-                      <h3 className="font-bold text-gray-800 line-clamp-2 mb-1 group-hover:text-orange-500 transition">
-                        {product.title}
-                      </h3>
-                      <p className="text-sm text-gray-600 mb-1 line-clamp-1">{product.authorName}</p>
-                      {renderStars(product.rating)}
+                      <div className="flex items-center gap-1 mb-1">
+                        <h3 className="font-bold text-sm text-gray-800 line-clamp-1 flex-1 group-hover:text-orange-500 transition">
+                          {product.title}
+                        </h3>
+                        <span className="text-xs text-gray-600 flex-shrink-0">-</span>
+                        <p className="text-xs text-gray-600 line-clamp-1 flex-1">{product.authorName}</p>
+                      </div>
+                      {renderStars(product.rating, product.reviewCount)}
                     </div>
 
                     <div className="flex flex-col mt-auto">
                       {product.discountedPrice ? (
                         <div className="flex flex-col">
-                          <span className="text-xl font-bold text-orange-500">{product.discountedPrice.toLocaleString()}₫</span>
-                          <span className="text-sm line-through text-gray-400">{product.price.toLocaleString()}₫</span>
+                          <span className="text-sm font-bold text-orange-500">{product.discountedPrice.toLocaleString()}₫</span>
+                          <span className="text-xs line-through text-gray-400">{product.price.toLocaleString()}₫</span>
                         </div>
                       ) : (
-                        <span className="text-xl font-bold text-orange-500">{product.price.toLocaleString()}₫</span>
+                        <span className="text-sm font-bold text-orange-500">{product.price.toLocaleString()}₫</span>
                       )}
                     </div>
-                    <div className="flex items-end justify-between mt-2">
-                      <span></span>
-                      <span className={"text-xs px-2 py-1 rounded " + (product.stock > 0 ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700")}>
+                    <div className="flex items-end justify-between mt-1 text-xs text-gray-500">
+                      <span>{product.soldQuantity ?? 0} đã bán</span>
+                      <span className={"px-2 py-0.5 " + (product.stock > 0 ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700")}>
                         {product.stock > 0 ? "Có hàng" : "Hết"}
                       </span>
                     </div>

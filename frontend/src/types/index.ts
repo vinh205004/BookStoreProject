@@ -34,6 +34,9 @@ export interface Book {
   discountedPrice?: number;
   discountBadge?: string;
   discountVoucherCode?: string;
+  rating?: number;
+  reviewCount?: number;
+  soldQuantity?: number;
 }
 export interface Publisher {
   publisherId: string;

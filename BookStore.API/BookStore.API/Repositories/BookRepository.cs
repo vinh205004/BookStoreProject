@@ -77,7 +77,8 @@ namespace BookStore.API.Repositories
             string? publisherId = null,
             string? targetAudience = null,
             decimal? minPrice = null,
-            decimal? maxPrice = null)
+            decimal? maxPrice = null,
+            bool? hasDiscount = null)
         {
             var query = _context.Books
                 .Where(b => !b.IsHidden)
@@ -134,13 +135,35 @@ namespace BookStore.API.Repositories
             }
 
             var books = await query.ToListAsync();
+            
+            // Get sold quantities for all books
+            var soldQuantities = await _context.OrderItems
+                .Where(oi => oi.Order != null && oi.Order.Status != "Cancelled")
+                .GroupBy(oi => oi.BookId)
+                .Select(g => new { BookId = g.Key, TotalQuantity = g.Sum(oi => oi.Quantity) })
+                .ToDictionaryAsync(x => x.BookId, x => x.TotalQuantity);
+            
             var now = DateTime.UtcNow;
             var vouchers = await _context.Vouchers
                 .Where(v => v.IsActive && v.StartDate <= now && v.ExpirationDate >= now)
                 .ToListAsync();
 
+            // Filter by discount if hasDiscount is true
+            if (hasDiscount.HasValue && hasDiscount.Value)
+            {
+                books = books
+                    .Where(b => vouchers.Any(v =>
+                        v.ApplicableProductId == b.BookId ||
+                        (v.ApplicableCategoryId == b.CategoryId && string.IsNullOrEmpty(v.ApplicableProductId))
+                    ))
+                    .ToList();
+            }
+
             return books.Select(b => {
-                var bestVoucher = vouchers.FirstOrDefault(v => v.ApplicableProductId == b.BookId || (v.ApplicableCategoryId == b.CategoryId && string.IsNullOrEmpty(v.ApplicableProductId)));
+                var bestVoucher = vouchers
+                    .Where(v => v.ApplicableProductId == b.BookId || (v.ApplicableCategoryId == b.CategoryId && string.IsNullOrEmpty(v.ApplicableProductId)))
+                    .OrderByDescending(v => v.DiscountType == "Percentage" ? b.Price * v.DiscountAmount / 100 : v.DiscountAmount)
+                    .FirstOrDefault();
                 
                 var searchDto = new ProductSearchDto
                 {
@@ -150,13 +173,14 @@ namespace BookStore.API.Repositories
                     Stock = b.Stock,
                     AuthorName = b.Author?.Name ?? "Chua xac dinh",
                     CategoryId = b.CategoryId,
-CategoryName = b.Category?.Name ?? "Chua xac dinh",
-
+                    CategoryName = b.Category?.Name ?? "Chua xac dinh",
                     PublisherName = b.Publisher?.Name ?? "",
                     TargetAudience = b.TargetAudience ?? "Truong thanh (18+)",
                     PageCount = b.PageCount,
                     MainImageUrl = b.BookImages.OrderBy(i => i.ImageId).FirstOrDefault()?.ImageUrl,
-                    Rating = b.Reviews != null && b.Reviews.Any() ? Math.Round(b.Reviews.Average(r => r.Rating), 1) : 0
+                    Rating = b.Reviews != null && b.Reviews.Any() ? Math.Round(b.Reviews.Average(r => r.Rating), 1) : 0,
+                    ReviewCount = b.Reviews?.Count ?? 0,
+                    SoldQuantity = soldQuantities.ContainsKey(b.BookId) ? soldQuantities[b.BookId] : 0
                 };
 
                 if (bestVoucher != null)
@@ -188,6 +212,11 @@ CategoryName = b.Category?.Name ?? "Chua xac dinh",
 
             if (book == null) return null;
 
+            // Get sold quantity
+            var soldQuantity = await _context.OrderItems
+                .Where(oi => oi.BookId == bookId && oi.Order != null && oi.Order.Status != "Cancelled")
+                .SumAsync(oi => oi.Quantity);
+
             var result = new ProductDetailDto
             {
                 BookId = book.BookId,
@@ -207,7 +236,9 @@ CategoryName = b.Category?.Name ?? "Chua xac dinh",
                 LengthUnit = book.LengthUnit ?? "cm",
                 PageCount = book.PageCount,
                 ImageUrls = book.BookImages.OrderBy(img => img.ImageId).Select(img => img.ImageUrl).ToList(),
-                Rating = book.Reviews != null && book.Reviews.Any() ? Math.Round(book.Reviews.Average(r => r.Rating), 1) : 0
+                Rating = book.Reviews != null && book.Reviews.Any() ? Math.Round(book.Reviews.Average(r => r.Rating), 1) : 0,
+                ReviewCount = book.Reviews?.Count ?? 0,
+                SoldQuantity = soldQuantity
             };
             
             var bestVoucher = await _context.Vouchers
@@ -259,6 +290,13 @@ CategoryName = b.Category?.Name ?? "Chua xac dinh",
                 .Take(count)
                 .ToListAsync();
 
+            // Get sold quantities
+            var soldQuantities = await _context.OrderItems
+                .Where(oi => oi.Order != null && oi.Order.Status != "Cancelled")
+                .GroupBy(oi => oi.BookId)
+                .Select(g => new { BookId = g.Key, TotalQuantity = g.Sum(oi => oi.Quantity) })
+                .ToDictionaryAsync(x => x.BookId, x => x.TotalQuantity);
+
             return books.Select(b => {
                 var bestVoucher = vouchers.FirstOrDefault(v => v.ApplicableProductId == b.BookId || (v.ApplicableCategoryId == b.CategoryId && string.IsNullOrEmpty(v.ApplicableProductId)));
                 
@@ -270,12 +308,14 @@ CategoryName = b.Category?.Name ?? "Chua xac dinh",
                     Stock = b.Stock,
                     AuthorName = b.Author?.Name ?? "Chua xac dinh",
                     CategoryId = b.CategoryId,
-CategoryName = b.Category?.Name ?? "Chua xac dinh",
+                    CategoryName = b.Category?.Name ?? "Chua xac dinh",
                     PublisherName = b.Publisher?.Name ?? "",
                     TargetAudience = b.TargetAudience ?? "Truong thanh (18+)",
                     PageCount = b.PageCount,
                     MainImageUrl = b.BookImages.OrderBy(i => i.ImageId).FirstOrDefault()?.ImageUrl,
-                    Rating = b.Reviews != null && b.Reviews.Any() ? Math.Round(b.Reviews.Average(r => r.Rating), 1) : 0
+                    Rating = b.Reviews != null && b.Reviews.Any() ? Math.Round(b.Reviews.Average(r => r.Rating), 1) : 0,
+                    ReviewCount = b.Reviews?.Count ?? 0,
+                    SoldQuantity = soldQuantities.ContainsKey(b.BookId) ? soldQuantities[b.BookId] : 0
                 };
 
                 if (bestVoucher != null)
@@ -326,12 +366,24 @@ CategoryName = b.Category?.Name ?? "Chua xac dinh",
                 .Include(b => b.Reviews)
                 .ToListAsync();
 
-            var result = discountedBooks
+            var filteredBooks = discountedBooks
                 .Where(b => activeVouchers.Any(v => 
                     v.ApplicableProductId == b.BookId || 
                     (v.ApplicableCategoryId == b.CategoryId && string.IsNullOrEmpty(v.ApplicableProductId))
                 ))
+                .OrderBy(b => b.Price)
                 .Take(count)
+                .ToList();
+
+            // Get sold quantities for these books
+            var bookIds = filteredBooks.Select(b => b.BookId).ToList();
+            var soldQuantities = await _context.OrderItems
+                .Where(oi => bookIds.Contains(oi.BookId) && oi.Order != null && oi.Order.Status != "Cancelled")
+                .GroupBy(oi => oi.BookId)
+                .Select(g => new { BookId = g.Key, TotalQuantity = g.Sum(oi => oi.Quantity) })
+                .ToDictionaryAsync(x => x.BookId, x => x.TotalQuantity);
+
+            var result = filteredBooks
                 .Select(b => 
                 {
                     // Lấy voucher có mức giảm lớn nhất (đơn giản hoá logic giảm giá)
@@ -349,13 +401,14 @@ CategoryName = b.Category?.Name ?? "Chua xac dinh",
                         Stock = b.Stock,
                         AuthorName = b.Author?.Name ?? "Chưa xác định",
                         CategoryId = b.CategoryId,
-CategoryName = b.Category?.Name ?? "Chưa xác định",
-
+                        CategoryName = b.Category?.Name ?? "Chưa xác định",
                         PublisherName = b.Publisher?.Name ?? "",
                         TargetAudience = b.TargetAudience ?? "Trưởng thành",
                         PageCount = b.PageCount,
                         MainImageUrl = b.BookImages.OrderBy(i => i.ImageId).FirstOrDefault()?.ImageUrl,
-                        Rating = b.Reviews != null && b.Reviews.Any() ? Math.Round(b.Reviews.Average(r => r.Rating), 1) : 0
+                        Rating = b.Reviews != null && b.Reviews.Any() ? Math.Round(b.Reviews.Average(r => r.Rating), 1) : 0,
+                        ReviewCount = b.Reviews?.Count ?? 0,
+                        SoldQuantity = soldQuantities.ContainsKey(b.BookId) ? soldQuantities[b.BookId] : 0
                     };
 
                     if (bestVoucher != null)
@@ -380,7 +433,7 @@ CategoryName = b.Category?.Name ?? "Chưa xác định",
         {
             var books = await _context.OrderItems
                 .Include(oi => oi.Order)
-                .Where(oi => oi.Order.OrderDate.Month == month && oi.Order.OrderDate.Year == year && oi.Order.Status != "Cancelled")
+                .Where(oi => oi.Order != null && oi.Order.OrderDate.Month == month && oi.Order.OrderDate.Year == year && oi.Order.Status != "Cancelled")
                 .GroupBy(oi => oi.BookId)
                 .Select(g => new { BookId = g.Key, TotalQuantity = g.Sum(oi => oi.Quantity) })
                 .OrderByDescending(x => x.TotalQuantity)
@@ -418,6 +471,15 @@ CategoryName = b.Category?.Name ?? "Chưa xác định",
 
         private async Task<IEnumerable<ProductSearchDto>> MapToSearchDto(IEnumerable<Book> books)
         {
+            var bookIds = books.Select(b => b.BookId).ToList();
+            
+            // Get sold quantities for these books
+            var soldQuantities = await _context.OrderItems
+                .Where(oi => bookIds.Contains(oi.BookId) && oi.Order != null && oi.Order.Status != "Cancelled")
+                .GroupBy(oi => oi.BookId)
+                .Select(g => new { BookId = g.Key, TotalQuantity = g.Sum(oi => oi.Quantity) })
+                .ToDictionaryAsync(x => x.BookId, x => x.TotalQuantity);
+            
             var now = DateTime.UtcNow;
             var vouchers = await _context.Vouchers
                 .Where(v => v.IsActive && v.StartDate <= now && v.ExpirationDate >= now)
@@ -434,12 +496,14 @@ CategoryName = b.Category?.Name ?? "Chưa xác định",
                     Stock = b.Stock,
                     AuthorName = b.Author?.Name ?? "Chua xac dinh",
                     CategoryId = b.CategoryId,
-CategoryName = b.Category?.Name ?? "Chua xac dinh",
+                    CategoryName = b.Category?.Name ?? "Chua xac dinh",
                     PublisherName = b.Publisher?.Name ?? "",
                     TargetAudience = b.TargetAudience ?? "Truong thanh (18+)",
                     PageCount = b.PageCount,
                     MainImageUrl = b.BookImages.OrderBy(i => i.ImageId).FirstOrDefault()?.ImageUrl,
-                    Rating = b.Reviews != null && b.Reviews.Any() ? Math.Round(b.Reviews.Average(r => r.Rating), 1) : 0
+                    Rating = b.Reviews != null && b.Reviews.Any() ? Math.Round(b.Reviews.Average(r => r.Rating), 1) : 0,
+                    ReviewCount = b.Reviews?.Count ?? 0,
+                    SoldQuantity = soldQuantities.ContainsKey(b.BookId) ? soldQuantities[b.BookId] : 0
                 };
 
                 if (bestVoucher != null)
