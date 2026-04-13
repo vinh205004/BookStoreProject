@@ -29,7 +29,6 @@ import CheckoutPage from './userpages/Checkout/CheckoutPage';
 import ProfilePage from './userpages/Account/ProfilePage';
 import MyOrders from './userpages/Account/MyOrders';
 
-// Component tạm để test giao điện (đã bỏ)
 
 function App() {
   return (

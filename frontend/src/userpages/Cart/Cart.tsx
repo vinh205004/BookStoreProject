@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { Trash2, ShoppingBag, ArrowLeft } from 'lucide-react';
 import { toast } from 'react-toastify';
 import axiosClient from '../../api/axiosClient';
-import { getGuestCart, removeFromGuestCart, updateGuestCartQuantity } from '../../utils/cartUtils';
+import { getGuestCart, removeFromGuestCart, updateGuestCartQuantity, clearGuestCart } from '../../utils/cartUtils';
 
 interface CartItem {
   cartItemId?: string; // Added for API reference
@@ -173,9 +173,18 @@ export default function Cart() {
 
   const clearCart = async () => {
     if (window.confirm('Bạn chắc chắn muốn xóa tất cả sản phẩm?')) {
+      const token = localStorage.getItem('token');
+      if (!token || token === 'undefined' || token === 'null') {
+        clearGuestCart();
+        setCart({ items: [], totalPrice: 0, totalItems: 0 });
+        window.dispatchEvent(new Event('cart-updated'));
+        toast.info('Đã xóa tất cả sản phẩm');
+        return;
+      }
+
       try {
         await axiosClient.delete('/cart');
-        setCart({ items: [] });
+        setCart({ items: [], totalPrice: 0, totalItems: 0 });
         // Dispatch custom event to update badge
         window.dispatchEvent(new Event('cart-updated'));
         toast.info('Đã xóa tất cả sản phẩm');
@@ -208,12 +217,29 @@ export default function Cart() {
       
       // Check xem có sản phẩm nào áp được voucher không
       const selectedCartItems = cart.items.filter(item => selectedItems.includes(item.bookId));
-      const hasApplicable = selectedCartItems.some(item => item.discountVoucherCode !== data.code);
       
-      if (!hasApplicable) {
-        // Tất cả sản phẩm đều ko áp được (đều có hardcoded voucher này hoặc ko match điều kiện)
-        const allHaveHardcodedVoucher = selectedCartItems.every(item => item.discountVoucherCode === data.code);
-        if (allHaveHardcodedVoucher) {
+      const orderTotal = selectedCartItems.reduce((sum, item) => sum + getPrice(item) * item.quantity, 0);
+      if (orderTotal < data.minOrderValue) {
+        toast.error(`Đơn hàng (${selectedCartItems.length} sản phẩm) chưa đạt mức tối thiểu (${data.minOrderValue.toLocaleString('vi-VN')}₫)!`);
+        return;
+      }
+
+      let applicableTotal = 0;
+      let hasAlreadyHardcodedVoucher = false;
+
+      selectedCartItems.forEach(item => {
+        let isApplicable = true;
+        if (item.discountVoucherCode === data.code) {
+          isApplicable = false;
+          hasAlreadyHardcodedVoucher = true;
+        }
+        if (isApplicable) {
+          applicableTotal += getPrice(item) * item.quantity;
+        }
+      });
+
+      if (applicableTotal === 0) {
+        if (hasAlreadyHardcodedVoucher) {
           toast.error('Sản phẩm đã được admin áp mã này rồi, không thể dùng lại!');
         } else {
           toast.error('Mã giảm giá này không áp dụng cho các sản phẩm được chọn!');
@@ -242,7 +268,7 @@ export default function Cart() {
     const orderTotal = selectedCartItems.reduce((sum, item) => sum + getPrice(item) * item.quantity, 0);
 
     if (orderTotal < appliedVoucher.minOrderValue) {
-      toast.error(`Đơn hàng (${selectedCartItems.length} sản phẩm) chưa đạt mức tối thiểu (${appliedVoucher.minOrderValue.toLocaleString('vi-VN')}₫)!`);
+      toast.info(`Voucher đã bị gỡ do đơn hàng chưa đạt mức tối thiểu (${appliedVoucher.minOrderValue.toLocaleString('vi-VN')}₫)`);
       setAppliedVoucher(null);
       setDiscountAmount(0);
       return;
@@ -272,9 +298,9 @@ export default function Cart() {
     // Nếu không có item nào áp được voucher này
     if (applicableTotal === 0) {
       if (hasAlreadyHardcodedVoucher) {
-        toast.error('Sản phẩm đã được admin áp mã này rồi, không thể dùng lại!');
+        toast.info('Voucher đã bị gỡ vì các sản phẩm đã có mã admin.');
       } else {
-        toast.error('Mã giảm giá này không áp dụng cho các sản phẩm được chọn!');
+        toast.info('Voucher đã bị gỡ do thay đổi sản phẩm trong giỏ.');
       }
       setAppliedVoucher(null);
       setDiscountAmount(0);
