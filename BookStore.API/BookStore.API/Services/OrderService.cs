@@ -158,21 +158,22 @@ namespace BookStore.API.Services
                 bool isApplicableForVoucher = true;
                 if (appliedVoucher != null)
                 {
-                    if (!string.IsNullOrEmpty(appliedVoucher.ApplicableProductId) && item.BookId != appliedVoucher.ApplicableProductId)
-                    {
-                        isApplicableForVoucher = false;
-                    }
-                    else if (!string.IsNullOrEmpty(appliedVoucher.ApplicableCategoryId) && bookDetail?.CategoryId != appliedVoucher.ApplicableCategoryId)
-                    {
-                        isApplicableForVoucher = false;
-                    }
-                    else if (bookDetail?.DiscountVoucherCode == appliedVoucher.Code)
-                    {
-                        // Sách đã được áp cứng mã voucher này rồi, không được tính thêm vào applicableAmount ở giỏ hàng
-                        isApplicableForVoucher = false;
-                    }
-                }
-                
+                      if (bookDetail?.DiscountVoucherCode == appliedVoucher.Code)
+                      {
+                          // Sách đã được áp cứng mã voucher này rồi, không được tính thêm vào applicableAmount ở giỏ hàng
+                          isApplicableForVoucher = false;
+                      }
+                      else if (!string.IsNullOrEmpty(appliedVoucher.ApplicableProductId) || !string.IsNullOrEmpty(appliedVoucher.ApplicableCategoryId))
+                      {
+                          bool isProductMatch = !string.IsNullOrEmpty(appliedVoucher.ApplicableProductId) && ("," + appliedVoucher.ApplicableProductId + ",").Contains("," + item.BookId + ",");
+                          bool isCategoryMatch = !string.IsNullOrEmpty(appliedVoucher.ApplicableCategoryId) && bookDetail?.CategoryId == appliedVoucher.ApplicableCategoryId && currentPrice >= appliedVoucher.MinOrderValue;
+                          
+                          if (!isProductMatch && !isCategoryMatch)
+                          {
+                              isApplicableForVoucher = false;
+                          }
+                      }
+                  }
                 if (isApplicableForVoucher)
                 {
                     applicableAmount += itemTotal;

@@ -27,6 +27,7 @@ namespace BookStore.API.Services
                 ExpirationDate = v.ExpirationDate,
                 ApplicableCategoryId = v.ApplicableCategoryId,
                 ApplicableProductId = v.ApplicableProductId,
+                IsHidden = v.IsHidden,
                 IsActive = v.IsActive
             });
         }
@@ -49,6 +50,7 @@ namespace BookStore.API.Services
                 ExpirationDate = v.ExpirationDate,
                 ApplicableCategoryId = v.ApplicableCategoryId,
                 ApplicableProductId = v.ApplicableProductId,
+                IsHidden = v.IsHidden,
                 IsActive = v.IsActive
             };
         }
@@ -77,6 +79,7 @@ namespace BookStore.API.Services
                 ExpirationDate = dto.ExpirationDate,
                 ApplicableCategoryId = dto.ApplicableCategoryId,
                 ApplicableProductId = dto.ApplicableProductId,
+                IsHidden = dto.IsHidden,
                 IsActive = true // Mặc định tạo ra là hoạt động
             };
 
@@ -117,6 +120,7 @@ namespace BookStore.API.Services
             voucher.ExpirationDate = dto.ExpirationDate.ToUniversalTime();
             voucher.ApplicableCategoryId = dto.ApplicableCategoryId;
             voucher.ApplicableProductId = dto.ApplicableProductId;
+            voucher.IsHidden = dto.IsHidden;
             voucher.IsActive = dto.IsActive;
 
             await _repo.UpdateAsync(voucher);

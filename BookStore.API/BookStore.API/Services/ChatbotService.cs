@@ -33,14 +33,14 @@ namespace BookStore.API.Services
                 .Where(b => !b.IsHidden)
                 .Select(b => new
                 {
-                    Id = b.BookId,
-                    Title = b.Title,
-                    Price = b.Price,
-                    Category = b.Category != null ? b.Category.Name : "Khác",
-                    Author = b.Author != null ? b.Author.Name : "Khác",
-                    Description = b.Description // Truyền luôn cả mô tả để Bot giải thích cốt truyện
-                })
-                .ToListAsync();
+                Id = b.BookId,
+                Title = b.Title,
+                Price = b.Price,
+                Category = b.Category != null ? b.Category.Name : "Khác",
+                Author = b.Author != null ? b.Author.Name : "Khác",
+                Description = string.IsNullOrEmpty(b.Description) ? "" : (b.Description.Length > 100 ? b.Description.Substring(0, 100) + "..." : b.Description)
+            })
+            .ToListAsync();
 
             // 2. Tính TỔNG SỐ LƯỢNG ĐÃ BÁN của từng sách
             var soldStats = await _context.OrderItems
@@ -60,37 +60,40 @@ namespace BookStore.API.Services
                 })
                 .ToDictionaryAsync(x => x.BookId, x => x);
 
-            // 4. Kết hợp toàn bộ Sách + Đánh giá + Doanh số để "Train" nhanh cho Bot
-            var catalogData = allBooks.Select(b => new {
+            // 4. Lọc sách thông minh để giảm Token Size gửi lên API (Tránh bị Rate Limit 429)
+            var queryWords = userMessage.ToLower().Split(new[] { ' ', ',', '.', '?' }, StringSplitOptions.RemoveEmptyEntries).Where(w => w.Length > 2).ToList();
+            
+            var matchedBooks = allBooks.Where(b => queryWords.Any(w => 
+                b.Title.ToLower().Contains(w) || 
+                b.Category.ToLower().Contains(w) || 
+                b.Author.ToLower().Contains(w))).Take(3).ToList();
+
+            var topSellers = allBooks.OrderByDescending(b => soldStats.ContainsKey(b.Id) ? soldStats[b.Id] : 0).Take(1).ToList();
+            var topRated = allBooks.OrderByDescending(b => ratingStats.ContainsKey(b.Id) ? ratingStats[b.Id].Rating : 0).Take(1).ToList();
+
+            // Gộp lại và loại bỏ trùng lặp (chỉ cho AI xem tối đa ~5 quyển để tối ưu lượng Token tối đa)
+            var selectedBooks = matchedBooks.Union(topSellers).Union(topRated).DistinctBy(b => b.Id).ToList();
+
+            var catalogData = selectedBooks.Select(b => new {
                 b.Title,
                 b.Author,
                 b.Category,
                 b.Price,
-                b.Description,
+                // Lược bỏ bớt Description
                 Sold = soldStats.ContainsKey(b.Id) ? soldStats[b.Id] : 0,
-                Rating = ratingStats.ContainsKey(b.Id) ? ratingStats[b.Id].Rating : 0,
-                ReviewCount = ratingStats.ContainsKey(b.Id) ? ratingStats[b.Id].ReviewCount : 0
+                Rating = ratingStats.ContainsKey(b.Id) ? ratingStats[b.Id].Rating : 0
             }).ToList();
 
             // Để tránh json quá dài và mất định dạng, bỏ qua null values và format nhỏ gọn
             var contextJson = JsonSerializer.Serialize(catalogData, new JsonSerializerOptions { DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull });
 
-            // 5. Tạo Prompt Dạy Bot (System Instruction)
-            var prompt = $@"
-Bạn là nhân viên tư vấn sách 5 sao, nhiệt tình, chuyên nghiệp của nhà sách BookStore.
-Nhà sách BookStore hiện đang kinh doanh TOÀN BỘ danh sách các cuốn sách dưới đây (JSON Array). 
-Mỗi cuốn sách bao gồm Tên (Title), Tác giả (Author), Danh mục (Category), Giá (Price), Mô tả (Description), Số lượng bán (Sold), 
-Đánh giá trung bình (Rating), và Số lượt đánh giá (ReviewCount):
-
-{contextJson}
-
-Khách hàng của bạn đang hỏi: ""{userMessage}""
-
-Quy tắc bắt buộc phải tuân thủ để trả lời:
-1. LUÔN LUÔN tìm kiến thức và dữ liệu sách trong khối văn bản JSON được cung cấp bên trên để trả lời khách hàng. Bạn tuyệt đối KHÔNG ĐƯỢC đề xuất phần sách nào CÓ THẬT BÊN NGOÀI nhưng lại KHÔNG CÓ TRONG DANH SÁCH này. Bạn chỉ bán sách của riêng cửa hàng này.
-2. Nếu khách hỏi sách TỐT NHẤT NGAY BÂY GIỜ, BÁN CHẠY HOẶC ĐÁNH GIÁ CAO: bạn PHẢI quét trong danh sách để tìm cuốn có 'Sold' lớn nhất, hoặc 'Rating' cao nhất có nhiều 'ReviewCount' để trả lời khách hàng. Nếu như cửa hàng mới khởi tạo (Rating hay Sold = 0) thì bạn lấy một sách ngẫu nhiên trong danh mục có liên quan dựa vào Title hoặc Description để gợi ý với cách nói thân thiện ""Cuốn sách rất thích hợp để bạn trở thành người đầu tiên đánh giá..."".
-3. Nếu khách tìm theo THỂ LOẠI HOẶC CỐT TRUYỆN: Hãy tự đọc trường 'Description' và 'Category' trong JSON để chọn 2-3 cuốn có nội dung khớp nhất tư vấn cho họ.
-4. Trả lời nhiệt tình, ngôn từ tự nhiên, độ dài VỪA PHẢI, rạch ròi bằng tiếng Việt, ĐƯỢC PHÉP thêm biểu tượng cảm xúc (Moji) vui vẻ. Sách phải ghi đúng tên tác giả. Giá sách lấy ở trường 'Price' hãy định dạng hàng nghìn kẹp với chữ 'VNĐ' phía sau (Ví dụ 120000 VNĐ). 
+            // 5. Tạo System Instruction cung cấp Database cho Bot
+            var systemInstruction = $@"Vai trò: AI CSKH của nhà sách Tiến Thọ.
+Khối JSON DB Sách: {contextJson}
+Quy tắc:
+1. AI CHỈ ĐƯỢC dùng thông tin từ JSON DB trên. Tuyệt đối KHÔNG tự sáng tác thêm sách.
+2. Trả lời CỰC KỲ NGẮN GỌN (1-2 câu). Tuy nhiên, PHẢI nêu ĐẦY ĐỦ các thông tin mà khách đang hỏi (như Tên, Tác giả, Giá, Số lượng bán). Giá format tiền kèm ' VNĐ'.
+3. KHÔNG chào hỏi lan man hay cảm ơn dông dài. Bỏ ngay các câu nhận xét, tư vấn, hoặc khuyên bảo thêm nếu khách không yêu cầu. Đi thẳng vào vấn đề.
 ";
 
             // 6. Gửi Request lên Gemini 2.5 Flash API
@@ -102,16 +105,39 @@ Quy tắc bắt buộc phải tuân thủ để trả lời:
 
             var url = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={apiKey}";
 
+            var chatHistory = new List<object>();
+
+            // Chèn lịch sử chat trước đó (nếu có), giới hạn tối đa 3 ngữ cảnh gần nhất để tiết kiệm token tối đa
+            // TẠM ẨN: Ẩn phần nhớ lịch sử trò chuyện đi để tiết kiệm Token tối đa nhất lúc này
+            /*
+            if (request.History != null && request.History.Any())
+            {
+                var recentHistory = request.History.TakeLast(3);
+                foreach (var msg in recentHistory)
+                {
+                    chatHistory.Add(new
+                    {
+                        role = msg.Role,
+                        parts = new[] { new { text = msg.Text } }
+                    });
+                }
+            }
+            */
+
+            // Chèn câu hỏi mới nhất của user
+            chatHistory.Add(new
+            {
+                role = "user",
+                parts = new[] { new { text = userMessage } }
+            });
+
             var payload = new
             {
-                contents = new[]
+                system_instruction = new
                 {
-                    new
-                    {
-                        role = "user",
-                        parts = new[] { new { text = prompt } }
-                    }
+                    parts = new { text = systemInstruction }
                 },
+                contents = chatHistory.ToArray(),
                 generationConfig = new
                 {
                     temperature = 0.5,
@@ -127,6 +153,10 @@ Quy tắc bắt buộc phải tuân thủ để trả lời:
             if (!response.IsSuccessStatusCode)
             {
                 var errorResponse = await response.Content.ReadAsStringAsync();
+                if ((int)response.StatusCode == 429) 
+                {
+                    return new ChatResponseDto { Response = "Tài khoản Google API Key của bạn đã hết lượt truy cập miễn phí (quá giới hạn Request mỗi phút / mỗi ngày của Google). Bạn vui lòng chờ thêm 1-2 phút, hoặc phải tạo một API Key mới để tiếp tục sử dụng nhé!" };
+                }
                 return new ChatResponseDto { Response = "Xin lỗi, hiện tại hệ thống AI đang quá tải do có nhiều lượt truy cập. Bạn vui lòng thử lại sau một lát nhé!" };
             }
 

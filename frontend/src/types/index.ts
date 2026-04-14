@@ -56,6 +56,7 @@ export interface Voucher {
   expirationDate: string;
   applicableCategoryId?: string;
   applicableProductId?: string;
+  isHidden?: boolean;
   isActive: boolean;
 }
 export interface OrderItem {

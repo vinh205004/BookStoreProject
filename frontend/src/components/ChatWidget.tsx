@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import React, { useState, useRef, useEffect } from 'react';
 import { MessageCircle, X, Send, Bot, User, Loader2 } from 'lucide-react';
 import axiosClient from '../api/axiosClient';
@@ -28,7 +29,7 @@ export default function ChatWidget() {
         {
           id: Date.now().toString(),
           sender: 'bot',
-          text: 'Xin chào! Mình là trợ lý AI của BookStore. Bạn cần tìm sách gì hay cần tư vấn gì không?',
+          text: 'Xin chào! Mình là trợ lý AI của cửa hàng sách Tiến Thọ. Bạn cần tìm sách gì hay cần tư vấn gì không?',
           timestamp: new Date()
         }
       ]);
@@ -51,9 +52,18 @@ export default function ChatWidget() {
     setIsLoading(true);
 
     try {
+      // Chuẩn bị lịch sử tin nhắn để gửi
+      const history = messages
+        .filter((msg, index) => !(index === 0 && msg.sender === 'bot' && msg.text.includes('Xin chào! Mình là trợ lý')))
+        .map(msg => ({
+          role: msg.sender === 'bot' ? 'model' : 'user',
+          text: msg.text
+        }));
+
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const response: any = await axiosClient.post('/Chatbot/Ask', {
-        message: userMsg.text
+        message: userMsg.text,
+        history: history
       });
 
       const botMsg: ChatMessage = {

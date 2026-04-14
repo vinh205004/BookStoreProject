@@ -16,6 +16,7 @@ namespace BookStore.API.DTOs
         public DateTime ExpirationDate { get; set; }
         public string? ApplicableCategoryId { get; set; }
         public string? ApplicableProductId { get; set; }
+        public bool IsHidden { get; set; }
         public bool IsActive { get; set; }
     }
 
@@ -48,6 +49,8 @@ namespace BookStore.API.DTOs
 
         public string? ApplicableCategoryId { get; set; }
         public string? ApplicableProductId { get; set; }
+        
+        public bool IsHidden { get; set; } = false;
     }
 
     public class VoucherUpdateDto : VoucherCreateDto

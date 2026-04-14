@@ -18,6 +18,7 @@ export default function Vouchers() {
   
   // State cho Form
   const [code, setCode] = useState('');
+  const [isHidden, setIsHidden] = useState(false);
   const [discountType, setDiscountType] = useState<'Direct' | 'Percentage'>('Direct');
   const [discountAmount, setDiscountAmount] = useState<number>(0);
   const [minOrderValue, setMinOrderValue] = useState<number>(0);
@@ -54,6 +55,7 @@ export default function Vouchers() {
     if (v) {
       setEditingId(v.voucherId);
       setCode(v.code);
+      setIsHidden(v.isHidden || false);
       setDiscountType(v.discountType as 'Direct' | 'Percentage');
       setDiscountAmount(v.discountAmount);
       setMinOrderValue(v.minOrderValue);
@@ -62,12 +64,12 @@ export default function Vouchers() {
       dateObj.setMinutes(dateObj.getMinutes() - dateObj.getTimezoneOffset());
       setExpirationDate(dateObj.toISOString().slice(0, 16));
       setApplicableCategoryId(v.applicableCategoryId || '');
-      // Nếu có category mà không có product = áp cứng danh mục mà không tích sản phẩm
-      // Nếu có product = tích những sản phẩm đó
-      setApplicableProductIds(v.applicableProductId ? [v.applicableProductId] : []);
+      // Nếu có product list được gộp lại bằng dấu phẩy
+      setApplicableProductIds(v.applicableProductId ? v.applicableProductId.split(',').filter(id => id.trim() !== '') : []);
     } else {
       setEditingId(null);
       setCode('');
+      setIsHidden(false);
       setDiscountType('Direct');
       setDiscountAmount(0);
       setMinOrderValue(0);
@@ -90,16 +92,21 @@ export default function Vouchers() {
     }
 
     try {
-      // Backend expect ApplicableProductId (string), gửi product đầu tiên nếu có
+      // Create a comma padded string for robust querying like ",id1,id2,"
+      const applicableProductIdString = applicableProductIds.length > 0 
+        ? `,${applicableProductIds.join(',')},` 
+        : null;
+
       const voucherData = { 
         code: code.toUpperCase(),
+        isHidden,
         discountType,
         discountAmount, 
         minOrderValue, 
         quantity, 
         expirationDate: new Date(expirationDate).toISOString(),
         applicableCategoryId: applicableCategoryId || null,
-        applicableProductId: applicableProductIds.length > 0 ? applicableProductIds[0] : null
+        applicableProductId: applicableProductIdString
       };
 
       if (editingId) {
@@ -221,9 +228,14 @@ export default function Vouchers() {
                 return (
                   <tr key={v.voucherId} className="hover:bg-slate-50">
                     <td className="p-3 sm:p-4">
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md border border-orange-200 bg-orange-50 text-orange-700 font-bold font-mono text-xs sm:text-sm tracking-wider">
-                        <TicketPercent size={16} /> {v.code}
-                      </span>
+                        <div className="flex flex-col gap-1 items-start">
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md border border-orange-200 bg-orange-50 text-orange-700 font-bold font-mono text-xs sm:text-sm tracking-wider">
+                            <TicketPercent size={16} /> {v.code}
+                          </span>
+                          {v.isHidden && (
+                            <span className="text-[10px] bg-slate-200 text-slate-600 px-2 py-0.5 rounded uppercase font-bold">Ẩn với người dùng</span>
+                          )}
+                        </div>
                     </td>
                     <td className="p-3 sm:p-4 font-bold text-red-500 text-xs sm:text-base">
                       {v.discountType === 'Percentage' 
@@ -266,6 +278,21 @@ export default function Vouchers() {
             <input type="text" required value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} 
               className="w-full border border-slate-300 px-4 py-2 focus:ring-2 focus:ring-orange-500 outline-none font-mono font-bold text-orange-700" 
               placeholder="VD: TIENTHO50K" />
+          </div>
+
+          <div className="col-span-2">
+            <label className="flex items-center gap-2 cursor-pointer bg-slate-50 p-3 rounded border border-slate-200">
+              <input 
+                type="checkbox" 
+                checked={isHidden} 
+                onChange={(e) => setIsHidden(e.target.checked)} 
+                className="w-4 h-4 text-orange-500 rounded focus:ring-orange-500" 
+              />
+              <div className="text-sm">
+                <p className="font-semibold text-slate-700">Ẩn với người dùng</p>
+                <p className="text-slate-500 text-xs">Voucher này dùng để tự động áp dụng (áp cứng) cho sản phẩm/danh mục mà không hiển thị ở giỏ hàng hay ngoài trang chủ cho người dùng thấy.</p>
+              </div>
+            </label>
           </div>
           
           <div className="col-span-2">
@@ -325,23 +352,35 @@ export default function Vouchers() {
             </label>
             <Select 
               isMulti
-              options={books.map(book => ({ value: book.bookId, label: book.title }))}
-              placeholder="Gõ để tìm sản phẩm..."
-              value={applicableProductIds.map(id => {
-                const book = books.find(b => b.bookId === id);
-                return { value: id, label: book?.title || '' };
-              })}
-              onChange={(selectedOptions) => {
-                setApplicableProductIds(selectedOptions?.map(opt => opt.value) || []);
-              }}
-              classNamePrefix="react-select"
-            />
+              options={books
+                .filter(book => {
+                  const isHardcodedInOtherVoucher = vouchers.some(
+                    v => v.voucherId !== editingId && 
+                    v.applicableProductId && 
+                    v.applicableProductId.split(',').includes(book.bookId)
+                  );
+                  return book.price >= minOrderValue && !isHardcodedInOtherVoucher && (!applicableCategoryId || book.categoryId === applicableCategoryId);
+                })
+                .map(book => ({ value: book.bookId, label: `${book.title} - ${book.price.toLocaleString()}đ` }))}
+              placeholder="Gõ để tìm sản phẩm phù hợp..."
+                value={applicableProductIds.map(id => {
+                  const book = books.find(b => b.bookId === id);
+                  return { value: id, label: book ? `${book.title} - ${book.price.toLocaleString()}đ` : '' };
+                })}
+                onChange={(selectedOptions) => {
+                  setApplicableProductIds(selectedOptions?.map(opt => opt.value) || []);
+                }}
+                classNamePrefix="react-select"
+              />
+              {minOrderValue > 0 && (
+                <p className="text-xs text-orange-500 mt-1">Chỉ những sản phẩm có giá lớn hơn hoặc bằng Đơn tối thiểu áp dụng ({minOrderValue.toLocaleString()}đ) mới hiển thị để chọn.</p>
+              )}
           </div>
-
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Tổng số lượng mã phát hành <span className="text-red-500">*</span></label>
-            <input type="number" required value={quantity} onChange={(e) => setQuantity(Number(e.target.value))} 
-              className="w-full border border-slate-300 px-4 py-2 focus:ring-2 focus:ring-orange-500 outline-none" min={1} />
+            <label className="block text-sm font-medium text-slate-700 mb-1">Số lượng <span className="text-red-500">*</span></label>
+            <input type="number" required min="1" value={quantity} onChange={(e) => setQuantity(Number(e.target.value))} 
+              className="w-full border border-slate-300 px-4 py-2 focus:ring-2 focus:ring-orange-500 outline-none" 
+              placeholder="VD: 100" />
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Ngày giờ hết hạn <span className="text-red-500">*</span></label>

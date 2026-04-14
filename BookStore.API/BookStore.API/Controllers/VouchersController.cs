@@ -33,6 +33,7 @@ namespace BookStore.API.Controllers
             var now = DateTime.UtcNow;
             var activeVouchers = vouchers.Where(v => 
                 v.IsActive && 
+                !v.IsHidden &&
                 (v.StartDate <= now || v.StartDate == default) && 
                 (v.ExpirationDate >= now || v.ExpirationDate == default) && 
                 (string.IsNullOrEmpty(v.ApplicableProductId) ? v.UsedCount < v.Quantity : true));

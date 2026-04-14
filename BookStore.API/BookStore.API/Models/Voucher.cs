@@ -32,6 +32,8 @@ namespace BookStore.API.Models
 
         public string? ApplicableProductId { get; set; } // Mã sản phẩm áp dụng (null nếu áp dụng toàn sàn)
 
+        public bool IsHidden { get; set; } = false; // Ẩn khỏi người dùng (chỉ admin biết)
+
         public bool IsActive { get; set; } = true; // Trạng thái (Thùng rác)
     }
 }

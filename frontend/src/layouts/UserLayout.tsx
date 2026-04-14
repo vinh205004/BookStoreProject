@@ -7,10 +7,12 @@ import SearchDropdown from '../components/SearchDropdown';
 import CategoryMenu from '../components/CategoryMenu';
 import ChatWidget from '../components/ChatWidget';
 import { getGuestCart } from '../utils/cartUtils';
+import { getUserRole } from '../utils/tokenUtils';
 
 export default function UserLayout() {
   const navigate = useNavigate();
   const [cartCount, setCartCount] = useState(0);
+  const isAdmin = getUserRole() === 'Admin';
 
   const updateCartCount = async () => {
     const token = localStorage.getItem('token');
@@ -130,6 +132,14 @@ export default function UserLayout() {
                   >
                     Đơn hàng của tôi
                   </Link>
+                  {isAdmin && (
+                    <Link
+                      to="/admin"
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-500 transition-colors border-t border-gray-100"
+                    >
+                      Trang quản lý
+                    </Link>
+                  )}
                 </div>
               </div>
 

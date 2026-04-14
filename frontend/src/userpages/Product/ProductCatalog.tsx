@@ -1,3 +1,4 @@
+/* eslint-disable prefer-const */
 import { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Star, ShoppingCart, Filter } from 'lucide-react';
@@ -5,6 +6,7 @@ import { toast } from 'react-toastify';
 import axiosClient from '../../api/axiosClient';
 
 import { addToGuestCart } from '../../utils/cartUtils';
+import React from 'react';
 
 interface Product {
   bookId: string;
@@ -41,6 +43,7 @@ interface Author {
 export default function ProductCatalog() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [products, setProducts] = useState<Product[]>([]);
+  const [sortOption, setSortOption] = useState<string>('default');
   const [categories, setCategories] = useState<Category[]>([]);
   const [authors, setAuthors] = useState<Author[]>([]);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -240,10 +243,31 @@ export default function ProductCatalog() {
     }
   };
 
+  const sortedProducts = React.useMemo(() => {
+    let result = [...products];
+    switch (sortOption) {
+      case 'priceAsc':
+        result.sort((a, b) => (a.discountedPrice || a.price) - (b.discountedPrice || b.price));
+        break;
+      case 'priceDesc':
+        result.sort((a, b) => (b.discountedPrice || b.price) - (a.discountedPrice || a.price));
+        break;
+      case 'soldDesc':
+        result.sort((a, b) => (b.soldQuantity || 0) - (a.soldQuantity || 0));
+        break;
+      case 'ratingDesc':
+        result.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+        break;
+      default:
+        break;
+    }
+    return result;
+  }, [products, sortOption]);
+
   // Calculate paginated products
-  const totalPages = Math.ceil(products.length / itemsPerPage);
+  const totalPages = Math.ceil(sortedProducts.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedProducts = products.slice(startIndex, startIndex + itemsPerPage);
+  const paginatedProducts = sortedProducts.slice(startIndex, startIndex + itemsPerPage);
 
   // Reset to first page when filters change
   useEffect(() => {
@@ -256,7 +280,7 @@ export default function ProductCatalog() {
 
       <div className="flex gap-6">
         {/* Filters - Desktop */}
-        <aside className="hidden lg:block w-64">
+          <aside className="hidden lg:block w-64 flex-shrink-0 sticky top-24 self-start max-h-[calc(100vh-6rem)] overflow-y-auto z-10 custom-scrollbar">
           <div className={`bg-white p-6 shadow transition-opacity duration-300 ${loading ? 'opacity-70' : 'opacity-100'}`}>
             <div className="flex items-center justify-between sm:hidden mb-4">
               <h2 className="font-bold">Bộ lọc</h2>
@@ -384,6 +408,25 @@ export default function ProductCatalog() {
 
         {/* Products Grid */}
         <div className="flex-1 relative">
+          <div className="mb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 text-gray-700 font-medium">
+            <div>Hiển thị {products.length} sản phẩm</div>
+            <div className="flex items-center gap-2">
+              <label htmlFor="sortOption" className="text-sm">Sắp xếp:</label>
+              <select
+                id="sortOption"
+                value={sortOption}
+                onChange={(e) => setSortOption(e.target.value)}
+                className="border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:border-orange-500"
+              >
+                <option value="default">Mới nhất</option>
+                <option value="priceAsc">Giá thấp đến cao</option>
+                <option value="priceDesc">Giá cao đến thấp</option>
+                <option value="soldDesc">Bán chạy nhất</option>
+                <option value="ratingDesc">Đánh giá cao nhất</option>
+              </select>
+            </div>
+          </div>
+          
           {products.length === 0 && !loading ? (
             <div className="text-center py-12">
               <p className="text-gray-500 text-lg">Không tìm thấy sản phẩm</p>

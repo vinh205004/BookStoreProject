@@ -232,16 +232,16 @@ export default function HomePage() {
       <section className="py-12 sm:py-16 lg:py-20 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-3xl sm:text-4xl font-bold mb-8 text-gray-800">Danh Mục Sách</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+          <div className="flex overflow-x-auto gap-4 sm:gap-6 snap-x snap-mandatory pb-4 scroll-smooth" style={{ scrollBehavior: 'smooth', touchAction: 'pan-x', WebkitOverflowScrolling: 'touch' }}>
             {categories.length > 0 ? (
               categories.map(cat => (
-                <a key={cat.categoryId} href={"/products?categoryId=" + cat.categoryId} className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition text-center">
+                <a key={cat.categoryId} href={"/products?categoryId=" + cat.categoryId} className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition text-center flex-none w-64 snap-start shrink-0">
                   <div className="text-4xl mb-3">📖</div>
                   <h3 className="font-bold text-gray-800">{cat.name}</h3>
                 </a>
               ))
             ) : (
-              <p className="text-gray-500 col-span-full text-center">Đang tải danh mục...</p>
+              <p className="text-gray-500 w-full text-center">Đang tải danh mục...</p>
             )}
           </div>
         </div>

@@ -153,15 +153,14 @@ namespace BookStore.API.Repositories
             {
                 books = books
                     .Where(b => vouchers.Any(v =>
-                        v.ApplicableProductId == b.BookId ||
-                        (v.ApplicableCategoryId == b.CategoryId && string.IsNullOrEmpty(v.ApplicableProductId))
+                        (v.ApplicableProductId != null && ("," + v.ApplicableProductId + ",").Contains("," + b.BookId + ",")) || (v.ApplicableCategoryId == b.CategoryId && b.Price >= v.MinOrderValue)
                     ))
                     .ToList();
             }
 
             return books.Select(b => {
                 var bestVoucher = vouchers
-                    .Where(v => v.ApplicableProductId == b.BookId || (v.ApplicableCategoryId == b.CategoryId && string.IsNullOrEmpty(v.ApplicableProductId)))
+                    .Where(v => (v.ApplicableProductId != null && ("," + v.ApplicableProductId + ",").Contains("," + b.BookId + ",")) || (v.ApplicableCategoryId == b.CategoryId && b.Price >= v.MinOrderValue))
                     .OrderByDescending(v => v.DiscountType == "Percentage" ? b.Price * v.DiscountAmount / 100 : v.DiscountAmount)
                     .FirstOrDefault();
                 
@@ -243,7 +242,7 @@ namespace BookStore.API.Repositories
             
             var bestVoucher = await _context.Vouchers
                 .Where(v => v.IsActive && v.StartDate <= DateTime.UtcNow && v.ExpirationDate >= DateTime.UtcNow && 
-                    (v.ApplicableProductId == book.BookId || (v.ApplicableCategoryId == book.CategoryId && string.IsNullOrEmpty(v.ApplicableProductId))))
+                    ((v.ApplicableProductId != null && ("," + v.ApplicableProductId + ",").Contains("," + book.BookId + ",")) || (v.ApplicableCategoryId == book.CategoryId && book.Price >= v.MinOrderValue)))
                 .FirstOrDefaultAsync();
 
             if (bestVoucher != null)
@@ -298,7 +297,7 @@ namespace BookStore.API.Repositories
                 .ToDictionaryAsync(x => x.BookId, x => x.TotalQuantity);
 
             return books.Select(b => {
-                var bestVoucher = vouchers.FirstOrDefault(v => v.ApplicableProductId == b.BookId || (v.ApplicableCategoryId == b.CategoryId && string.IsNullOrEmpty(v.ApplicableProductId)));
+                var bestVoucher = vouchers.FirstOrDefault(v => (v.ApplicableProductId != null && ("," + v.ApplicableProductId + ",").Contains("," + b.BookId + ",")) || (v.ApplicableCategoryId == b.CategoryId && b.Price >= v.MinOrderValue));
                 
                 var searchDto = new ProductSearchDto
                 {
@@ -368,8 +367,7 @@ namespace BookStore.API.Repositories
 
             var filteredBooks = discountedBooks
                 .Where(b => activeVouchers.Any(v => 
-                    v.ApplicableProductId == b.BookId || 
-                    (v.ApplicableCategoryId == b.CategoryId && string.IsNullOrEmpty(v.ApplicableProductId))
+                    (v.ApplicableProductId != null && ("," + v.ApplicableProductId + ",").Contains("," + b.BookId + ",")) || (v.ApplicableCategoryId == b.CategoryId && b.Price >= v.MinOrderValue)
                 ))
                 .OrderBy(b => b.Price)
                 .Take(count)
@@ -388,8 +386,7 @@ namespace BookStore.API.Repositories
                 {
                     // Lấy voucher có mức giảm lớn nhất (đơn giản hoá logic giảm giá)
                     var bestVoucher = activeVouchers
-                        .Where(v => v.ApplicableProductId == b.BookId || 
-                                   (v.ApplicableCategoryId == b.CategoryId && string.IsNullOrEmpty(v.ApplicableProductId)))
+                        .Where(v => (v.ApplicableProductId != null && ("," + v.ApplicableProductId + ",").Contains("," + b.BookId + ",")) || (v.ApplicableCategoryId == b.CategoryId && b.Price >= v.MinOrderValue))
                         .OrderByDescending(v => v.DiscountType == "Percentage" ? b.Price * v.DiscountAmount / 100 : v.DiscountAmount)
                         .FirstOrDefault();
 
@@ -486,7 +483,7 @@ namespace BookStore.API.Repositories
                 .ToListAsync();
 
             return books.Select(b => {
-                var bestVoucher = vouchers.FirstOrDefault(v => v.ApplicableProductId == b.BookId || (v.ApplicableCategoryId == b.CategoryId && string.IsNullOrEmpty(v.ApplicableProductId)));
+                var bestVoucher = vouchers.FirstOrDefault(v => (v.ApplicableProductId != null && ("," + v.ApplicableProductId + ",").Contains("," + b.BookId + ",")) || (v.ApplicableCategoryId == b.CategoryId && b.Price >= v.MinOrderValue));
                 
                 var searchDto = new ProductSearchDto
                 {
