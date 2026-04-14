@@ -668,6 +668,22 @@
     "ReturnTypes": []
   },
   {
+    "ContainingType": "BookStore.API.Controllers.ChatbotController",
+    "Method": "Ask",
+    "RelativePath": "api/Chatbot/Ask",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "dto",
+        "Type": "BookStore.API.DTOs.ChatRequestDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
     "ContainingType": "BookStore.API.Controllers.DashboardController",
     "Method": "GetDashboardData",
     "RelativePath": "api/Dashboard",

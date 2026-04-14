@@ -58,6 +58,9 @@ namespace BookStore.API
             builder.Services.AddScoped<IReviewService, ReviewService>();
             builder.Services.AddScoped<IReviewReplyRepository, ReviewReplyRepository>();
             builder.Services.AddScoped<IReviewReplyService, ReviewReplyService>();
+            builder.Services.AddScoped<IChatbotService, ChatbotService>();
+            
+            builder.Services.AddHttpClient("Gemini");
 
             // 2. Cấu hình xác thực JWT
             builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)

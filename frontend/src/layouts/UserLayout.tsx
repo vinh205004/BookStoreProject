@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 import axiosClient from '../api/axiosClient';
 import SearchDropdown from '../components/SearchDropdown';
 import CategoryMenu from '../components/CategoryMenu';
+import ChatWidget from '../components/ChatWidget';
 import { getGuestCart } from '../utils/cartUtils';
 
 export default function UserLayout() {
@@ -224,6 +225,7 @@ export default function UserLayout() {
           </div>
         </div>
       </footer>
+      <ChatWidget />
     </div>
   );
 }
