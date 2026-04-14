@@ -775,6 +775,18 @@
         }
       }
     },
+    "/api/dev/seed": {
+      "get": {
+        "tags": [
+          "BookStore.API"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/Cart": {
       "get": {
         "tags": [

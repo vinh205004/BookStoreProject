@@ -102,18 +102,41 @@ export default function UserLayout() {
                 )}
               </Link>
 
-              <Link
-                to="/profile"
-                className="p-2 hover:bg-orange-600 rounded-none transition"
-                title="Tài khoản"
-              >
-                <User size={24} />
-              </Link>
+              {/* User Dropdown */}
+              <div className="relative group">
+                <Link
+                  to="/profile"
+                  className="p-2 hover:bg-orange-600 rounded-none transition flex items-center"
+                  title="Tài khoản"
+                >
+                  <User size={24} />
+                </Link>
+                
+                {/* Invisible spacer to maintain hover */}
+                <div className="absolute top-full right-0 w-full h-2 bg-transparent z-[99]"></div>
+
+                {/* Dropdown Menu - invisible by default, visible on hover */}
+                <div className="absolute right-0 top-[calc(100%+0.5rem)] w-48 bg-white rounded-md shadow-xl py-2 invisible opacity-0 translate-y-1 group-hover:visible group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-200 z-[100] border border-gray-100">
+                  <Link
+                    to="/profile"
+                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-500 transition-colors"
+                  >
+                    Thông tin cá nhân
+                  </Link>
+                  <Link
+                    to="/orders"
+                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-500 transition-colors"
+                  >
+                    Đơn hàng của tôi
+                  </Link>
+                </div>
+              </div>
 
               <button
                 onClick={handleLogout}
                 className="p-2 hover:bg-orange-600 rounded-none transition"
                 title="Đăng xuất"
+
               >
                 <LogOut size={24} />
               </button>

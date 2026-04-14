@@ -278,9 +278,9 @@ export default function AdminDashboard() {
             )}
           </div>
           
-          <div className="flex-1 overflow-y-auto overflow-x-hidden pr-2 relative">
+          <div className="flex-1 relative overflow-hidden">
             {/* VÙNG THEO DÕI NỘI DUNG HOẶC MODAL CHI TIẾT */}
-            <div className={`transition-all duration-300 w-full ${selectedCategory ? 'opacity-0 pointer-events-none absolute' : 'opacity-100 relative'}`}>
+            <div className={`transition-all duration-300 w-full h-[320px] overflow-y-auto pr-2 ${selectedCategory ? 'opacity-0 pointer-events-none absolute top-0' : 'opacity-100 relative'}`}>
               {categorySales.length > 0 ? (
                 <div className="space-y-4">
                   {categorySales.map((item, index) => {

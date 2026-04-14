@@ -64,7 +64,7 @@ export default function SearchDropdown() {
           }}
           onFocus={() => query.trim().length >= 1 && setShowResults(true)}
           placeholder="Tìm sách..."
-          className="w-full px-4 py-2 rounded-lg text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-yellow-300"
+          className="w-full px-4 py-2 rounded-lg bg-white text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-yellow-300"
         />
         {query && (
           <button

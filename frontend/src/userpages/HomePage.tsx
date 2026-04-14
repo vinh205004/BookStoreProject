@@ -443,19 +443,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="bg-blue-600 text-white py-12 sm:py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl sm:text-4xl font-bold mb-4">Đăng ký nhận tin tức</h2>
-          <p className="text-lg mb-6 opacity-90">Nhận thông báo về sách mới, khuyến mãi và sự kiện độc quyền</p>
-          <div className="flex gap-2 max-w-md mx-auto flex-col sm:flex-row">
-            <input type="email" placeholder="Nhập email của bạn" className="flex-1 px-4 py-3 rounded text-gray-800 focus:outline-none focus:ring-2 focus:ring-yellow-300" />
-            <button className="bg-orange-500 hover:bg-orange-600 text-white font-bold px-6 py-3 rounded transition">
-              Đăng ký
-            </button>
-          </div>
-        </div>
-      </section>
+      
 
     </div>
   );

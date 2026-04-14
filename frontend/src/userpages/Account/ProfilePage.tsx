@@ -1,8 +1,10 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User, Mail, Phone, MapPin, Lock, Save, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'react-toastify';
 import axiosClient from '../../api/axiosClient';
+import LocationPickerMap from '../../components/LocationPickerMap';
 
 interface UserProfile {
   userId: string;
@@ -227,14 +229,23 @@ export default function ProfilePage() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Địa chỉ</label>
-                  <div className="relative">
-                    <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-                    <input
-                      type="text"
+                  <div className="relative mb-4">
+                    <MapPin className="absolute left-3 top-3 text-gray-400" size={20} />
+                    <textarea
                       name="address"
                       value={formData.address}
-                      onChange={handleProfileChange}
+                      onChange={(e) => setFormData(prev => ({ ...prev, address: e.target.value }))}
+                      placeholder="Nhập địa chỉ giao hàng hoặc chọn từ bản đồ bên dưới"
+                      rows={3}
                       className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    />
+                  </div>
+
+                  {/* Location Picker Map */}
+                  <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                    <LocationPickerMap 
+                      onLocationSelect={(address) => setFormData(prev => ({ ...prev, address: address }))} 
+                      defaultAddress={formData.address}
                     />
                   </div>
                 </div>

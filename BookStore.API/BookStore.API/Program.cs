@@ -25,7 +25,8 @@ namespace BookStore.API
             
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
-            builder.Services.AddDbContext<AppDbContext>(options =>
+              // Add Scoped Services
+              builder.Services.AddScoped<BookStore.API.Data.AppDbSeeder>();            builder.Services.AddDbContext<AppDbContext>(options =>
             options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
             // 1. Đăng ký DI Container
             builder.Services.AddScoped<IAuthService, AuthService>();
@@ -157,9 +158,20 @@ namespace BookStore.API
             app.UseAuthentication();
             app.UseAuthorization();
 
+              app.MapGet("/api/dev/seed", async (BookStore.API.Data.AppDbSeeder seeder) => 
+              {
+                  try 
+                  {
+                      await seeder.SeedAsync();
+                      return Results.Ok(new { message = "Database seeded successfully." });
+                  }
+                  catch(Exception ex) 
+                  {
+                      return Results.BadRequest(ex.Message);
+                  }
+              });
 
             app.MapControllers();
-
             app.Run();
         }
     }

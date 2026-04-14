@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { ShoppingCart, Phone, MapPin, FileText } from 'lucide-react';
 import { toast } from 'react-toastify';
 import axiosClient from '../../api/axiosClient';
+import LocationPickerMap from '../../components/LocationPickerMap';
 
 interface CartItem {
   cartItemId?: string;
@@ -164,17 +165,24 @@ export default function CheckoutPage() {
               <div>
                 <label className="block text-sm font-bold text-gray-700 mb-2">Địa chỉ giao hàng *</label>
                 <div className="relative">
-                  <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                  <MapPin className="absolute left-3 top-3 text-gray-400" size={20} />
                   <textarea
                     name="shippingAddress"
                     value={formData.shippingAddress}
                     onChange={handleChange}
-                    placeholder="Nhập địa chỉ giao hàng"
+                    placeholder="Nhập địa chỉ giao hàng hoặc chọn từ bản đồ bên dưới"
                     rows={3}
                     className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
                     required
                   />
                 </div>
+              </div>
+
+              {/* Location Picker Map */}
+              <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                <LocationPickerMap 
+                  onLocationSelect={(address) => setFormData(prev => ({ ...prev, shippingAddress: address }))} 
+                />
               </div>
 
               <div>

@@ -37,10 +37,17 @@ export default function Orders() {
     }
   };
 
-  const handleOpenDetail = (order: Order) => {
-    setSelectedOrder(order);
-    setNewStatus(order.status);
-    setIsModalOpen(true);
+  const handleOpenDetail = async (order: Order) => {
+    try {
+      // Fetch đầy đủ thông tin chi tiết đơn hàng báo gồm OrderItems
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const data: any = await axiosClient.get(`/Orders/${order.orderId}`);
+      setSelectedOrder(data);
+      setNewStatus(data.status);
+      setIsModalOpen(true);
+    } catch {
+      toast.error('Lỗi khi tải chi tiết đơn hàng!');
+    }
   };
 
   const handleUpdateStatus = async (e: React.FormEvent) => {
@@ -152,13 +159,13 @@ export default function Orders() {
               <h4 className="font-bold text-slate-800 mb-3 text-sm uppercase">Sản phẩm đã đặt</h4>
               <div className="border border-slate-200 rounded-none divide-y divide-slate-100">
                 {selectedOrder.orderItems.map((item) => (
-                  <div key={item.orderItemId} className="flex items-center gap-4 p-3">
+                  <div key={item.orderItemId} className="flex items-center gap-4 p-3 hover:bg-slate-50 transition-colors">
                     <img src={item.imageUrl || 'https://via.placeholder.com/50'} alt={item.bookTitle} className="w-12 h-16 object-cover rounded-none border border-slate-200" />
-                    <div className="flex-1">
-                      <div className="font-semibold text-slate-800 line-clamp-1">{item.bookTitle}</div>
-                      <div className="text-sm text-slate-500">SL: {item.quantity} x {item.unitPrice.toLocaleString('vi-VN')} đ</div>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-semibold text-slate-800 line-clamp-2" title={item.bookTitle}>{item.bookTitle}</div>
+                      <div className="text-sm text-slate-500 mt-1">SL: {item.quantity} x {item.unitPrice.toLocaleString('vi-VN')} đ</div>
                     </div>
-                    <div className="font-bold text-slate-800">
+                    <div className="font-bold text-orange-600 whitespace-nowrap">
                       {(item.quantity * item.unitPrice).toLocaleString('vi-VN')} đ
                     </div>
                   </div>

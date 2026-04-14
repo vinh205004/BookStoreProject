@@ -1,5 +1,5 @@
 ﻿import React, { useState, useEffect, useCallback } from 'react';
-import { Plus, Edit, Trash2, Eye } from 'lucide-react';
+import { Plus, Edit, Trash2, Eye, MonitorPlay } from 'lucide-react';
 import { toast } from 'react-toastify';
 import axiosClient from '../api/axiosClient';
 import type { Banner, Category } from '../types';
@@ -114,82 +114,82 @@ export default function Banners() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Quản lý Banner</h2>
+    <div className="bg-white shadow-sm p-4 sm:p-6">
+      {/* HEADER */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 border-b border-slate-100 pb-4 gap-3">
+        <h2 className="text-lg sm:text-xl font-bold text-slate-800 flex items-center gap-2">
+          <MonitorPlay className="text-orange-500 flex-shrink-0" size={24} /> 
+          <span>Quản lý Banner</span>
+        </h2>
         <Button onClick={() => handleOpenModal()} icon={<Plus size={20} />}>
           Thêm Banner
         </Button>
       </div>
 
-      <div className="bg-white rounded-none shadow overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left">
-            <thead className="bg-gray-50 text-gray-600">
-              <tr>
-                <th className="p-4 font-semibold">Hình ảnh</th>
-                <th className="p-4 font-semibold">Tiêu đề / Phụ đề</th>
-                <th className="p-4 font-semibold">Liên kết URL</th>
-                <th className="p-4 font-semibold text-center">Thứ tự</th>
-                <th className="p-4 font-semibold">Trạng thái</th>
-                <th className="p-4 font-semibold text-right">Thao tác</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {banners.map((b) => (
-                <tr key={b.bannerId} className="hover:bg-gray-50">
-                  <td className="p-4">
-                    <img src={b.imageUrl} alt="Banner" className="h-16 w-32 object-cover rounded-none shadow-sm border" />
-                  </td>
-                  <td className="p-4">
-                    <div className="font-medium text-gray-800">{b.title}</div>
-                    <div className="text-sm text-gray-500">{b.subtitle}</div>
-                  </td>
-                  <td className="p-4">
-                    {(() => {
-                      if (!b.linkUrl) return <span className="text-sm text-gray-500">Không có</span>;
-                      const catId = b.linkUrl.match(/categoryId=([^&]+)/)?.[1];
-                      const matchedCat = catId ? categories.find(c => c.categoryId === catId) : null;
-                      return (
-                        <div className="flex flex-col">
-                          {matchedCat && <span className="font-semibold text-sm text-gray-800">{matchedCat.name}</span>}
-                          <a href={b.linkUrl} target="_blank" rel="noreferrer" className={`text-orange-500 hover:underline ${matchedCat ? 'text-xs text-blue-400 mt-0.5' : 'text-sm'}`}>
-                            {b.linkUrl}
-                          </a>
-                        </div>
-                      );
-                    })()}
-                  </td>
-                  <td className="p-4 text-center font-semibold text-gray-600">{b.displayOrder}</td>
-                  <td className="p-4">
-                    <span className={`px-3 py-1 rounded-none text-xs font-medium ${b.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                      {b.isActive ? 'Đang hiển thị' : 'Đang ẩn'}
-                    </span>
-                  </td>
-                  <td className="p-4 text-right space-x-2">
-                    <button onClick={() => handleToggleActive(b)} className="p-2 bg-yellow-100 text-yellow-600 hover:bg-yellow-200 rounded-none transition" title="Đổi trạng thái">
-                      <Eye size={18} className={b.isActive ? '' : 'opacity-50'} />
-                    </button>
-                    <button onClick={() => handleOpenModal(b)} className="p-2 bg-orange-100 text-orange-600 hover:bg-blue-200 rounded-none transition" title="Sửa">
-                      <Edit size={18} />
-                    </button>
-                    <button onClick={() => handleDelete(b.bannerId)} className="p-2 bg-red-100 text-red-600 hover:bg-red-200 rounded-none transition" title="Xóa">
-                      <Trash2 size={18} />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-              {banners.length === 0 && (
-                <tr>
-                  <td colSpan={6} className="p-8 text-center text-gray-500">
-                    Chưa có banner nào được khởi tạo.
-                  </td>
-                </tr>
+      {/* BẢNG DỮ LIỆU */}
+      <div className="overflow-x-auto -mx-4 sm:mx-0">
+        <table className="w-full text-left border-collapse">
+          <thead>
+            <tr className="bg-slate-50 border-b border-slate-200 text-xs sm:text-sm text-slate-600 uppercase">
+              <th className="p-3 sm:p-4 font-semibold">Hình ảnh</th>
+              <th className="p-3 sm:p-4 font-semibold">Tiêu đề / Phụ đề</th>
+              <th className="p-3 sm:p-4 font-semibold">Liên kết URL</th>
+              <th className="p-3 sm:p-4 font-semibold text-center">Thứ tự</th>
+              <th className="p-3 sm:p-4 font-semibold text-center">Trạng thái</th>
+              <th className="p-3 sm:p-4 font-semibold text-center">Thao tác</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-200 text-slate-700">
+              {banners.length === 0 ? (
+                <tr><td colSpan={6} className="p-8 text-center text-slate-500">Trống.</td></tr>
+              ) : (
+                banners.map((b) => (
+                  <tr key={b.bannerId} className="hover:bg-slate-50">
+                    <td className="p-3 sm:p-4">
+                      <img src={b.imageUrl} alt="Banner" className="h-14 w-28 sm:h-16 sm:w-32 object-cover shadow-sm border" />
+                    </td>
+                    <td className="p-3 sm:p-4 text-xs sm:text-base">
+                      <div className="font-semibold text-slate-900">{b.title}</div>
+                      <div className="text-xs sm:text-sm text-slate-500">{b.subtitle}</div>
+                    </td>
+                    <td className="p-3 sm:p-4 text-xs sm:text-base">
+                      {(() => {
+                        if (!b.linkUrl) return <span className="text-slate-500">Không có</span>;
+                        const catId = b.linkUrl.match(/categoryId=([^&]+)/)?.[1];
+                        const matchedCat = catId ? categories.find(c => c.categoryId === catId) : null;
+                        return (
+                          <div className="flex flex-col">
+                            {matchedCat && <span className="font-semibold text-slate-800">{matchedCat.name}</span>}
+                            <a href={b.linkUrl} target="_blank" rel="noreferrer" className={`text-orange-500 hover:underline ${matchedCat ? 'text-xs text-blue-400 mt-0.5' : ''}`}>
+                              {b.linkUrl}
+                            </a>
+                          </div>
+                        );
+                      })()}
+                    </td>
+                    <td className="p-3 sm:p-4 text-center font-semibold text-slate-600 text-xs sm:text-base">{b.displayOrder}</td>
+                    <td className="p-3 sm:p-4 text-center">
+                      <span className={`px-2 sm:px-3 py-1 text-xs font-bold inline-block whitespace-nowrap ${b.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                        {b.isActive ? 'Đang hiển thị' : 'Đang ẩn'}
+                      </span>
+                    </td>
+                    <td className="p-3 sm:p-4 flex justify-center gap-2 sm:gap-3">
+                      <button onClick={() => handleToggleActive(b)} className={`p-1 ${b.isActive ? 'text-green-600 hover:text-green-800' : 'text-slate-400 hover:text-slate-600'}`} title="Đổi trạng thái">
+                        <Eye size={18} />
+                      </button>
+                      <button onClick={() => handleOpenModal(b)} className="text-orange-500 hover:text-orange-700 p-1" title="Sửa">
+                        <Edit size={18} />
+                      </button>
+                      <button onClick={() => handleDelete(b.bannerId)} className="text-red-500 hover:text-red-700 p-1" title="Xóa">
+                        <Trash2 size={18} />
+                      </button>
+                    </td>
+                  </tr>
+                ))
               )}
             </tbody>
           </table>
         </div>
-      </div>
 
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={editingId ? 'Sửa banner' : 'Thêm banner'}>
         <form onSubmit={handleSubmit} className="space-y-4">

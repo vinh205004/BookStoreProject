@@ -694,6 +694,22 @@
     "ReturnTypes": []
   },
   {
+    "ContainingType": "BookStore.API.Program\u002B\u003C\u003Ec",
+    "Method": "\u003CMain\u003Eb__0_5",
+    "RelativePath": "api/dev/seed",
+    "HttpMethod": "GET",
+    "IsController": false,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": [
+      {
+        "Type": "System.Void",
+        "MediaTypes": [],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
     "ContainingType": "BookStore.API.Controllers.OrdersController",
     "Method": "CreateOrder",
     "RelativePath": "api/Orders",
