@@ -21,6 +21,7 @@ namespace BookStore.API.Services
         public async Task<IEnumerable<BookDto>> GetAllBooksAsync()
         {
             var books = await _bookRepo.GetAllAsync();
+            var vouchers = await GetActiveVouchersAsync();
             var bookDtos = books.Select(b => new BookDto
             {
                 BookId = b.BookId,
@@ -40,10 +41,14 @@ namespace BookStore.API.Services
                 Length = b.Length,
                 Width = b.Width,
                 LengthUnit = b.LengthUnit ?? "cm",
-                PageCount = b.PageCount,
-                DiscountedPrice = b.DiscountedPrice,
-                DiscountBadge = b.DiscountBadge
-            }).ToList();
+                PageCount = b.PageCount
+            })
+            .Select(dto =>
+            {
+                ApplyBestVoucher(dto, vouchers);
+                return dto;
+            })
+            .ToList();
 
             return bookDtos;
         }
@@ -52,6 +57,7 @@ namespace BookStore.API.Services
         {
             var b = await _bookRepo.GetByIdAsync(id);
             if (b == null) return null;
+            var vouchers = await GetActiveVouchersAsync();
 
             var bookDto = new BookDto
             {
@@ -72,11 +78,10 @@ namespace BookStore.API.Services
                 Length = b.Length,
                 Width = b.Width,
                 LengthUnit = b.LengthUnit ?? "cm",
-                PageCount = b.PageCount,
-                DiscountedPrice = b.DiscountedPrice,
-                DiscountBadge = b.DiscountBadge
+                PageCount = b.PageCount
             };
 
+            ApplyBestVoucher(bookDto, vouchers);
             return bookDto;
         }
 
@@ -103,8 +108,8 @@ namespace BookStore.API.Services
                 Width = dto.Width,
                 LengthUnit = dto.LengthUnit ?? "cm",
                 PageCount = dto.PageCount,
-                DiscountedPrice = dto.DiscountedPrice,
-                DiscountBadge = dto.DiscountBadge
+                DiscountedPrice = null,
+                DiscountBadge = null
             };
 
             await _bookRepo.AddAsync(newBook);
@@ -138,8 +143,8 @@ namespace BookStore.API.Services
             book.Width = dto.Width;
             book.LengthUnit = dto.LengthUnit ?? "cm";
             book.PageCount = dto.PageCount;
-            book.DiscountedPrice = dto.DiscountedPrice;
-            book.DiscountBadge = dto.DiscountBadge;
+            book.DiscountedPrice = null;
+            book.DiscountBadge = null;
             book.UpdatedAt = DateTime.UtcNow;
 
             await _bookRepo.UpdateAsync(book);
@@ -216,6 +221,68 @@ namespace BookStore.API.Services
         public async Task<IEnumerable<ProductSearchDto>> GetBooksByCategoryAsync(string categoryId)
         {
             return await _bookRepo.GetBooksByCategoryAsync(categoryId);
+        }
+
+        private async Task<List<Voucher>> GetActiveVouchersAsync()
+        {
+            var now = DateTime.UtcNow;
+            var vouchers = await _voucherRepo.GetAllAsync();
+            return vouchers
+                .Where(v => v.IsActive &&
+                            v.StartDate <= now &&
+                            v.ExpirationDate >= now &&
+                            v.UsedCount < v.Quantity)
+                .ToList();
+        }
+
+        private static void ApplyBestVoucher(BookDto book, IEnumerable<Voucher> vouchers)
+        {
+            var bestVoucher = vouchers
+                .Where(v => IsVoucherApplicable(book, v))
+                .OrderByDescending(v => CalculateDiscountValue(book.Price, v))
+                .FirstOrDefault();
+
+            if (bestVoucher == null)
+            {
+                book.DiscountedPrice = null;
+                book.DiscountBadge = null;
+                book.DiscountVoucherCode = null;
+                return;
+            }
+
+            var discountValue = CalculateDiscountValue(book.Price, bestVoucher);
+            if (discountValue <= 0)
+            {
+                return;
+            }
+
+            book.DiscountedPrice = Math.Max(0, book.Price - discountValue);
+            book.DiscountBadge = bestVoucher.DiscountType == "Percentage"
+                ? $"-{bestVoucher.DiscountAmount:N0}%"
+                : $"-{bestVoucher.DiscountAmount:N0}đ";
+            book.DiscountVoucherCode = bestVoucher.Code;
+        }
+
+        private static bool IsVoucherApplicable(BookDto book, Voucher voucher)
+        {
+            if (book.Price < voucher.MinOrderValue)
+            {
+                return false;
+            }
+
+            var appliesToProduct = !string.IsNullOrWhiteSpace(voucher.ApplicableProductId) &&
+                                   ("," + voucher.ApplicableProductId.Trim(',') + ",").Contains("," + book.BookId + ",");
+            var appliesToCategory = !string.IsNullOrWhiteSpace(voucher.ApplicableCategoryId) &&
+                                    voucher.ApplicableCategoryId == book.CategoryId;
+
+            return appliesToProduct || appliesToCategory;
+        }
+
+        private static decimal CalculateDiscountValue(decimal price, Voucher voucher)
+        {
+            return voucher.DiscountType == "Percentage"
+                ? price * voucher.DiscountAmount / 100m
+                : Math.Min(price, voucher.DiscountAmount);
         }
     }
 }

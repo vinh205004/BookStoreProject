@@ -34,6 +34,7 @@ namespace BookStore.API.Services
                 OrderDate = o.OrderDate,
                 TotalAmount = o.TotalAmount,
                 Status = o.Status,
+                PaymentMethod = ResolvePaymentMethod(o),
                 ShippingAddress = o.ShippingAddress,
                 Note = o.Note,
                 OrderItems = o.OrderItems.Select(oi => new OrderItemDto
@@ -62,6 +63,7 @@ namespace BookStore.API.Services
                 OrderDate = o.OrderDate,
                 TotalAmount = o.TotalAmount,
                 Status = o.Status,
+                PaymentMethod = ResolvePaymentMethod(o),
                 ShippingAddress = o.ShippingAddress,
                 Note = o.Note,
                 OrderItems = o.OrderItems.Select(oi => new OrderItemDto
@@ -86,6 +88,11 @@ namespace BookStore.API.Services
             if (!validStatuses.Contains(dto.Status))
                 throw new Exception("Trạng thái đơn hàng không hợp lệ!");
 
+            if (dto.Status == "Cancelled" && order.Status != "Cancelled")
+            {
+                await RestoreOrderStockAsync(order);
+            }
+
             order.Status = dto.Status;
             await _repo.UpdateAsync(order);
             return true;
@@ -105,6 +112,7 @@ namespace BookStore.API.Services
                 PhoneNumber = dto.PhoneNumber,
                 Note = dto.Note,
                 Status = "Pending",
+                PaymentMethod = "COD",
                 OrderDate = DateTime.UtcNow,
                 TotalAmount = 0,
                 OrderItems = new List<OrderItem>()
@@ -251,6 +259,28 @@ namespace BookStore.API.Services
             return await GetUserOrderDetailAsync(userId, order.OrderId) ?? throw new Exception("Không thể tạo đơn hàng!");
         }
 
+        public async Task<bool> CancelUserOrderAsync(string userId, string orderId)
+        {
+            var order = await _context.Orders
+                .Include(o => o.OrderItems)
+                .ThenInclude(oi => oi.Book)
+                .FirstOrDefaultAsync(o => o.OrderId == orderId && o.UserId == userId);
+
+            if (order == null) return false;
+
+            if (order.Status != "Pending" && order.Status != "Processing")
+                throw new Exception("Chỉ có thể hủy đơn hàng khi đang chờ xác nhận hoặc đang xử lý!");
+
+            await RestoreOrderStockAsync(order);
+            order.Status = "Cancelled";
+            order.Note = string.IsNullOrWhiteSpace(order.Note)
+                ? "Khách hàng đã hủy đơn"
+                : $"{order.Note} | Khách hàng đã hủy đơn";
+
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
 public async Task<IEnumerable<UserOrderDetailDto>> GetUserOrdersAsync(string userId)
         {
             var orders = await _context.Orders
@@ -267,6 +297,7 @@ public async Task<IEnumerable<UserOrderDetailDto>> GetUserOrdersAsync(string use
                 OrderDate = o.OrderDate,
                 TotalAmount = o.TotalAmount,
                 Status = o.Status,
+                PaymentMethod = ResolvePaymentMethod(o),
                 ShippingAddress = o.ShippingAddress,
                 PhoneNumber = o.PhoneNumber,
                 Note = o.Note,
@@ -298,6 +329,7 @@ public async Task<IEnumerable<UserOrderDetailDto>> GetUserOrdersAsync(string use
                 OrderDate = order.OrderDate,
                 TotalAmount = order.TotalAmount,
                 Status = order.Status,
+                PaymentMethod = ResolvePaymentMethod(order),
                 ShippingAddress = order.ShippingAddress,
                 PhoneNumber = order.PhoneNumber,
                 Note = order.Note,
@@ -310,6 +342,30 @@ public async Task<IEnumerable<UserOrderDetailDto>> GetUserOrdersAsync(string use
                     UnitPrice = oi.UnitPrice
                 }).ToList()
             };
+        }
+
+        private static Task RestoreOrderStockAsync(Order order)
+        {
+            foreach (var item in order.OrderItems)
+            {
+                if (item.Book != null)
+                {
+                    item.Book.Stock += item.Quantity;
+                }
+            }
+
+            return Task.CompletedTask;
+        }
+
+        private static string ResolvePaymentMethod(Order order)
+        {
+            if (order.PaymentMethod == "VNPAY" ||
+                (!string.IsNullOrWhiteSpace(order.Note) && order.Note.Contains("VNPAY", StringComparison.OrdinalIgnoreCase)))
+            {
+                return "VNPAY";
+            }
+
+            return "COD";
         }
     }
 }

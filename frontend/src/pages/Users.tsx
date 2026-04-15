@@ -7,10 +7,14 @@ import type { User } from '../types';
 import Modal from '../components/ui/Modal';
 import DetailModal from '../components/ui/DetailModal';
 import Button from '../components/ui/Button';
+import Pagination from '../components/Pagination';
+
+const ITEMS_PER_PAGE = 10;
 
 export default function Users() {
   const [users, setUsers] = useState<User[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
   
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
@@ -40,6 +44,12 @@ export default function Users() {
     user.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
     user.email.toLowerCase().includes(searchQuery.toLowerCase())
   );
+  const totalPages = Math.ceil(filteredUsers.length / ITEMS_PER_PAGE);
+  const paginatedUsers = filteredUsers.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, filteredUsers.length]);
 
   const handleOpenDetail = (user: User) => {
     setSelectedUser(user);
@@ -119,7 +129,7 @@ export default function Users() {
             {filteredUsers.length === 0 ? (
               <tr><td colSpan={7} className="p-8 text-center text-slate-500">Không tìm thấy người dùng nào.</td></tr>
             ) : (
-              filteredUsers.map((user) => (
+              paginatedUsers.map((user) => (
                 <tr key={user.userId} className="hover:bg-slate-50 transition-colors">
                   <td className="p-4 font-semibold text-slate-900">{user.username}</td>
                   <td className="p-4">{user.fullName}</td>
@@ -188,6 +198,8 @@ export default function Users() {
           </tbody>
         </table>
       </div>
+
+      <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
 
       {/* MODAL XEM CHI TIẾT */}
       <DetailModal 

@@ -7,11 +7,19 @@ import axiosClient from '../api/axiosClient';
 import type { Voucher, Category, Book } from '../types';
 import Modal from '../components/ui/Modal';
 import Button from '../components/ui/Button';
+import Pagination from '../components/Pagination';
+import SortableHeader, { type SortDirection } from '../components/SortableHeader';
+
+const ITEMS_PER_PAGE = 10;
+type VoucherSortKey = 'discountAmount' | 'minOrderValue' | 'usedCount';
 
 export default function Vouchers() {
   const [vouchers, setVouchers] = useState<Voucher[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [showTrash, setShowTrash] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [sortKey, setSortKey] = useState<VoucherSortKey>('usedCount');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -167,6 +175,23 @@ export default function Vouchers() {
   );
   
   const displayData = showTrash ? filteredTrash : filteredActive;
+  const sortedData = [...displayData].sort((a, b) => {
+    const aValue = a[sortKey] || 0;
+    const bValue = b[sortKey] || 0;
+    return sortDirection === 'asc' ? aValue - bValue : bValue - aValue;
+  });
+  const totalPages = Math.ceil(sortedData.length / ITEMS_PER_PAGE);
+  const paginatedData = sortedData.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+
+  const handleSort = (key: VoucherSortKey) => {
+    setSortKey(key);
+    setSortDirection(current => sortKey === key && current === 'desc' ? 'asc' : 'desc');
+    setCurrentPage(1);
+  };
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, showTrash, displayData.length]);
 
   return (
     <div className="bg-white shadow-sm p-4 sm:p-6">
@@ -210,18 +235,18 @@ export default function Vouchers() {
           <thead>
             <tr className="bg-slate-50 border-b border-slate-200 text-xs sm:text-sm text-slate-600 uppercase">
               <th className="p-3 sm:p-4 font-semibold">Mã Code</th>
-              <th className="p-3 sm:p-4 font-semibold">Mức giảm</th>
-              <th className="p-3 sm:p-4 font-semibold hidden sm:table-cell">Điều kiện đơn</th>
-              <th className="p-3 sm:p-4 font-semibold">Đã dùng</th>
+              <SortableHeader active={sortKey === 'discountAmount'} direction={sortDirection} onClick={() => handleSort('discountAmount')}>Mức giảm</SortableHeader>
+              <SortableHeader active={sortKey === 'minOrderValue'} direction={sortDirection} onClick={() => handleSort('minOrderValue')} className="hidden sm:table-cell">Điều kiện đơn</SortableHeader>
+              <SortableHeader active={sortKey === 'usedCount'} direction={sortDirection} onClick={() => handleSort('usedCount')}>Đã dùng</SortableHeader>
               <th className="p-3 sm:p-4 font-semibold hidden sm:table-cell">Hạn sử dụng</th>
               <th className="p-3 sm:p-4 font-semibold text-center">Thao tác</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-200 text-slate-700">
             {displayData.length === 0 ? (
-              <tr><td colSpan={5} className="p-8 text-center text-slate-500">Chưa có mã giảm giá nào.</td></tr>
+              <tr><td colSpan={6} className="p-8 text-center text-slate-500">Chưa có mã giảm giá nào.</td></tr>
             ) : (
-              displayData.map((v) => {
+              paginatedData.map((v) => {
                 // Kiểm tra xem mã đã quá hạn chưa
                 const isExpired = new Date(v.expirationDate) < new Date();
                 
@@ -269,6 +294,8 @@ export default function Vouchers() {
           </tbody>
         </table>
       </div>
+
+      <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
 
       {/* Modal kích thước lớn vì có nhiều trường */}
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={editingId ? 'Cập nhật Voucher' : 'Tạo Voucher mới'}>

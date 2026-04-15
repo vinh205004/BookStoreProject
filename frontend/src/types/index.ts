@@ -3,6 +3,7 @@ export interface Category {
   name: string;
   description: string;
   isActive: boolean;
+  bookCount?: number;
 }
 export interface Author {
   authorId: string;
@@ -75,6 +76,7 @@ export interface Order {
   shippingAddress: string;
   totalAmount: number;
   status: string;
+  paymentMethod?: string;
   orderDate: string;
   orderItems: OrderItem[];
 }

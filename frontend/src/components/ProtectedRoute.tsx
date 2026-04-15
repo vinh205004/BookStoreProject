@@ -1,14 +1,23 @@
 import { Navigate, Outlet } from 'react-router-dom';
+import { getUserRole } from '../utils/tokenUtils';
 
-export default function ProtectedRoute() {
+interface ProtectedRouteProps {
+  allowedRoles?: string[];
+}
+
+export default function ProtectedRoute({ allowedRoles }: ProtectedRouteProps) {
   const token = localStorage.getItem('token');
-  
-  // Chặn token null, undefined, hoặc chuỗi toàn dấu cách
+
   if (!token || token === 'undefined' || token === 'null' || token.trim() === '') {
     return <Navigate to="/login" replace />;
   }
 
-  // Nếu token hợp lệ, trả về Outlet (nested route)
-  // Routing logic (Admin vs Customer) để trong từng route definition
+  if (allowedRoles && allowedRoles.length > 0) {
+    const role = getUserRole();
+    if (!role || !allowedRoles.includes(role)) {
+      return <Navigate to="/" replace />;
+    }
+  }
+
   return <Outlet />;
 }

@@ -19,7 +19,8 @@ namespace BookStore.API.Services
                 CategoryId = c.CategoryId,
                 Name = c.Name,
                 Description = c.Description,
-                IsActive = c.IsActive
+                IsActive = c.IsActive,
+                BookCount = c.Books.Count(b => !b.IsHidden)
             });
         }
 
@@ -33,7 +34,8 @@ namespace BookStore.API.Services
                 CategoryId = c.CategoryId,
                 Name = c.Name,
                 Description = c.Description,
-                IsActive = c.IsActive
+                IsActive = c.IsActive,
+                BookCount = c.Books.Count(b => !b.IsHidden)
             };
         }
 
@@ -56,7 +58,8 @@ namespace BookStore.API.Services
                 CategoryId = newCategory.CategoryId,
                 Name = newCategory.Name,
                 Description = newCategory.Description,
-                IsActive = newCategory.IsActive
+                IsActive = newCategory.IsActive,
+                BookCount = 0
             };
         }
 

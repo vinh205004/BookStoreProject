@@ -25,7 +25,7 @@ namespace BookStore.API.Services
             "hay", "nhat", "tu", "van", "giup", "voi", "gia", "bao", "nhieu",
             "hang", "ton", "kho", "giam", "uu", "dai", "khuyen", "mai", "sale",
             "voucher", "dang", "con", "het", "duoi", "tren", "tu", "den", "toi",
-            "khoang", "nho", "hon", "lon", "qua", "khong"
+            "khoang", "nho", "hon", "lon", "qua", "khong", "tac", "ai", "ma", "duoc"
         };
 
         private static readonly string[] DescriptionIntentWords =
@@ -88,6 +88,7 @@ namespace BookStore.API.Services
             var wantsTopRated = TopRatedIntentWords.Any(normalizedMessage.Contains);
             var wantsExpensiveBooks = ExpensiveIntentWords.Any(normalizedMessage.Contains);
             var wantsCheapBooks = CheapIntentWords.Any(normalizedMessage.Contains);
+            var wantsAuthor = IsAuthorIntent(normalizedMessage);
             var wantsPrice = IsPriceIntent(normalizedMessage);
             var wantsStock = IsStockIntent(normalizedMessage);
             var wantsDiscount = IsDiscountIntent(normalizedMessage);
@@ -118,7 +119,8 @@ namespace BookStore.API.Services
                     Stock = b.Stock,
                     Description = string.IsNullOrWhiteSpace(b.Description)
                         ? null
-                        : (b.Description.Length > 90 ? b.Description.Substring(0, 90) + "..." : b.Description)
+                        : (b.Description.Length > 90 ? b.Description.Substring(0, 90) + "..." : b.Description),
+                    DiscountedPrice = b.DiscountedPrice
                 })
                 .ToListAsync();
 
@@ -142,7 +144,7 @@ namespace BookStore.API.Services
             var now = DateTime.UtcNow;
             var activeVouchers = await _context.Vouchers
                 .AsNoTracking()
-                .Where(v => v.IsActive && !v.IsHidden && v.StartDate <= now && v.ExpirationDate >= now && v.UsedCount < v.Quantity)
+                .Where(v => v.IsActive && v.StartDate <= now && v.ExpirationDate >= now && v.UsedCount < v.Quantity)
                 .ToListAsync();
 
             foreach (var book in books)
@@ -153,7 +155,9 @@ namespace BookStore.API.Services
                 ApplyBestVoucher(book, activeVouchers);
             }
 
-            var matchedBooks = books
+            var searchableBooks = ApplyCategoryHint(books, normalizedMessage).ToList();
+
+            var matchedBooks = searchableBooks
                 .Select(book => new
                 {
                     Book = book,
@@ -167,12 +171,12 @@ namespace BookStore.API.Services
                 .Select(x => x.Book)
                 .ToList();
 
-            var topSellers = books
+            var topSellers = searchableBooks
                 .OrderByDescending(b => b.Sold)
                 .ThenByDescending(b => b.Rating)
                 .Take(MaxTopBooks);
 
-            var topRated = books
+            var topRated = searchableBooks
                 .Where(b => b.Rating > 0)
                 .OrderByDescending(b => b.Rating)
                 .ThenByDescending(b => b.Sold)
@@ -180,7 +184,7 @@ namespace BookStore.API.Services
 
             if (wantsExpensiveBooks)
             {
-                var expensiveBooks = ApplyPriceFilter(books, priceFilter, useDiscountedPrice: false)
+                var expensiveBooks = ApplyPriceFilter(searchableBooks, priceFilter, useDiscountedPrice: false)
                     .OrderByDescending(b => b.Price)
                     .Take(3);
 
@@ -192,7 +196,7 @@ namespace BookStore.API.Services
 
             if (wantsCheapBooks)
             {
-                var cheapBooks = ApplyPriceFilter(books, priceFilter, useDiscountedPrice: false)
+                var cheapBooks = ApplyPriceFilter(searchableBooks, priceFilter, useDiscountedPrice: false)
                     .OrderBy(b => b.Price)
                     .Take(3);
 
@@ -204,7 +208,7 @@ namespace BookStore.API.Services
 
             if (wantsDiscount)
             {
-                var discountCandidates = GetBudgetCandidateBooks(books.Where(b => !string.IsNullOrWhiteSpace(b.Discount)).ToList(), queryWords);
+                var discountCandidates = GetBudgetCandidateBooks(searchableBooks.Where(b => !string.IsNullOrWhiteSpace(b.Discount)).ToList(), queryWords);
                 var discountedBooks = ApplyPriceFilter(discountCandidates, priceFilter, useDiscountedPrice: true)
                     .OrderByDescending(b => b.Rating)
                     .ThenByDescending(b => b.Sold)
@@ -221,6 +225,14 @@ namespace BookStore.API.Services
             }
 
             var bestMatchedBooks = SelectBestMatches(matchedBooks, queryWords).ToList();
+
+            if (wantsAuthor && bestMatchedBooks.Count > 0)
+            {
+                return new ChatResponseDto
+                {
+                    Response = BuildAuthorResponse(bestMatchedBooks)
+                };
+            }
 
             if (wantsPrice && bestMatchedBooks.Count > 0)
             {
@@ -241,7 +253,7 @@ namespace BookStore.API.Services
             if (budget.HasValue)
             {
                 var quantity = requestedQuantity ?? 3;
-                var budgetCandidates = GetBudgetCandidateBooks(books, queryWords);
+                var budgetCandidates = GetBudgetCandidateBooks(searchableBooks, queryWords);
                 var affordableBooks = SelectBooksWithinBudget(budgetCandidates, budget.Value, quantity);
 
                 return new ChatResponseDto
@@ -429,7 +441,7 @@ namespace BookStore.API.Services
         {
             return normalizedMessage
                 .Split(new[] { ' ', ',', '.', '?', '!', ';', ':', '-', '_' }, StringSplitOptions.RemoveEmptyEntries)
-                .Where(w => w.Length > 2 && !StopWords.Contains(w) && !LooksLikeMoneyToken(w))
+                .Where(w => w.Length > 1 && !StopWords.Contains(w) && !LooksLikeMoneyToken(w))
                 .Distinct()
                 .Take(8)
                 .ToList();
@@ -451,13 +463,18 @@ namespace BookStore.API.Services
             var score = 0;
             foreach (var word in queryWords)
             {
-                if (book.SearchText.Contains(word))
+                if (ContainsSearchToken(book.SearchText, word))
                 {
                     score++;
                 }
             }
 
             return score;
+        }
+
+        private static bool ContainsSearchToken(string text, string word)
+        {
+            return Regex.IsMatch(text, $@"(?<![a-z0-9]){Regex.Escape(word)}(?![a-z0-9])");
         }
 
         private static string NormalizeVietnamese(string value)
@@ -563,10 +580,7 @@ namespace BookStore.API.Services
                                    ("," + voucher.ApplicableProductId + ",").Contains("," + book.Id + ",");
             var appliesToCategory = !string.IsNullOrWhiteSpace(voucher.ApplicableCategoryId) &&
                                     voucher.ApplicableCategoryId == book.CategoryId;
-            var appliesGlobally = string.IsNullOrWhiteSpace(voucher.ApplicableProductId) &&
-                                  string.IsNullOrWhiteSpace(voucher.ApplicableCategoryId);
-
-            return appliesToProduct || appliesToCategory || appliesGlobally;
+            return appliesToProduct || appliesToCategory;
         }
 
         private static decimal CalculateDiscountValue(decimal price, Voucher voucher)
@@ -578,7 +592,7 @@ namespace BookStore.API.Services
 
         private static string BuildBudgetResponse(decimal budget, int requestedQuantity, IReadOnlyCollection<BookContextItem> books)
         {
-            var total = books.Sum(b => b.Price);
+            var total = books.Sum(b => b.EffectivePrice);
             var title = books.Count >= requestedQuantity
                 ? $"Với {FormatPrice(budget)} để mua {requestedQuantity} cuốn, bạn có thể chọn"
                 : $"Với {FormatPrice(budget)}, chưa đủ combo {requestedQuantity} cuốn tốt; có thể chọn {books.Count} cuốn";
@@ -597,14 +611,20 @@ namespace BookStore.API.Services
             return $"Tình trạng trong kho: {string.Join("; ", lines)}.";
         }
 
+        private static string BuildAuthorResponse(IEnumerable<BookContextItem> books)
+        {
+            var lines = books.Select((b, index) => $"{index + 1}. {b.Title}: {b.Author}");
+            return $"Tác giả: {string.Join("; ", lines)}.";
+        }
+
         private static List<BookContextItem> SelectBooksWithinBudget(IEnumerable<BookContextItem> books, decimal budget, int requestedQuantity)
         {
             var quantity = Math.Clamp(requestedQuantity, 1, 5);
             var candidates = books
-                .Where(b => b.Price <= budget)
+                .Where(b => b.EffectivePrice <= budget)
                 .OrderByDescending(b => b.Rating)
                 .ThenByDescending(b => b.Sold)
-                .ThenBy(b => b.Price)
+                .ThenBy(b => b.EffectivePrice)
                 .Take(60)
                 .ToList();
 
@@ -647,6 +667,67 @@ namespace BookStore.API.Services
                 .ToList();
 
             return matchedBooks.Count > 0 ? matchedBooks : books.ToList();
+        }
+
+        private static IEnumerable<BookContextItem> ApplyCategoryHint(IReadOnlyCollection<BookContextItem> books, string normalizedMessage)
+        {
+            string[]? categoryHints = null;
+
+            if (normalizedMessage.Contains("thieu nhi") ||
+                normalizedMessage.Contains("nhi dong") ||
+                normalizedMessage.Contains("tre em"))
+            {
+                categoryHints = new[] { "thieu nhi" };
+            }
+            else if (normalizedMessage.Contains("van hoc viet nam") ||
+                     normalizedMessage.Contains("sach viet nam"))
+            {
+                categoryHints = new[] { "van hoc viet nam" };
+            }
+            else if (normalizedMessage.Contains("van hoc nuoc ngoai") ||
+                     normalizedMessage.Contains("sach nuoc ngoai"))
+            {
+                categoryHints = new[] { "van hoc nuoc ngoai" };
+            }
+            else if (normalizedMessage.Contains("kinh doanh") ||
+                     normalizedMessage.Contains("dau tu") ||
+                     normalizedMessage.Contains("marketing"))
+            {
+                categoryHints = new[] { "kinh doanh" };
+            }
+            else if (normalizedMessage.Contains("ky nang") ||
+                     normalizedMessage.Contains("phat trien ban than") ||
+                     normalizedMessage.Contains("tu duy"))
+            {
+                categoryHints = new[] { "ky nang song" };
+            }
+            else if (normalizedMessage.Contains("khoa hoc") ||
+                     normalizedMessage.Contains("cong nghe") ||
+                     normalizedMessage.Contains("lap trinh") ||
+                     normalizedMessage.Contains("it"))
+            {
+                categoryHints = new[] { "khoa hoc", "cong nghe" };
+            }
+            else if (normalizedMessage.Contains("lich su") ||
+                     normalizedMessage.Contains("van hoa"))
+            {
+                categoryHints = new[] { "lich su", "van hoa" };
+            }
+
+            if (categoryHints == null)
+            {
+                return books;
+            }
+
+            var filtered = books
+                .Where(book =>
+                {
+                    var category = NormalizeVietnamese(book.Category);
+                    return categoryHints.Any(category.Contains);
+                })
+                .ToList();
+
+            return filtered.Count > 0 ? filtered : books;
         }
 
         private static IEnumerable<BookContextItem> ApplyPriceFilter(IEnumerable<BookContextItem> books, PriceFilter? filter, bool useDiscountedPrice)
@@ -718,7 +799,7 @@ namespace BookStore.API.Services
                 for (var i = startIndex; i < candidates.Count; i++)
                 {
                     var book = candidates[i];
-                    var nextTotal = currentTotal + book.Price;
+                    var nextTotal = currentTotal + book.EffectivePrice;
                     if (nextTotal > budget)
                     {
                         continue;
@@ -832,9 +913,17 @@ namespace BookStore.API.Services
 
         private static bool IsPriceIntent(string normalizedMessage)
         {
-            return normalizedMessage.Contains("gia") ||
+            return !normalizedMessage.Contains("tac gia") &&
+                   (normalizedMessage.Contains("gia") ||
                    normalizedMessage.Contains("bao nhieu tien") ||
-                   normalizedMessage.Contains("bao nhieu vnd");
+                   normalizedMessage.Contains("bao nhieu vnd"));
+        }
+
+        private static bool IsAuthorIntent(string normalizedMessage)
+        {
+            return normalizedMessage.Contains("tac gia") ||
+                   normalizedMessage.Contains("ai viet") ||
+                   normalizedMessage.Contains("cua ai");
         }
 
         private static bool IsStockIntent(string normalizedMessage)

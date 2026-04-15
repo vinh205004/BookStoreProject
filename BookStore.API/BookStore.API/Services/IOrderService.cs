@@ -11,6 +11,7 @@ namespace BookStore.API.Services
 
         // User endpoints
         Task<UserOrderDetailDto> CreateOrderAsync(string userId, CreateOrderDto dto);
+        Task<bool> CancelUserOrderAsync(string userId, string orderId);
         Task<IEnumerable<UserOrderDetailDto>> GetUserOrdersAsync(string userId);
         Task<UserOrderDetailDto?> GetUserOrderDetailAsync(string userId, string orderId);
     }

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { ShoppingCart, Phone, MapPin, FileText } from 'lucide-react';
+import { CreditCard, FileText, MapPin, Phone, ShoppingCart, Wallet } from 'lucide-react';
 import { toast } from 'react-toastify';
 import axiosClient from '../../api/axiosClient';
 import LocationPickerMap from '../../components/LocationPickerMap';
@@ -27,6 +27,7 @@ export default function CheckoutPage() {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<'cod' | 'vnpay'>('cod');
   const [formData, setFormData] = useState({
     shippingAddress: '',
     phoneNumber: '',
@@ -100,6 +101,17 @@ export default function CheckoutPage() {
         voucherCode: appliedVoucherCode,
       };
 
+      if (paymentMethod === 'vnpay') {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const response: any = await axiosClient.post('/Payments/vnpay/create', { order: orderData });
+        if (!response.paymentUrl) {
+          throw new Error('Không tạo được liên kết thanh toán VNPAY.');
+        }
+
+        window.location.href = response.paymentUrl;
+        return;
+      }
+
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const response: any = await axiosClient.post('/Orders', orderData);
       
@@ -119,11 +131,11 @@ export default function CheckoutPage() {
       window.dispatchEvent(new Event('cart-updated'));
       
       toast.success('Đơn hàng đã được tạo thành công!');
-      navigate(`/order-success/${response.orderId}`);
+      navigate(`/orders?orderId=${response.orderId}`);
     } catch (error) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const axiosError = error as any;
-      toast.error(axiosError.response?.data?.message || 'Lỗi khi tạo đơn hàng!');
+      toast.error(axiosError.response?.data?.error || axiosError.response?.data?.message || axiosError.message || 'Lỗi khi tạo đơn hàng!');
     } finally {
       setSubmitting(false);
     }
@@ -215,6 +227,43 @@ export default function CheckoutPage() {
                   />
                 </div>
               </div>
+
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">Phương thức thanh toán</label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <label className={`border p-4 rounded-lg cursor-pointer transition ${paymentMethod === 'cod' ? 'border-orange-500 bg-orange-50' : 'border-gray-200 bg-white'}`}>
+                    <input
+                      type="radio"
+                      name="paymentMethod"
+                      value="cod"
+                      checked={paymentMethod === 'cod'}
+                      onChange={() => setPaymentMethod('cod')}
+                      className="sr-only"
+                    />
+                    <span className="flex items-center gap-2 font-bold text-gray-800">
+                      <Wallet size={20} className="text-orange-500" />
+                      Thanh toán khi nhận hàng
+                    </span>
+                    <span className="block text-sm text-gray-500 mt-1">Tạo đơn và thanh toán trực tiếp khi giao hàng.</span>
+                  </label>
+
+                  <label className={`border p-4 rounded-lg cursor-pointer transition ${paymentMethod === 'vnpay' ? 'border-blue-500 bg-blue-50' : 'border-gray-200 bg-white'}`}>
+                    <input
+                      type="radio"
+                      name="paymentMethod"
+                      value="vnpay"
+                      checked={paymentMethod === 'vnpay'}
+                      onChange={() => setPaymentMethod('vnpay')}
+                      className="sr-only"
+                    />
+                    <span className="flex items-center gap-2 font-bold text-gray-800">
+                      <CreditCard size={20} className="text-blue-500" />
+                      VNPAY Sandbox
+                    </span>
+                    <span className="block text-sm text-gray-500 mt-1">Chuyển sang cổng thanh toán test của VNPAY.</span>
+                  </label>
+                </div>
+              </div>
             </div>
 
             <button
@@ -222,7 +271,7 @@ export default function CheckoutPage() {
               disabled={submitting}
               className="w-full mt-6 bg-orange-500 hover:bg-orange-600 disabled:bg-gray-400 text-white font-bold py-3 rounded-lg transition"
             >
-              {submitting ? 'Đang xử lý...' : 'Xác nhận đơn hàng'}
+              {submitting ? 'Đang xử lý...' : paymentMethod === 'vnpay' ? 'Thanh toán qua VNPAY' : 'Xác nhận đơn hàng'}
             </button>
           </form>
         </div>
@@ -235,7 +284,7 @@ export default function CheckoutPage() {
             <div className="space-y-3 mb-6 pb-6 border-b border-gray-200 max-h-96 overflow-y-auto">
               {cart.map(item => (
                 <div key={item.bookId} className="flex justify-between text-sm">
-                  <span className="text-gray-600 line-clamp-1">{item.bookTitle} x{item.quantity}</span>
+                  <span className="text-gray-600 leading-5 break-words">{item.bookTitle} x{item.quantity}</span>
                   <span className="font-semibold text-gray-800">{(item.price * item.quantity).toLocaleString()}₫</span>
                 </div>
               ))}

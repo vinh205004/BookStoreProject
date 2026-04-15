@@ -8,10 +8,18 @@ import Modal from '../components/ui/Modal';
 import DetailModal from '../components/ui/DetailModal';
 import Button from '../components/ui/Button';
 import MultiImageUpload from '../components/ui/MultiImageUpload';
+import Pagination from '../components/Pagination';
+import SortableHeader, { type SortDirection } from '../components/SortableHeader';
+
+const ITEMS_PER_PAGE = 10;
+type BookSortKey = 'price' | 'stock';
 
 export default function Books() {
   const [books, setBooks] = useState<Book[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [sortKey, setSortKey] = useState<BookSortKey>('stock');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
 
   // DATA CHO DROPDOWN
   const [categories, setCategories] = useState<Category[]>([]);
@@ -233,6 +241,23 @@ export default function Books() {
   );
   
   const displayData = showTrash ? filteredTrash : filteredActive;
+  const sortedData = [...displayData].sort((a, b) => {
+    const aValue = sortKey === 'price' ? a.price : a.stock;
+    const bValue = sortKey === 'price' ? b.price : b.stock;
+    return sortDirection === 'asc' ? aValue - bValue : bValue - aValue;
+  });
+  const totalPages = Math.ceil(sortedData.length / ITEMS_PER_PAGE);
+  const paginatedData = sortedData.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+
+  const handleSort = (key: BookSortKey) => {
+    setSortKey(key);
+    setSortDirection(current => sortKey === key && current === 'desc' ? 'asc' : 'desc');
+    setCurrentPage(1);
+  };
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, showTrash, displayData.length]);
 
   return (
     <div className="bg-white shadow-sm p-4 sm:p-6">
@@ -291,8 +316,8 @@ export default function Books() {
               <th className="p-3 sm:p-4 font-semibold">Tên sách</th>
               <th className="p-3 sm:p-4 font-semibold hidden sm:table-cell">Tác giả</th>
               <th className="p-3 sm:p-4 font-semibold hidden sm:table-cell">Danh mục</th>
-              <th className="p-3 sm:p-4 font-semibold">Giá</th>
-              <th className="p-3 sm:p-4 font-semibold">Kho</th>
+              <SortableHeader active={sortKey === 'price'} direction={sortDirection} onClick={() => handleSort('price')}>Giá</SortableHeader>
+              <SortableHeader active={sortKey === 'stock'} direction={sortDirection} onClick={() => handleSort('stock')}>Kho</SortableHeader>
               <th className="p-3 sm:p-4 font-semibold text-center">Thao tác</th>
             </tr>
           </thead>
@@ -300,7 +325,7 @@ export default function Books() {
             {displayData.length === 0 ? (
               <tr><td colSpan={7} className="p-8 text-center text-slate-500">Trống.</td></tr>
             ) : (
-              displayData.map((book) => (
+              paginatedData.map((book) => (
                 <tr key={book.bookId} className="hover:bg-slate-50">
                   <td className="p-3 sm:p-4">
                     {book.imageUrls && book.imageUrls.length > 0 ? (
@@ -322,6 +347,9 @@ export default function Books() {
                             <span className="font-bold text-orange-500">{Number(book.discountedPrice).toLocaleString('vi-VN')} đ</span>
                             {book.discountBadge && (
                               <span className="inline-block bg-red-500 text-white px-2 py-0.5 text-xs font-bold rounded-none">{book.discountBadge}</span>
+                            )}
+                            {book.discountVoucherCode && (
+                              <span className="inline-block bg-slate-100 text-slate-700 px-2 py-0.5 text-xs font-semibold rounded-none">{book.discountVoucherCode}</span>
                             )}
                           </div>
                           <span className="text-gray-400 line-through text-xs">{Number(book.price).toLocaleString('vi-VN')} đ</span>
@@ -356,6 +384,8 @@ export default function Books() {
           </tbody>
         </table>
       </div>
+
+      <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
 
       {/* MODAL THÊM/SỬA SÁCH */}
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={editingId ? 'Cập nhật thông tin sách' : 'Thêm sách mới vào kho'}>
@@ -502,7 +532,8 @@ export default function Books() {
               { label: 'Kho hàng', value: `${selectedBook.stock} cuốn` },
               ...(selectedBook.discountedPrice !== undefined && selectedBook.discountedPrice > 0 ? [
                 { label: 'Giá giảm', value: `${selectedBook.discountedPrice.toLocaleString('vi-VN')} đ` },
-                { label: 'Badge', value: selectedBook.discountBadge || '-' }
+                { label: 'Badge', value: selectedBook.discountBadge || '-' },
+                { label: 'Voucher', value: selectedBook.discountVoucherCode || '-' }
               ] : [])
             ]
           },

@@ -27,6 +27,10 @@ namespace BookStore.API.Models
         public string Status { get; set; } = "Pending"; // Các trạng thái: Pending, Processing, Shipped, Delivered, Cancelled
 
         [Required]
+        [MaxLength(50)]
+        public string PaymentMethod { get; set; } = "COD";
+
+        [Required]
         [MaxLength(255)]
         public string ShippingAddress { get; set; } = string.Empty;
 

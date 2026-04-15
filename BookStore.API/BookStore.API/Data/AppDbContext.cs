@@ -21,5 +21,14 @@ namespace BookStore.API.Data
         public DbSet<Banner> Banners { get; set; }
         public DbSet<Review> Reviews { get; set; }
         public DbSet<ReviewReply> ReviewReplies { get; set; }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+
+            modelBuilder.Entity<Order>()
+                .Property(o => o.PaymentMethod)
+                .HasDefaultValue("COD");
+        }
     }
 }

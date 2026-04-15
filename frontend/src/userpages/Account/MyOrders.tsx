@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Package, ChevronDown, ArrowLeft } from 'lucide-react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { ArrowLeft, ChevronDown, Package, XCircle } from 'lucide-react';
 import { toast } from 'react-toastify';
 import axiosClient from '../../api/axiosClient';
 
@@ -17,6 +17,7 @@ interface Order {
   orderDate: string;
   totalAmount: number;
   status: string;
+  paymentMethod?: string;
   shippingAddress: string;
   phoneNumber: string;
   note: string;
@@ -25,6 +26,7 @@ interface Order {
 
 export default function MyOrders() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
@@ -32,6 +34,24 @@ export default function MyOrders() {
   useEffect(() => {
     fetchOrders();
   }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const payment = params.get('payment');
+    const orderId = params.get('orderId');
+
+    if (orderId) {
+      setExpandedOrder(orderId);
+    }
+
+    if (payment === 'success') {
+      toast.success('Thanh toán VNPAY thành công!');
+      navigate('/orders', { replace: true });
+    } else if (payment === 'failed') {
+      toast.error('Thanh toán VNPAY chưa thành công hoặc đã bị hủy.');
+      navigate('/orders', { replace: true });
+    }
+  }, [location.search, navigate]);
 
   const fetchOrders = async () => {
     try {
@@ -78,6 +98,26 @@ export default function MyOrders() {
         return 'Đã hủy';
       default:
         return status;
+    }
+  };
+
+  const getPaymentMethodText = (method?: string) => {
+    return method === 'VNPAY' ? 'Đã thanh toán qua VNPAY' : 'Thanh toán khi nhận hàng';
+  };
+
+  const canCancelOrder = (status: string) => status === 'Pending' || status === 'Processing';
+
+  const handleCancelOrder = async (orderId: string) => {
+    if (!window.confirm('Bạn có chắc muốn hủy đơn hàng này?')) return;
+
+    try {
+      await axiosClient.put(`/Orders/user/${orderId}/cancel`);
+      toast.success('Đã hủy đơn hàng thành công!');
+      await fetchOrders();
+      setExpandedOrder(orderId);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
+      toast.error(error.response?.data?.error || error.response?.data?.message || 'Không thể hủy đơn hàng!');
     }
   };
 
@@ -131,6 +171,9 @@ export default function MyOrders() {
                   <span className={`text-xs px-3 py-1 rounded-full font-semibold ${getStatusColor(order.status)}`}>
                     {getStatusText(order.status)}
                   </span>
+                  <span className="text-xs px-3 py-1 rounded-full font-semibold bg-gray-100 text-gray-700">
+                    {getPaymentMethodText(order.paymentMethod)}
+                  </span>
                 </div>
                 <p className="text-sm text-gray-600">
                   {new Date(order.orderDate).toLocaleDateString('vi-VN')} • {order.items.length} sản phẩm
@@ -166,7 +209,7 @@ export default function MyOrders() {
                           />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="font-semibold text-gray-800 line-clamp-2">{item.bookTitle}</p>
+                          <p className="font-semibold text-gray-800 leading-5 break-words">{item.bookTitle}</p>
                           <p className="text-sm text-gray-600">Số lượng: {item.quantity}</p>
                           <p className="text-orange-500 font-bold">{(item.unitPrice * item.quantity).toLocaleString()}₫</p>
                         </div>
@@ -180,6 +223,7 @@ export default function MyOrders() {
                   <h4 className="font-bold text-gray-800 mb-3">Địa chỉ giao hàng</h4>
                   <p className="text-gray-700 mb-2">{order.shippingAddress}</p>
                   <p className="text-sm text-gray-600">Điện thoại: {order.phoneNumber}</p>
+                  <p className="text-sm text-gray-600 mt-2">Thanh toán: {getPaymentMethodText(order.paymentMethod)}</p>
                   {order.note && <p className="text-sm text-gray-600 mt-2">Ghi chú: {order.note}</p>}
                 </div>
 
@@ -198,6 +242,19 @@ export default function MyOrders() {
                     <span className="font-bold text-orange-500 text-lg">{order.totalAmount.toLocaleString()}₫</span>
                   </div>
                 </div>
+
+                {canCancelOrder(order.status) && (
+                  <div className="flex justify-end mb-4">
+                    <button
+                      type="button"
+                      onClick={() => handleCancelOrder(order.orderId)}
+                      className="inline-flex items-center gap-2 bg-red-100 hover:bg-red-200 text-red-700 font-bold px-4 py-2 rounded transition"
+                    >
+                      <XCircle size={18} />
+                      Hủy đơn hàng
+                    </button>
+                  </div>
+                )}
 
                 {/* Order Timestamp */}
                 <p className="text-xs text-gray-500 text-right">

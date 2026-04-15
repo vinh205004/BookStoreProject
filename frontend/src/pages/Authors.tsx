@@ -7,10 +7,16 @@ import Modal from '../components/ui/Modal';
 import DetailModal from '../components/ui/DetailModal';
 import Button from '../components/ui/Button';
 import ImageUpload from '../components/ui/ImageUpload';
+import Pagination from '../components/Pagination';
+import SortableHeader, { type SortDirection } from '../components/SortableHeader';
+
+const ITEMS_PER_PAGE = 10;
 
 export default function Authors() {
   const [authors, setAuthors] = useState<Author[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
 
   // STATE ĐỂ CHUYỂN TAB (False = Danh sách chính, True = Thùng rác)
   const [showTrash, setShowTrash] = useState(false);
@@ -123,6 +129,17 @@ export default function Authors() {
   );
   
   const displayData = showTrash ? filteredTrash : filteredActive;
+  const sortedData = [...displayData].sort((a, b) => {
+    const aValue = a.bookCount || 0;
+    const bValue = b.bookCount || 0;
+    return sortDirection === 'asc' ? aValue - bValue : bValue - aValue;
+  });
+  const totalPages = Math.ceil(sortedData.length / ITEMS_PER_PAGE);
+  const paginatedData = sortedData.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, showTrash, displayData.length]);
 
   return (
     <div className="bg-white shadow-sm p-4 sm:p-6">
@@ -179,7 +196,16 @@ export default function Authors() {
             <tr className="bg-slate-50 border-b border-slate-200 text-xs sm:text-sm text-slate-600 uppercase">
               <th className="p-3 sm:p-4 font-semibold w-24">Hình ảnh</th>
               <th className="p-3 sm:p-4 font-semibold">Tên tác giả</th>
-              <th className="p-3 sm:p-4 font-semibold">Số tác phẩm</th>
+              <SortableHeader
+                active
+                direction={sortDirection}
+                onClick={() => {
+                  setSortDirection(current => current === 'desc' ? 'asc' : 'desc');
+                  setCurrentPage(1);
+                }}
+              >
+                Số tác phẩm
+              </SortableHeader>
               <th className="p-3 sm:p-4 font-semibold hidden sm:table-cell">Tiểu sử</th>
               <th className="p-3 sm:p-4 font-semibold">Trạng thái</th>
               <th className="p-3 sm:p-4 font-semibold text-center">Thao tác</th>
@@ -189,7 +215,7 @@ export default function Authors() {
             {displayData.length === 0 ? (
               <tr><td colSpan={6} className="p-8 text-center text-slate-500">Trống.</td></tr>
             ) : (
-              displayData.map((author) => (
+              paginatedData.map((author) => (
                 <tr key={author.authorId} className="hover:bg-slate-50">
                   <td className="p-3 sm:p-4">
                     {author.imageUrl ? (
@@ -232,6 +258,8 @@ export default function Authors() {
           </tbody>
         </table>
       </div>
+
+      <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
 
       {/* MODAL THÊM/SỬA */}
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={editingId ? 'Cập nhật tác giả' : 'Thêm tác giả mới'}>

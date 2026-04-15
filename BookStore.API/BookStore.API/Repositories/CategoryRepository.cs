@@ -11,12 +11,16 @@ namespace BookStore.API.Repositories
 
         public async Task<IEnumerable<Category>> GetAllAsync()
         {
-            return await _context.Categories.ToListAsync();
+            return await _context.Categories
+                .Include(c => c.Books)
+                .ToListAsync();
         }
 
         public async Task<Category?> GetByIdAsync(string id)
         {
-            return await _context.Categories.FindAsync(id);
+            return await _context.Categories
+                .Include(c => c.Books)
+                .FirstOrDefaultAsync(c => c.CategoryId == id);
         }
 
         public async Task<Category?> GetByNameAsync(string name)

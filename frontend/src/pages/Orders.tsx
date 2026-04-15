@@ -5,6 +5,11 @@ import axiosClient from '../api/axiosClient';
 import type { Order } from '../types';
 import Modal from '../components/ui/Modal';
 import Button from '../components/ui/Button';
+import Pagination from '../components/Pagination';
+import SortableHeader, { type SortDirection } from '../components/SortableHeader';
+
+const ITEMS_PER_PAGE = 10;
+type OrderSortKey = 'orderDate' | 'totalAmount';
 
 // Cấu hình màu và Text cho từng trạng thái
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -16,9 +21,16 @@ const STATUS_CONFIG: Record<string, { label: string, color: string, icon: any }>
   'Cancelled': { label: 'Đã hủy', color: 'bg-red-100 text-red-700 border-red-200', icon: <XCircle size={16} /> },
 };
 
+const getPaymentMethodLabel = (method?: string) => {
+  return method === 'VNPAY' ? 'VNPAY' : 'COD';
+};
+
 export default function Orders() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [sortKey, setSortKey] = useState<OrderSortKey>('orderDate');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -69,6 +81,23 @@ export default function Orders() {
     order.orderId.toString().includes(searchQuery) ||
     order.status.toLowerCase().includes(searchQuery.toLowerCase())
   );
+  const sortedOrders = [...filteredOrders].sort((a, b) => {
+    const aValue = sortKey === 'orderDate' ? new Date(a.orderDate).getTime() : a.totalAmount;
+    const bValue = sortKey === 'orderDate' ? new Date(b.orderDate).getTime() : b.totalAmount;
+    return sortDirection === 'asc' ? aValue - bValue : bValue - aValue;
+  });
+  const totalPages = Math.ceil(sortedOrders.length / ITEMS_PER_PAGE);
+  const paginatedOrders = sortedOrders.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+
+  const handleSort = (key: OrderSortKey) => {
+    setSortKey(key);
+    setSortDirection(current => sortKey === key && current === 'desc' ? 'asc' : 'desc');
+    setCurrentPage(1);
+  };
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, filteredOrders.length]);
 
   return (
     <div className="bg-white shadow-sm border border-slate-200 p-4 sm:p-6">
@@ -96,17 +125,18 @@ export default function Orders() {
             <tr className="bg-slate-50 border-b border-slate-200 text-xs sm:text-sm text-slate-600 uppercase">
               <th className="p-3 sm:p-4 font-semibold">Mã Đơn</th>
               <th className="p-3 sm:p-4 font-semibold hidden sm:table-cell">Khách hàng</th>
-              <th className="p-3 sm:p-4 font-semibold hidden sm:table-cell">Ngày đặt</th>
-              <th className="p-3 sm:p-4 font-semibold">Tổng tiền</th>
+              <SortableHeader active={sortKey === 'orderDate'} direction={sortDirection} onClick={() => handleSort('orderDate')} className="hidden sm:table-cell">Ngày đặt</SortableHeader>
+              <SortableHeader active={sortKey === 'totalAmount'} direction={sortDirection} onClick={() => handleSort('totalAmount')}>Tổng tiền</SortableHeader>
+              <th className="p-3 sm:p-4 font-semibold hidden sm:table-cell">Thanh toán</th>
               <th className="p-3 sm:p-4 font-semibold">Trạng thái</th>
               <th className="p-3 sm:p-4 font-semibold text-center">Thao tác</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-200 text-slate-700">
             {filteredOrders.length === 0 ? (
-              <tr><td colSpan={6} className="p-8 text-center text-slate-500">{orders.length === 0 ? 'Chưa có đơn hàng nào trong hệ thống.' : 'Không tìm thấy đơn hàng phù hợp.'}</td></tr>
+              <tr><td colSpan={7} className="p-8 text-center text-slate-500">{orders.length === 0 ? 'Chưa có đơn hàng nào trong hệ thống.' : 'Không tìm thấy đơn hàng phù hợp.'}</td></tr>
             ) : (
-              filteredOrders.map((order) => {
+              paginatedOrders.map((order) => {
                 const statusInfo = STATUS_CONFIG[order.status] || STATUS_CONFIG['Pending'];
                 return (
                   <tr key={order.orderId} className="hover:bg-slate-50 transition-colors">
@@ -117,6 +147,11 @@ export default function Orders() {
                     </td>
                     <td className="p-3 sm:p-4 hidden sm:table-cell text-xs sm:text-base">{new Date(order.orderDate).toLocaleString('vi-VN')}</td>
                     <td className="p-3 sm:p-4 font-bold text-red-500 text-xs sm:text-base">{order.totalAmount.toLocaleString('vi-VN')} đ</td>
+                    <td className="p-3 sm:p-4 hidden sm:table-cell text-xs sm:text-base">
+                      <span className={`px-2 py-1 text-xs font-bold border ${order.paymentMethod === 'VNPAY' ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-slate-50 text-slate-700 border-slate-200'}`}>
+                        {getPaymentMethodLabel(order.paymentMethod)}
+                      </span>
+                    </td>
                     <td className="p-3 sm:p-4">
                       <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-none text-xs font-bold border ${statusInfo.color}`}>
                         {statusInfo.icon} {statusInfo.label}
@@ -138,6 +173,8 @@ export default function Orders() {
         </table>
       </div>
 
+      <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
+
       {/* MODAL CHI TIẾT ĐƠN HÀNG */}
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={`Chi tiết đơn hàng #ORD-${selectedOrder?.orderId}`}>
         {selectedOrder && (
@@ -151,6 +188,7 @@ export default function Orders() {
                 <div><span className="text-slate-500">Điện thoại:</span> <span className="font-semibold">{selectedOrder.customerPhone}</span></div>
                 <div className="col-span-2"><span className="text-slate-500">Địa chỉ:</span> <span className="font-semibold">{selectedOrder.shippingAddress}</span></div>
                 <div className="col-span-2"><span className="text-slate-500">Ngày đặt:</span> <span className="font-semibold">{new Date(selectedOrder.orderDate).toLocaleString('vi-VN')}</span></div>
+                <div className="col-span-2"><span className="text-slate-500">Thanh toán:</span> <span className="font-semibold">{getPaymentMethodLabel(selectedOrder.paymentMethod)}</span></div>
               </div>
             </div>
 

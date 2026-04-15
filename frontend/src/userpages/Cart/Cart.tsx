@@ -389,7 +389,7 @@ export default function Cart() {
                 {/* Details */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between mb-1">
-                    <h3 className="font-bold text-gray-800 line-clamp-2">{item.bookTitle}</h3>
+                    <h3 className="font-bold text-gray-800 leading-5 break-words">{item.bookTitle}</h3>
                     {item.discountBadge && (
                       <div className="ml-2 bg-red-500 text-white px-2 py-1 rounded text-xs font-bold whitespace-nowrap">
                         {item.discountBadge}

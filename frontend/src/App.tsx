@@ -56,7 +56,7 @@ function App() {
         </Route>
 
         {/* Admin Routes */}
-        <Route element={<ProtectedRoute />}>
+        <Route element={<ProtectedRoute allowedRoles={['Admin']} />}>
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<AdminDashboard />} />
             <Route path="categories" element={<Categories />} />

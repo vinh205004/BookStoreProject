@@ -36,7 +36,8 @@ namespace BookStore.API.Services
                 Name = a.Name,
                 Biography = a.Biography,
                 ImageUrl = a.ImageUrl,
-                IsActive = a.IsActive
+                IsActive = a.IsActive,
+                BookCount = a.Books.Count(b => !b.IsHidden)
             };
         }
 
@@ -57,7 +58,9 @@ namespace BookStore.API.Services
                 AuthorId = newAuthor.AuthorId,
                 Name = newAuthor.Name,
                 Biography = newAuthor.Biography,
-                ImageUrl = newAuthor.ImageUrl
+                ImageUrl = newAuthor.ImageUrl,
+                IsActive = newAuthor.IsActive,
+                BookCount = 0
             };
         }
 

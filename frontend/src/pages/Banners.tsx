@@ -6,9 +6,15 @@ import type { Banner, Category } from '../types';
 import Modal from '../components/ui/Modal';
 import Button from '../components/ui/Button';
 import ImageUpload from '../components/ui/ImageUpload';
+import Pagination from '../components/Pagination';
+import SortableHeader, { type SortDirection } from '../components/SortableHeader';
+
+const ITEMS_PER_PAGE = 10;
 
 export default function Banners() {
   const [banners, setBanners] = useState<Banner[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [imageUrl, setImageUrl] = useState('');
@@ -113,6 +119,18 @@ export default function Banners() {
     }
   };
 
+  const sortedBanners = [...banners].sort((a, b) => {
+    return sortDirection === 'asc'
+      ? a.displayOrder - b.displayOrder
+      : b.displayOrder - a.displayOrder;
+  });
+  const totalPages = Math.ceil(sortedBanners.length / ITEMS_PER_PAGE);
+  const paginatedBanners = sortedBanners.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [banners.length]);
+
   return (
     <div className="bg-white shadow-sm p-4 sm:p-6">
       {/* HEADER */}
@@ -134,7 +152,17 @@ export default function Banners() {
               <th className="p-3 sm:p-4 font-semibold">Hình ảnh</th>
               <th className="p-3 sm:p-4 font-semibold">Tiêu đề / Phụ đề</th>
               <th className="p-3 sm:p-4 font-semibold">Liên kết URL</th>
-              <th className="p-3 sm:p-4 font-semibold text-center">Thứ tự</th>
+              <SortableHeader
+                active
+                direction={sortDirection}
+                onClick={() => {
+                  setSortDirection(current => current === 'asc' ? 'desc' : 'asc');
+                  setCurrentPage(1);
+                }}
+                className="text-center"
+              >
+                Thứ tự
+              </SortableHeader>
               <th className="p-3 sm:p-4 font-semibold text-center">Trạng thái</th>
               <th className="p-3 sm:p-4 font-semibold text-center">Thao tác</th>
             </tr>
@@ -143,7 +171,7 @@ export default function Banners() {
               {banners.length === 0 ? (
                 <tr><td colSpan={6} className="p-8 text-center text-slate-500">Trống.</td></tr>
               ) : (
-                banners.map((b) => (
+                paginatedBanners.map((b) => (
                   <tr key={b.bannerId} className="hover:bg-slate-50">
                     <td className="p-3 sm:p-4">
                       <img src={b.imageUrl} alt="Banner" className="h-14 w-28 sm:h-16 sm:w-32 object-cover shadow-sm border" />
@@ -190,6 +218,8 @@ export default function Banners() {
             </tbody>
           </table>
         </div>
+
+      <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
 
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={editingId ? 'Sửa banner' : 'Thêm banner'}>
         <form onSubmit={handleSubmit} className="space-y-4">

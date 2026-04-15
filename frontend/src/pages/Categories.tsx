@@ -5,10 +5,16 @@ import axiosClient from '../api/axiosClient';
 import type { Category } from '../types';
 import Modal from '../components/ui/Modal';
 import Button from '../components/ui/Button';
+import Pagination from '../components/Pagination';
+import SortableHeader, { type SortDirection } from '../components/SortableHeader';
+
+const ITEMS_PER_PAGE = 10;
 
 export default function Categories() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
 
   // STATE ĐỂ CHUYỂN TAB (False = Danh sách chính, True = Thùng rác)
   const [showTrash, setShowTrash] = useState(false);
@@ -113,6 +119,17 @@ export default function Categories() {
   
   // Dữ liệu sẽ hiển thị trên bảng tùy thuộc vào Tab đang chọn
   const displayData = showTrash ? filteredTrash : filteredActive;
+  const sortedData = [...displayData].sort((a, b) => {
+    const aValue = a.bookCount || 0;
+    const bValue = b.bookCount || 0;
+    return sortDirection === 'asc' ? aValue - bValue : bValue - aValue;
+  });
+  const totalPages = Math.ceil(sortedData.length / ITEMS_PER_PAGE);
+  const paginatedData = sortedData.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, showTrash, displayData.length]);
 
   return (
     <div className="bg-white shadow-sm p-4 sm:p-6">
@@ -171,18 +188,32 @@ export default function Categories() {
             <tr className="bg-slate-50 border-b border-slate-200 text-xs sm:text-sm text-slate-600 uppercase">
               <th className="p-3 sm:p-4 font-semibold">Tên danh mục</th>
               <th className="p-3 sm:p-4 font-semibold hidden sm:table-cell">Mô tả</th>
+              <SortableHeader
+                active
+                direction={sortDirection}
+                onClick={() => {
+                  setSortDirection(current => current === 'desc' ? 'asc' : 'desc');
+                  setCurrentPage(1);
+                }}
+                className="text-center"
+              >
+                Số sách
+              </SortableHeader>
               <th className="p-3 sm:p-4 font-semibold">Trạng thái</th>
               <th className="p-3 sm:p-4 font-semibold text-center">Thao tác</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-200 text-slate-700">
             {displayData.length === 0 ? (
-              <tr><td colSpan={4} className="p-8 text-center text-slate-500">Trống.</td></tr>
+              <tr><td colSpan={5} className="p-8 text-center text-slate-500">Trống.</td></tr>
             ) : (
-              displayData.map((cat) => (
+              paginatedData.map((cat) => (
                 <tr key={cat.categoryId} className="hover:bg-slate-50">
                   <td className="p-3 sm:p-4 font-semibold text-xs sm:text-base">{cat.name}</td>
                   <td className="p-3 sm:p-4 hidden sm:table-cell text-xs sm:text-base">{cat.description}</td>
+                  <td className="p-3 sm:p-4 text-center text-xs sm:text-base font-semibold text-slate-700">
+                    {cat.bookCount ?? 0} cuốn
+                  </td>
                   <td className="p-3 sm:p-4">
                     <span className={`px-2 sm:px-3 py-1 rounded-none text-xs font-bold inline-block ${cat.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
                       {cat.isActive ? 'Hoạt động' : 'Đã xóa'}
@@ -213,6 +244,8 @@ export default function Categories() {
           </tbody>
         </table>
       </div>
+
+      <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
 
       {/* MODAL THÊM/SỬA */}
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={editingId ? 'Cập nhật danh mục' : 'Thêm danh mục mới'}>

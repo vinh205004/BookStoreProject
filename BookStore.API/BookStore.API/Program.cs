@@ -59,6 +59,7 @@ namespace BookStore.API
             builder.Services.AddScoped<IReviewReplyRepository, ReviewReplyRepository>();
             builder.Services.AddScoped<IReviewReplyService, ReviewReplyService>();
             builder.Services.AddScoped<IChatbotService, ChatbotService>();
+            builder.Services.AddScoped<VnpayService>();
             
             builder.Services.AddHttpClient("ChatAnywhere", client =>
             {

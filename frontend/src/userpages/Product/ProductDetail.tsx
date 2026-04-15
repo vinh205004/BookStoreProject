@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { Star, ShoppingCart, ArrowLeft } from 'lucide-react';
+import { ArrowLeft, BookOpen, Building2, Star, ShoppingCart, UserCircle, X } from 'lucide-react';
 import { toast } from 'react-toastify';
 import axiosClient from '../../api/axiosClient';
 import { getCurrentUserId, getUserRole } from '../../utils/tokenUtils';
@@ -33,6 +33,25 @@ interface ProductDetail {
   discountVoucherCode?: string;
 }
 
+interface AuthorInfo {
+  authorId: string;
+  name: string;
+  biography: string;
+  imageUrl: string;
+  bookCount?: number;
+}
+
+interface PublisherInfo {
+  publisherId: string;
+  name: string;
+  description: string;
+}
+
+type InfoModalState =
+  | { type: 'author'; data: AuthorInfo }
+  | { type: 'publisher'; data: PublisherInfo }
+  | null;
+
 import { addToGuestCart } from '../../utils/cartUtils';
 
 export default function ProductDetail() {
@@ -44,6 +63,8 @@ export default function ProductDetail() {
   const [loading, setLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [infoModal, setInfoModal] = useState<InfoModalState>(null);
+  const [loadingInfoModal, setLoadingInfoModal] = useState<'author' | 'publisher' | null>(null);
 
   const [authorBooks, setAuthorBooks] = useState<any[]>([]);
   const [categoryBooks, setCategoryBooks] = useState<any[]>([]);
@@ -309,6 +330,34 @@ export default function ProductDetail() {
     }
   };
 
+  const handleOpenAuthorInfo = async () => {
+    if (!product) return;
+
+    try {
+      setLoadingInfoModal('author');
+      const author: any = await axiosClient.get(`/Authors/${product.authorId}`);
+      setInfoModal({ type: 'author', data: author });
+    } catch {
+      toast.error('Không tải được thông tin tác giả!');
+    } finally {
+      setLoadingInfoModal(null);
+    }
+  };
+
+  const handleOpenPublisherInfo = async () => {
+    if (!product) return;
+
+    try {
+      setLoadingInfoModal('publisher');
+      const publisher: any = await axiosClient.get(`/Publishers/${product.publisherId}`);
+      setInfoModal({ type: 'publisher', data: publisher });
+    } catch {
+      toast.error('Không tải được thông tin nhà xuất bản!');
+    } finally {
+      setLoadingInfoModal(null);
+    }
+  };
+
   if (loading) {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -426,7 +475,14 @@ export default function ProductDetail() {
           <div className="grid grid-cols-2 gap-4 mb-6 p-4 bg-gray-50 rounded-none">
             <div>
               <p className="text-sm text-gray-600">Tác giả</p>
-              <p className="font-semibold text-gray-800">{product.authorName}</p>
+              <button
+                type="button"
+                onClick={handleOpenAuthorInfo}
+                disabled={loadingInfoModal === 'author'}
+                className="font-semibold text-gray-800 hover:text-orange-600 underline-offset-4 hover:underline text-left disabled:text-gray-400"
+              >
+                {loadingInfoModal === 'author' ? 'Đang tải...' : product.authorName}
+              </button>
             </div>
             <div>
               <p className="text-sm text-gray-600">Danh mục</p>
@@ -434,7 +490,14 @@ export default function ProductDetail() {
             </div>
             <div>
               <p className="text-sm text-gray-600">Nhà xuất bản</p>
-              <p className="font-semibold text-gray-800">{product.publisherName}</p>
+              <button
+                type="button"
+                onClick={handleOpenPublisherInfo}
+                disabled={loadingInfoModal === 'publisher'}
+                className="font-semibold text-gray-800 hover:text-orange-600 underline-offset-4 hover:underline text-left disabled:text-gray-400"
+              >
+                {loadingInfoModal === 'publisher' ? 'Đang tải...' : product.publisherName}
+              </button>
             </div>
           </div>
 
@@ -520,7 +583,7 @@ export default function ProductDetail() {
                   </Link>
                   <div className="flex-1 min-w-0">
                     <Link to={`/product/${book.bookId}`}>
-                      <h4 className="font-semibold text-gray-800 text-sm line-clamp-2 group-hover:text-orange-500 transition-colors">
+                      <h4 className="font-semibold text-gray-800 text-sm leading-5 break-words group-hover:text-orange-500 transition-colors">
                         {book.title}
                       </h4>
                     </Link>
@@ -827,7 +890,7 @@ export default function ProductDetail() {
                   />
                 </div>
                 
-                <h3 className="font-bold text-gray-800 text-center mb-2 line-clamp-2 h-10 w-full group-hover:text-orange-500 transition-colors">
+                <h3 className="font-bold text-gray-800 text-center mb-2 leading-5 min-h-[2.5rem] w-full break-words group-hover:text-orange-500 transition-colors">
                   {book.title}
                 </h3>
   
@@ -850,6 +913,70 @@ export default function ProductDetail() {
       </div>
       
       </div>
+
+      {infoModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+          <div className="bg-white w-full max-w-xl rounded shadow-xl max-h-[85vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-gray-200 p-4">
+              <div className="flex items-center gap-2">
+                {infoModal.type === 'author' ? (
+                  <UserCircle className="text-orange-500" size={24} />
+                ) : (
+                  <Building2 className="text-orange-500" size={24} />
+                )}
+                <h3 className="font-bold text-xl text-gray-800">
+                  {infoModal.type === 'author' ? 'Thông tin tác giả' : 'Thông tin nhà xuất bản'}
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setInfoModal(null)}
+                className="p-1 text-gray-500 hover:text-gray-800"
+                aria-label="Đóng"
+              >
+                <X size={24} />
+              </button>
+            </div>
+
+            <div className="p-5">
+              {infoModal.type === 'author' ? (
+                <div className="flex flex-col sm:flex-row gap-5">
+                  <div className="w-28 h-28 flex-shrink-0 bg-gray-100 border border-gray-200 rounded overflow-hidden">
+                    {infoModal.data.imageUrl ? (
+                      <img
+                        src={infoModal.data.imageUrl}
+                        alt={infoModal.data.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-gray-400">
+                        <UserCircle size={56} />
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h4 className="text-2xl font-bold text-gray-900 mb-2">{infoModal.data.name}</h4>
+                    <div className="inline-flex items-center gap-2 bg-orange-50 text-orange-700 px-3 py-1 text-sm font-semibold mb-4">
+                      <BookOpen size={16} />
+                      {infoModal.data.bookCount ?? 0} tác phẩm trong kho
+                    </div>
+                    <p className="text-gray-700 leading-7 whitespace-pre-wrap">
+                      {infoModal.data.biography || 'Chưa có tiểu sử cho tác giả này.'}
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  <h4 className="text-2xl font-bold text-gray-900 mb-4">{infoModal.data.name}</h4>
+                  <p className="text-gray-700 leading-7 whitespace-pre-wrap">
+                    {infoModal.data.description || 'Chưa có mô tả cho nhà xuất bản này.'}
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

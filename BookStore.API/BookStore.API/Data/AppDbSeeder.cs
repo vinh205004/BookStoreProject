@@ -64,9 +64,144 @@ namespace BookStore.API.Data
                 .Select(p => new Publisher { PublisherId = Guid.NewGuid().ToString(), Name = p, Description = p + " Việt Nam" }).ToList();
             await _context.Publishers.AddRangeAsync(publishers);
 
-            var authorNames = new[] { "Nguyễn Nhật Ánh", "Tô Hoài", "Trí Tuệ Việt", "Nam Cao", "Thạch Lam", "Paulo Coelho", "Haruki Murakami", "J.K. Rowling", "Dan Brown", "Tony Buổi Sáng", "Nguyễn Ngọc Tư", "George Orwell", "Stephen Hawking", "Yuval Noah Harari", "Sơn Tùng", "Hoài Bão" };
+            var authorNames = new[]
+            {
+                "Nhiều tác giả", "Nguyễn Nhật Ánh", "Tô Hoài", "Ngô Tất Tố", "Nam Cao",
+                "Thạch Lam", "Vũ Trọng Phụng", "Nguyên Hồng", "Nguyễn Công Hoan",
+                "Nguyễn Ngọc Tư", "Paulo Coelho", "Haruki Murakami", "J.K. Rowling",
+                "Dan Brown", "George Orwell", "Stephen Hawking", "Yuval Noah Harari",
+                "Dale Carnegie", "Antoine de Saint-Exupéry", "J.M. Barrie", "Lewis Carroll",
+                "Charles Dickens", "Hector Malot", "Mark Twain", "Herman Melville",
+                "Ernest Hemingway", "Margaret Mitchell", "Alexandre Dumas", "Victor Hugo",
+                "Miguel de Cervantes", "Daniel Defoe", "Jonathan Swift", "Jane Austen",
+                "Oscar Wilde", "Mary Shelley", "Emily Brontë", "Harper Lee", "J.R.R. Tolkien",
+                "L. Frank Baum", "Rudyard Kipling", "A.A. Milne", "Anh em Grimm",
+                "Hans Christian Andersen", "Carlo Collodi", "E.B. White", "Fujiko F. Fujio",
+                "Aoyama Gosho", "Akira Toriyama", "Hergé", "Robert Louis Stevenson",
+                "Trác Nhã", "Johanna Spyri", "P.L. Travers", "Trần Trọng Kim", "Ngô Sĩ Liên",
+                "Nguyễn Hiến Lê", "Tony Buổi Sáng", "Jules Verne", "J.D. Salinger",
+                "Ayn Rand", "Jeffrey Archer", "Ethel Lilian Voynich", "Colleen McCullough",
+                "Carlos Ruiz Zafón", "Albert Camus", "Baird T. Spalding", "Stephen R. Covey",
+                "Napoleon Hill", "George S. Clason", "Charles Duhigg", "Gustave Le Bon",
+                "David J. Lieberman", "Keith Ferrazzi", "Minh Niệm", "Robert Kiyosaki",
+                "T. Harv Eker", "W. Chan Kim", "Jim Collins", "Steven D. Levitt",
+                "Stephen J. Dubner", "Benjamin Graham", "Peter Thiel", "Song Hongbing",
+                "Charles Darwin", "Thomas L. Friedman", "Brian Greene", "Carl Sagan",
+                "Jared Diamond", "Ban biên soạn Tiến Thọ - Văn học Việt Nam",
+                "Ban biên soạn Tiến Thọ - Văn học nước ngoài",
+                "Ban biên soạn Tiến Thọ - Kỹ năng sống",
+                "Ban biên soạn Tiến Thọ - Kinh tế quản trị",
+                "Ban biên soạn Tiến Thọ - Khoa học kỹ thuật",
+                "Ban biên soạn Tiến Thọ - Thiếu nhi",
+                "Ban biên soạn Tiến Thọ - Lịch sử văn hóa"
+            };
             var authors = authorNames.Select(a => new Author { AuthorId = Guid.NewGuid().ToString(), Name = a, Biography = "Một tác giả nổi tiếng." }).ToList();
             await _context.Authors.AddRangeAsync(authors);
+            var authorIds = authors.ToDictionary(a => a.Name, a => a.AuthorId);
+
+            var titleAuthors = new Dictionary<string, string>
+            {
+                ["Mắt Biếc"] = "Nguyễn Nhật Ánh",
+                ["Cho Tôi Xin Một Vé Đi Tuổi Thơ"] = "Nguyễn Nhật Ánh",
+                ["Ngồi Khóc Trên Cây"] = "Nguyễn Nhật Ánh",
+                ["Tôi Thấy Hoa Vàng Trên Cỏ Xanh"] = "Nguyễn Nhật Ánh",
+                ["Dế Mèn Phiêu Lưu Ký"] = "Tô Hoài",
+                ["Chí Phèo"] = "Nam Cao",
+                ["Lão Hạc"] = "Nam Cao",
+                ["Sống Mòn"] = "Nam Cao",
+                ["Gió Lạnh Đầu Mùa"] = "Thạch Lam",
+                ["Hai Đứa Trẻ"] = "Thạch Lam",
+                ["Tắt Đèn"] = "Ngô Tất Tố",
+                ["Số Đỏ"] = "Vũ Trọng Phụng",
+                ["Bỉ Vỏ"] = "Nguyên Hồng",
+                ["Bước Đường Cùng"] = "Nguyễn Công Hoan",
+                ["Cánh Đồng Bất Tận"] = "Nguyễn Ngọc Tư",
+
+                ["Nhà Giả Kim"] = "Paulo Coelho",
+                ["Rừng Na Uy"] = "Haruki Murakami",
+                ["Phía Nam Biên Giới Phía Tây Mặt Trời"] = "Haruki Murakami",
+                ["Kafka Bên Bờ Biển"] = "Haruki Murakami",
+                ["Harry Potter"] = "J.K. Rowling",
+                ["Mật Mã Da Vinci"] = "Dan Brown",
+                ["Thiên Thần Và Ác Quỷ"] = "Dan Brown",
+                ["Pháo Đài Số"] = "Dan Brown",
+                ["1984"] = "George Orwell",
+                ["Trại Súc Vật"] = "George Orwell",
+                ["Ông Già Và Biển Cả"] = "Ernest Hemingway",
+                ["Giết Con Chim Nhại"] = "Harper Lee",
+                ["Cuốn Theo Chiều Gió"] = "Margaret Mitchell",
+                ["Không Gia Đình"] = "Hector Malot",
+                ["Đồi Gió Hú"] = "Emily Brontë",
+                ["Kiêu Hãnh Và Định Kiến"] = "Jane Austen",
+                ["Bức Tranh Dorian Gray"] = "Oscar Wilde",
+                ["Đảo Giấu Vàng"] = "Robert Louis Stevenson",
+                ["Bá Tước Monte Cristo"] = "Alexandre Dumas",
+                ["Frankenstein"] = "Mary Shelley",
+                ["Hai Vạn Dặm Dưới Đáy Biển"] = "Jules Verne",
+                ["Bắt Trẻ Đồng Xanh"] = "J.D. Salinger",
+                ["Suối Nguồn"] = "Ayn Rand",
+                ["Hai Số Phận"] = "Jeffrey Archer",
+                ["Ruồi Trâu"] = "Ethel Lilian Voynich",
+                ["Tiếng Chim Hót Trong Bụi Mận Gai"] = "Colleen McCullough",
+                ["Bóng Chìm Của Gió"] = "Carlos Ruiz Zafón",
+                ["Người Dưng"] = "Albert Camus",
+
+                ["Đắc Nhân Tâm"] = "Dale Carnegie",
+                ["Quẳng Gánh Lo Đi Và Vui Sống"] = "Dale Carnegie",
+                ["Khéo Ăn Nói Sẽ Có Được Thiên Hạ"] = "Trác Nhã",
+                ["Tony Buổi Sáng"] = "Tony Buổi Sáng",
+                ["7 Thói Quen Của Người Thành Đạt"] = "Stephen R. Covey",
+                ["Nghĩ Giàu Làm Giàu"] = "Napoleon Hill",
+                ["Người Giàu Có Nhất Babylon"] = "George S. Clason",
+                ["Sức Mạnh Của Thói Quen"] = "Charles Duhigg",
+                ["Tâm Lý Học Đám Đông"] = "Gustave Le Bon",
+                ["Đọc Vị Bất Kỳ Ai"] = "David J. Lieberman",
+                ["Đừng Bao Giờ Đi Ăn Một Mình"] = "Keith Ferrazzi",
+                ["Hiểu Về Trái Tim"] = "Minh Niệm",
+                ["Hành Trình Về Phương Đông"] = "Baird T. Spalding",
+
+                ["Lược Sử Thời Gian"] = "Stephen Hawking",
+                ["Vũ Trụ Trong Vỏ Hạt Dẻ"] = "Stephen Hawking",
+                ["Sapiens - Lược Sử Loài Người"] = "Yuval Noah Harari",
+                ["Homo Deus"] = "Yuval Noah Harari",
+                ["Nguồn Gốc Các Loài"] = "Charles Darwin",
+                ["Thế Giới Phẳng"] = "Thomas L. Friedman",
+                ["Lý Thuyết Dây"] = "Brian Greene",
+                ["Sự Sống Trong Vũ Trụ"] = "Carl Sagan",
+                ["Súng Vi Trùng Và Thép"] = "Jared Diamond",
+
+                ["Rich Dad Poor Dad"] = "Robert Kiyosaki",
+                ["Cha Giàu Cha Nghèo"] = "Robert Kiyosaki",
+                ["Bí Mật Tư Duy Triệu Phú"] = "T. Harv Eker",
+                ["Chiến Lược Đại Dương Xanh"] = "W. Chan Kim",
+                ["Từ Tốt Đến Vĩ Đại"] = "Jim Collins",
+                ["Kinh Tế Học Hài Hước"] = "Steven D. Levitt",
+                ["Nhà Đầu Tư Thông Minh"] = "Benjamin Graham",
+                ["Zero to One"] = "Peter Thiel",
+                ["Chiến Tranh Tiền Tệ"] = "Song Hongbing",
+
+                ["Doremon"] = "Fujiko F. Fujio",
+                ["Conan"] = "Aoyama Gosho",
+                ["7 Viên Ngọc Rồng"] = "Akira Toriyama",
+                ["Những Cuộc Phiêu Lưu Của TinTin"] = "Hergé",
+                ["Cổ Tích Grimm"] = "Anh em Grimm",
+                ["Cổ Tích Andersen"] = "Hans Christian Andersen",
+                ["Alice Ở Xứ Sở Diệu Kỳ"] = "Lewis Carroll",
+                ["Hoàng Tử Bé"] = "Antoine de Saint-Exupéry",
+                ["Gulliver Du Ký"] = "Jonathan Swift",
+                ["Heidi"] = "Johanna Spyri",
+                ["Mary Poppins"] = "P.L. Travers",
+                ["Pinocchio"] = "Carlo Collodi",
+                ["Peter Pan"] = "J.M. Barrie",
+                ["Oliver Twist"] = "Charles Dickens",
+                ["Gấu Pooh"] = "A.A. Milne",
+                ["Cậu Bé Rừng Xanh"] = "Rudyard Kipling",
+                ["Phù Thủy Xứ Oz"] = "L. Frank Baum",
+
+                ["Việt Nam Sử Lược"] = "Trần Trọng Kim",
+                ["Đại Việt Sử Ký Toàn Thư"] = "Ngô Sĩ Liên",
+                ["Nguyễn Trãi - Sự Nghiệp"] = "Ban biên soạn Tiến Thọ - Lịch sử văn hóa"
+            };
 
             var random = new Random();
             var books = new List<Book>();
@@ -102,7 +237,23 @@ namespace BookStore.API.Data
             foreach(var b in books) 
             {
                 b.BookId = Guid.NewGuid().ToString();
-                b.AuthorId = authors[random.Next(authors.Count)].AuthorId;
+                var fallbackAuthorName = b.CategoryId switch
+                {
+                    var id when id == catVn => "Ban biên soạn Tiến Thọ - Văn học Việt Nam",
+                    var id when id == catNgoai => "Ban biên soạn Tiến Thọ - Văn học nước ngoài",
+                    var id when id == catKN => "Ban biên soạn Tiến Thọ - Kỹ năng sống",
+                    var id when id == catKT => "Ban biên soạn Tiến Thọ - Kinh tế quản trị",
+                    var id when id == catKH => "Ban biên soạn Tiến Thọ - Khoa học kỹ thuật",
+                    var id when id == catTN => "Ban biên soạn Tiến Thọ - Thiếu nhi",
+                    var id when id == catLS => "Ban biên soạn Tiến Thọ - Lịch sử văn hóa",
+                    _ => "Nhiều tác giả"
+                };
+                var selectedAuthorName = titleAuthors.TryGetValue(b.Title, out var authorName)
+                    ? authorName
+                    : fallbackAuthorName;
+                b.AuthorId = authorIds.TryGetValue(selectedAuthorName, out var authorId)
+                    ? authorId
+                    : authorIds[fallbackAuthorName];
                 b.PublisherId = publishers[random.Next(publishers.Count)].PublisherId;
                 b.Price = random.Next(40, 300) * 1000;
                 b.Stock = random.Next(20, 200);

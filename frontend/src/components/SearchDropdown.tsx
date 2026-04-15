@@ -114,7 +114,7 @@ export default function SearchDropdown() {
                         />
                       )}
                       <div className="flex-1 min-w-0">
-                        <h4 className="font-medium text-gray-800 text-sm line-clamp-1">
+                        <h4 className="font-medium text-gray-800 text-sm leading-5 break-words">
                           {product.title}
                         </h4>
                         <p className="text-orange-500 font-bold text-sm">

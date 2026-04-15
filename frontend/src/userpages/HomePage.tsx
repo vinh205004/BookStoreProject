@@ -282,12 +282,11 @@ export default function HomePage() {
 
                   <div className="p-2 flex flex-col flex-1 justify-between gap-1">
                     <div>
-                        <div className="flex items-center gap-1 mb-1">
-                          <h3 className="font-bold text-sm text-gray-800 line-clamp-1 flex-1 group-hover:text-orange-500 transition">
+                        <div className="mb-1">
+                          <h3 className="font-bold text-sm leading-5 min-h-[2.5rem] text-gray-800 break-words group-hover:text-orange-500 transition">
                             {product.title}
                           </h3>
-                          <span className="text-xs text-gray-600 flex-shrink-0">-</span>
-                          <p className="text-xs text-gray-600 line-clamp-1 flex-1">{product.authorName}</p>
+                          <p className="text-xs text-gray-600 line-clamp-1">{product.authorName}</p>
                         </div>
                         {renderStars(product.rating, product.reviewCount)}
                     </div>
@@ -345,12 +344,11 @@ export default function HomePage() {
 
                   <div className="p-2 flex flex-col flex-1 justify-between gap-1">
                     <div>
-                      <div className="flex items-center gap-1 mb-1">
-                        <h3 className="font-bold text-sm text-gray-800 line-clamp-1 flex-1 group-hover:text-orange-500 transition">
+                      <div className="mb-1">
+                        <h3 className="font-bold text-sm leading-5 min-h-[2.5rem] text-gray-800 break-words group-hover:text-orange-500 transition">
                           {product.title}
                         </h3>
-                        <span className="text-xs text-gray-600 flex-shrink-0">-</span>
-                        <p className="text-xs text-gray-600 line-clamp-1 flex-1">{product.authorName}</p>
+                        <p className="text-xs text-gray-600 line-clamp-1">{product.authorName}</p>
                       </div>
                       {renderStars(product.rating, product.reviewCount)}
                     </div>
@@ -409,12 +407,11 @@ export default function HomePage() {
 
                   <div className="p-2 flex flex-col flex-1 justify-between gap-1">
                     <div>
-                      <div className="flex items-center gap-1 mb-1">
-                        <h3 className="font-bold text-sm text-gray-800 line-clamp-1 flex-1 group-hover:text-orange-500 transition">
+                      <div className="mb-1">
+                        <h3 className="font-bold text-sm leading-5 min-h-[2.5rem] text-gray-800 break-words group-hover:text-orange-500 transition">
                           {product.title}
                         </h3>
-                        <span className="text-xs text-gray-600 flex-shrink-0">-</span>
-                        <p className="text-xs text-gray-600 line-clamp-1 flex-1">{product.authorName}</p>
+                        <p className="text-xs text-gray-600 line-clamp-1">{product.authorName}</p>
                       </div>
                       {renderStars(product.rating, product.reviewCount)}
                     </div>

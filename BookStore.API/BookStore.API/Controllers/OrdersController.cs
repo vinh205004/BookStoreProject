@@ -76,6 +76,27 @@ namespace BookStore.API.Controllers
             }
         }
 
+        [HttpPut("user/{orderId}/cancel")]
+        public async Task<IActionResult> CancelUserOrder(string orderId)
+        {
+            try
+            {
+                var userId = User.FindFirst("UserId")?.Value;
+                if (string.IsNullOrEmpty(userId))
+                    return Unauthorized(new { error = "Không xác định được người dùng" });
+
+                var success = await _orderService.CancelUserOrderAsync(userId, orderId);
+                if (!success)
+                    return NotFound(new { message = "Không tìm thấy đơn hàng" });
+
+                return Ok(new { message = "Đã hủy đơn hàng thành công!" });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+        }
+
         // Admin endpoints
         [HttpGet]
         [Authorize(Roles = "Admin")]

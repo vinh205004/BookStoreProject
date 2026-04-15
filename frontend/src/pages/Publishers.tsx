@@ -5,10 +5,14 @@ import axiosClient from '../api/axiosClient';
 import type { Publisher } from '../types';
 import Modal from '../components/ui/Modal';
 import Button from '../components/ui/Button';
+import Pagination from '../components/Pagination';
+
+const ITEMS_PER_PAGE = 10;
 
 export default function Publishers() {
   const [publishers, setPublishers] = useState<Publisher[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
   const [showTrash, setShowTrash] = useState(false);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -107,6 +111,12 @@ export default function Publishers() {
   );
   
   const displayData = showTrash ? filteredTrash : filteredActive;
+  const totalPages = Math.ceil(displayData.length / ITEMS_PER_PAGE);
+  const paginatedData = displayData.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, showTrash, displayData.length]);
 
   return (
     <div className="bg-white shadow-sm p-4 sm:p-6">
@@ -159,7 +169,7 @@ export default function Publishers() {
             {displayData.length === 0 ? (
               <tr><td colSpan={4} className="p-8 text-center text-slate-500">Chưa có dữ liệu.</td></tr>
             ) : (
-              displayData.map((pub) => (
+              paginatedData.map((pub) => (
                 <tr key={pub.publisherId} className="hover:bg-slate-50">
                   <td className="p-3 sm:p-4 font-semibold flex items-center gap-2 text-xs sm:text-base"><Building2 size={18} className="text-slate-400 flex-shrink-0"/> {pub.name}</td>
                   <td className="p-3 sm:p-4 hidden sm:table-cell text-xs sm:text-base">{pub.description}</td>
@@ -184,6 +194,8 @@ export default function Publishers() {
           </tbody>
         </table>
       </div>
+
+      <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
 
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={editingId ? 'Cập nhật Nhà Xuất Bản' : 'Thêm Nhà Xuất Bản mới'}>
         <form onSubmit={handleSubmit} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
