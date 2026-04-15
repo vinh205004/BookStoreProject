@@ -1,6 +1,7 @@
-﻿/* eslint-disable @typescript-eslint/no-explicit-any */
+﻿/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Star, ShoppingCart, ArrowLeft } from 'lucide-react';
 import { toast } from 'react-toastify';
 import axiosClient from '../../api/axiosClient';
@@ -44,12 +45,26 @@ export default function ProductDetail() {
   const [quantity, setQuantity] = useState(1);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
+  const [authorBooks, setAuthorBooks] = useState<any[]>([]);
+  const [categoryBooks, setCategoryBooks] = useState<any[]>([]);
+
   useEffect(() => {
     const loadProduct = async () => {
       try {
         setLoading(true);
         const response: any = await axiosClient.get(`/Books/${id}/detail`);
         setProduct(response);
+        
+        try {
+          const authorRes: any = await axiosClient.get(`/Books/search?authorId=${response.authorId}`);
+          setAuthorBooks((authorRes || []).filter((b: any) => b.bookId !== id).slice(0, 10));
+        } catch (e) { console.error('Lỗi tải sách cùng tác giả'); }
+        
+        try {
+          const catRes: any = await axiosClient.get(`/Books/search?categoryId=${response.categoryId}`);
+          setCategoryBooks((catRes || []).filter((b: any) => b.bookId !== id).slice(0, 15));
+        } catch (e) { console.error('Lỗi tải sách cùng danh mục'); }
+
       } catch {
         toast.error('Lỗi khi tải chi tiết sản phẩm!');
         navigate('/products');
@@ -60,6 +75,7 @@ export default function ProductDetail() {
 
     if (id) {
       loadProduct();
+      window.scrollTo(0, 0);
     }
   }, [id, navigate]);
 
@@ -320,10 +336,12 @@ export default function ProductDetail() {
         Quay lại
       </button>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Images */}
-        <div>
-          <div className="aspect-square bg-gray-100 rounded-none overflow-hidden mb-4">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        <div className="lg:col-span-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          {/* Images */}
+          <div>
+            <div className="aspect-square bg-gray-100 rounded-none overflow-hidden mb-4">
             <img
               src={product.imageUrls[selectedImageIndex] || '/placeholder.jpg'}
               alt={product.title}
@@ -477,6 +495,54 @@ export default function ProductDetail() {
             {product.stock > 0 ? 'Thêm vào giỏ hàng' : 'Hết hàng'}
           </button>
         </div>
+      </div>
+      </div>
+      
+      {/* Sách cùng tác giả (Right Column) */}
+      <div className="lg:col-span-1 border-l border-gray-200 pl-4 hidden lg:block">
+        <div className="sticky top-6">
+          <div className="flex justify-between items-center mb-4 border-b pb-2">
+            <h3 className="font-bold text-lg text-gray-800">Sách cùng tác giả</h3>
+            <Link to={`/products?authorId=${product.authorId}`} className="text-sm text-orange-500 hover:text-orange-600 font-semibold border border-orange-500 px-2 py-1 rounded">
+              Xem tất cả
+            </Link>
+          </div>
+          <div className="flex flex-col gap-4 max-h-[80vh] overflow-y-auto pr-2 custom-scrollbar">
+            {authorBooks.length > 0 ? (
+              authorBooks.map(book => (
+                <div key={book.bookId} className="flex gap-3 relative group">
+                  <Link to={`/product/${book.bookId}`} className="w-20 h-28 flex-shrink-0 bg-gray-100 border border-gray-200">
+                    <img
+                      src={book.imageUrls?.[0] || '/placeholder.jpg'}
+                      alt={book.title}
+                      className="w-full h-full object-cover"
+                    />
+                  </Link>
+                  <div className="flex-1 min-w-0">
+                    <Link to={`/product/${book.bookId}`}>
+                      <h4 className="font-semibold text-gray-800 text-sm line-clamp-2 group-hover:text-orange-500 transition-colors">
+                        {book.title}
+                      </h4>
+                    </Link>
+                    {book.discountedPrice ? (
+                      <div className="mt-1">
+                        <span className="text-orange-500 font-bold text-sm block">{book.discountedPrice.toLocaleString()}đ</span>
+                        <span className="text-gray-400 text-xs line-through">{book.price.toLocaleString()}đ</span>
+                      </div>
+                    ) : (
+                      <div className="mt-1 font-bold text-orange-500 text-sm">
+                        {book.price.toLocaleString()}đ
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))
+            ) : (
+              <p className="text-sm text-gray-500 italic">Không có sách nào cùng tác giả.</p>
+            )}
+          </div>
+        </div>
+      </div>
       </div>
 
       {/* Description & Reviews Tabs */}
@@ -734,6 +800,55 @@ export default function ProductDetail() {
             )}
           </div>
         </div>
+
+      {/* Sách cùng danh mục (Bottom Scroll) */}
+      <div className="mt-16 border-t border-gray-200 pt-8">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-bold text-gray-800">Sách cùng danh mục</h2>
+          <Link to={`/products?categoryId=${product.categoryId}`} className="text-orange-500 hover:text-orange-600 font-bold border border-orange-500 px-4 py-2 hover:bg-orange-50 transition border-r-4">
+            Xem tất cả
+          </Link>
+        </div>
+        
+        <div className="flex overflow-x-auto gap-4 pb-4 custom-scrollbar">
+          {categoryBooks.length > 0 ? (
+            categoryBooks.map(book => (
+              <Link to={`/product/${book.bookId}`} key={book.bookId} className="w-48 flex-shrink-0 group flex flex-col items-center bg-white p-3 rounded-none border border-gray-100 shadow-sm hover:shadow-md transition-shadow relative">
+                {book.discountBadge && (
+                  <div className="absolute top-2 left-2 z-10 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded">
+                    {book.discountBadge}
+                  </div>
+                )}
+                <div className="w-full aspect-square bg-white flex items-center justify-center p-2 mb-3">
+                  <img
+                    src={book.imageUrls?.[0] || '/placeholder.jpg'}
+                    alt={book.title}
+                    className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
+                  />
+                </div>
+                
+                <h3 className="font-bold text-gray-800 text-center mb-2 line-clamp-2 h-10 w-full group-hover:text-orange-500 transition-colors">
+                  {book.title}
+                </h3>
+  
+                <div className="flex flex-col items-center gap-1 w-full">
+                  {book.discountedPrice ? (
+                    <>
+                      <span className="text-orange-500 font-bold text-lg">{book.discountedPrice.toLocaleString()}đ</span>
+                      <span className="text-gray-400 line-through text-sm">{book.price.toLocaleString()}đ</span>
+                    </>
+                  ) : (
+                    <span className="text-orange-500 font-bold text-lg">{book.price.toLocaleString()}đ</span>
+                  )}
+                </div>
+              </Link>
+            ))
+          ) : (
+            <p className="text-gray-500 italic">Không có sách nào cùng danh mục.</p>
+          )}
+        </div>
+      </div>
+      
       </div>
     </div>
   );

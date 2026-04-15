@@ -60,7 +60,10 @@ namespace BookStore.API
             builder.Services.AddScoped<IReviewReplyService, ReviewReplyService>();
             builder.Services.AddScoped<IChatbotService, ChatbotService>();
             
-            builder.Services.AddHttpClient("Gemini");
+            builder.Services.AddHttpClient("ChatAnywhere", client =>
+            {
+                client.Timeout = TimeSpan.FromSeconds(30);
+            });
 
             // 2. Cấu hình xác thực JWT
             builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)

@@ -1,6 +1,6 @@
 /* eslint-disable prefer-const */
-import { useState, useEffect, useRef } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useState, useEffect, useRef, useMemo } from 'react';
+import { useSearchParams, Link } from 'react-router-dom';
 import { Star, ShoppingCart, Filter } from 'lucide-react';
 import { toast } from 'react-toastify';
 import axiosClient from '../../api/axiosClient';
@@ -243,7 +243,7 @@ export default function ProductCatalog() {
     }
   };
 
-  const sortedProducts = React.useMemo(() => {
+  const sortedProducts = useMemo(() => {
     let result = [...products];
     switch (sortOption) {
       case 'priceAsc':
@@ -435,7 +435,7 @@ export default function ProductCatalog() {
             <div className={`transition-all duration-500 ${loading ? 'opacity-50 scale-100' : 'opacity-100'}`}>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {paginatedProducts.map(product => (
-                <div key={product.bookId} className="bg-white shadow-md overflow-hidden hover:shadow-lg transition flex flex-col h-full border-2 border-orange-500">
+                <Link to={`/product/${product.bookId}`} key={product.bookId} className="bg-white shadow-md overflow-hidden hover:shadow-lg transition flex flex-col h-full border-2 border-orange-500 cursor-pointer">
                   {/* Image */}
                   <div className="aspect-square bg-gray-100 overflow-hidden relative flex-shrink-0 border-2 border-orange-500">
                     <img
@@ -453,7 +453,7 @@ export default function ProductCatalog() {
                   {/* Content */}
                   <div className="p-2 flex flex-col flex-1">
                     <div className="flex items-center justify-between gap-1 mb-1">
-                      <h3 className="font-bold text-sm text-gray-800 line-clamp-1 flex-1">{product.title}</h3>
+                      <h3 className="font-bold text-sm text-gray-800 line-clamp-1 flex-1 hover:text-orange-500 transition-colors">{product.title}</h3>
                       <span className="text-xs text-gray-600 flex-shrink-0">-</span>
                       <p className="text-xs text-gray-600 line-clamp-1 flex-1">{product.authorName}</p>
                     </div>
@@ -488,14 +488,19 @@ export default function ProductCatalog() {
                     </div>
 
                     <div className="flex gap-1 mt-auto">
-                      <a
-                        href={`/product/${product.bookId}`}
-                        className="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-1 text-center transition text-xs font-semibold"
+                      <Link
+                        to={`/product/${product.bookId}`}
+                        className="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-1 flex items-center justify-center transition text-xs font-semibold"
+                        onClick={(e: React.MouseEvent) => e.stopPropagation()}
                       >
                         Chi tiết
-                      </a>
+                      </Link>
                       <button
-                        onClick={() => handleAddToCart(product)}
+                        onClick={(e: React.MouseEvent) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleAddToCart(product);
+                        }}
                         disabled={product.stock <= 0}
                         className="flex-1 bg-orange-500 hover:bg-orange-600 disabled:bg-gray-400 text-white py-1 flex items-center justify-center gap-1 transition text-xs font-semibold"
                       >
@@ -504,7 +509,7 @@ export default function ProductCatalog() {
                       </button>
                     </div>
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
 
