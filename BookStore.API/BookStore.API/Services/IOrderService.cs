@@ -10,7 +10,8 @@ namespace BookStore.API.Services
         Task<bool> UpdateOrderStatusAsync(string id, OrderUpdateStatusDto dto);
 
         // User endpoints
-        Task<UserOrderDetailDto> CreateOrderAsync(string userId, CreateOrderDto dto);
+        Task<UserOrderDetailDto> CreateOrderAsync(string userId, CreateOrderDto dto, string paymentMethod = "COD", bool finalizePurchase = true);
+        Task<bool> CompletePendingVnpayOrderAsync(string orderId);
         Task<bool> CancelUserOrderAsync(string userId, string orderId);
         Task<IEnumerable<UserOrderDetailDto>> GetUserOrdersAsync(string userId);
         Task<UserOrderDetailDto?> GetUserOrderDetailAsync(string userId, string orderId);

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { CreditCard, FileText, MapPin, Phone, ShoppingCart, Wallet } from 'lucide-react';
 import { toast } from 'react-toastify';
@@ -13,6 +13,9 @@ interface CartItem {
   quantity: number;
   imageUrl: string;
   stock?: number;
+  discountedPrice?: number;
+  discountBadge?: string;
+  discountVoucherCode?: string;
 }
 
 interface CartResponse {
@@ -34,13 +37,9 @@ export default function CheckoutPage() {
     note: '',
   });
 
-  useEffect(() => {
-    loadCart();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [navigate]);
-
-  const loadCart = async () => {
+  const loadCart = useCallback(async () => {
     try {
+      setLoading(true);
       const cartData: CartResponse = await axiosClient.get('/cart');
       const selectedItemIds = location.state?.selectedItems || [];
       const selectedCartItems = selectedItemIds.length > 0 
@@ -58,7 +57,40 @@ export default function CheckoutPage() {
       toast.error('Lỗi khi tải giỏ hàng!');
       navigate('/cart');
     }
-  };
+  }, [location.state?.selectedItems, navigate]);
+
+  useEffect(() => {
+    loadCart();
+  }, [loadCart]);
+
+  useEffect(() => {
+    const refreshCheckoutCart = () => {
+      setSubmitting(false);
+      loadCart();
+    };
+
+    const handlePageShow = (event: PageTransitionEvent) => {
+      if (event.persisted) {
+        refreshCheckoutCart();
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        refreshCheckoutCart();
+      }
+    };
+
+    window.addEventListener('pageshow', handlePageShow);
+    window.addEventListener('focus', refreshCheckoutCart);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener('pageshow', handlePageShow);
+      window.removeEventListener('focus', refreshCheckoutCart);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [loadCart]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -68,7 +100,9 @@ export default function CheckoutPage() {
     }));
   };
 
-  const totalPrice = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const getPrice = (item: CartItem) => item.discountedPrice ?? item.price;
+
+  const totalPrice = cart.reduce((sum, item) => sum + getPrice(item) * item.quantity, 0);
   const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
 
   const appliedVoucherCode = location.state?.appliedVoucherCode;
@@ -285,7 +319,7 @@ export default function CheckoutPage() {
               {cart.map(item => (
                 <div key={item.bookId} className="flex justify-between text-sm">
                   <span className="text-gray-600 leading-5 break-words">{item.bookTitle} x{item.quantity}</span>
-                  <span className="font-semibold text-gray-800">{(item.price * item.quantity).toLocaleString()}₫</span>
+                  <span className="font-semibold text-gray-800">{(getPrice(item) * item.quantity).toLocaleString()}₫</span>
                 </div>
               ))}
             </div>

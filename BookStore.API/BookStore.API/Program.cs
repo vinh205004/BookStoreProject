@@ -60,6 +60,7 @@ namespace BookStore.API
             builder.Services.AddScoped<IReviewReplyService, ReviewReplyService>();
             builder.Services.AddScoped<IChatbotService, ChatbotService>();
             builder.Services.AddScoped<VnpayService>();
+            builder.Services.AddScoped<IPaymentService, PaymentService>();
             
             builder.Services.AddHttpClient("ChatAnywhere", client =>
             {
@@ -165,18 +166,21 @@ namespace BookStore.API
             app.UseAuthentication();
             app.UseAuthorization();
 
-              app.MapGet("/api/dev/seed", async (BookStore.API.Data.AppDbSeeder seeder) => 
-              {
-                  try 
-                  {
-                      await seeder.SeedAsync();
-                      return Results.Ok(new { message = "Database seeded successfully." });
-                  }
-                  catch(Exception ex) 
-                  {
-                      return Results.BadRequest(ex.Message);
-                  }
-              });
+            if (app.Environment.IsDevelopment())
+            {
+                app.MapGet("/api/dev/seed", async (BookStore.API.Data.AppDbSeeder seeder) =>
+                {
+                    try
+                    {
+                        await seeder.SeedAsync();
+                        return Results.Ok(new { message = "Database seeded successfully." });
+                    }
+                    catch (Exception ex)
+                    {
+                        return Results.BadRequest(ex.Message);
+                    }
+                });
+            }
 
             app.MapControllers();
             app.Run();

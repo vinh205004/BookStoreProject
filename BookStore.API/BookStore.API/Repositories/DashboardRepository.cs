@@ -62,9 +62,9 @@ namespace BookStore.API.Repositories
             // 3. Tỷ lệ Category (Danh mục sách đã bán) - Group by category, then return items with book details
             var categorySalesQuery = await _context.OrderItems
                 .Include(oi => oi.Book)
-                    .ThenInclude(b => b.Category)
+                    .ThenInclude(b => b!.Category)
                 .Include(oi => oi.Order)
-                .Where(oi => oi.Order.Status == "Delivered" && oi.Order.OrderDate.Year == year && oi.Order.OrderDate.Month == month)
+                .Where(oi => oi.Order!.Status == "Delivered" && oi.Order.OrderDate.Year == year && oi.Order.OrderDate.Month == month)
                 .ToListAsync();
 
             var categorySalesData = categorySalesQuery
@@ -84,9 +84,9 @@ namespace BookStore.API.Repositories
             // 4. Top Selling trong tháng và năm được chọn
             var topSellingQuery = await _context.OrderItems
                 .Include(oi => oi.Book)
-                    .ThenInclude(b => b.BookImages)
+                    .ThenInclude(b => b!.BookImages)
                 .Include(oi => oi.Order)
-                .Where(oi => oi.Order.Status == "Delivered" && oi.Order.OrderDate.Year == year && oi.Order.OrderDate.Month == month)
+                .Where(oi => oi.Order!.Status == "Delivered" && oi.Order.OrderDate.Year == year && oi.Order.OrderDate.Month == month)
                 .ToListAsync();
 
             var topSelling = topSellingQuery
@@ -94,7 +94,7 @@ namespace BookStore.API.Repositories
                 .Where(g => g.Key != null)
                 .Select(g => new
                 {
-                    id = g.Key.BookId,
+                    id = g.Key!.BookId,
                     title = g.Key.Title,
                     price = g.Key.Price,
                     sold = g.Sum(oi => oi.Quantity),
@@ -111,7 +111,7 @@ namespace BookStore.API.Repositories
                 .Include(r => r.Replies)
                     .ThenInclude(reply => reply.User)
                 .Include(r => r.Book)
-                    .ThenInclude(b => b.BookImages)
+                    .ThenInclude(b => b!.BookImages)
                 .ToListAsync();
 
             var topRated = topRatedQuery
@@ -119,7 +119,7 @@ namespace BookStore.API.Repositories
                 .Where(g => g.Key != null)
                 .Select(g => new
                 {
-                    id = g.Key.BookId,
+                    id = g.Key!.BookId,
                     title = g.Key.Title,
                     price = g.Key.Price,
                     rating = Math.Round(g.Average(r => r.Rating), 1),

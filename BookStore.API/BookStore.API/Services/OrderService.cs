@@ -25,7 +25,7 @@ namespace BookStore.API.Services
         public async Task<IEnumerable<OrderDto>> GetAllOrdersAsync()
         {
             var orders = await _repo.GetAllAsync();
-            return orders.Select(o => new OrderDto
+            return orders.Where(o => o.Status != "PaymentPending").Select(o => new OrderDto
             {
                 OrderId = o.OrderId,
                 CustomerName = o.User?.FullName ?? "Khách vãng lai",
@@ -99,164 +99,218 @@ namespace BookStore.API.Services
         }
 
         // User-facing methods
-                public async Task<UserOrderDetailDto> CreateOrderAsync(string userId, CreateOrderDto dto)
+        public async Task<UserOrderDetailDto> CreateOrderAsync(string userId, CreateOrderDto dto, string paymentMethod = "COD", bool finalizePurchase = true)
         {
             if (dto.Items == null || dto.Items.Count == 0)
                 throw new Exception("Giỏ hàng không có sản phẩm!");
 
-            var order = new Order
+            await using var transaction = await _context.Database.BeginTransactionAsync();
+
+            try
             {
-                OrderId = IdGenerator.GenerateOrderId(),
-                UserId = userId,
-                ShippingAddress = dto.ShippingAddress,
-                PhoneNumber = dto.PhoneNumber,
-                Note = dto.Note,
-                Status = "Pending",
-                PaymentMethod = "COD",
-                OrderDate = DateTime.UtcNow,
-                TotalAmount = 0,
-                OrderItems = new List<OrderItem>()
-            };
-
-            decimal totalAmount = 0;
-            decimal applicableAmount = 0;
-
-            Voucher? appliedVoucher = null;
-            if (!string.IsNullOrEmpty(dto.VoucherCode))
-            {
-                appliedVoucher = await _context.Vouchers.FirstOrDefaultAsync(v => v.Code == dto.VoucherCode && v.IsActive);
-                if (appliedVoucher == null)
-                    throw new Exception("Mã giảm giá không hợp lệ!");
-                    
-                var now = DateTime.UtcNow;
-                if (now < appliedVoucher.StartDate)
-                    throw new Exception("Mã giảm giá chưa đến thời gian có thể sử dụng!");
-                if (now > appliedVoucher.ExpirationDate)
-                    throw new Exception("Mã giảm giá đã hết hạn!");
-                if (string.IsNullOrEmpty(appliedVoucher.ApplicableProductId) && string.IsNullOrEmpty(appliedVoucher.ApplicableCategoryId) && appliedVoucher.UsedCount >= appliedVoucher.Quantity)
-                    throw new Exception("Mã giảm giá đã hết số lượng sử dụng!");
-            }
-
-            foreach (var item in dto.Items)
-            {
-                var book = await _bookRepo.GetByIdAsync(item.BookId);
-                if (book == null)
-                    throw new Exception($"Sách {item.BookId} không tồn tại!");
-
-                if (book.Stock < item.Quantity)
-                    throw new Exception($"Sách '{book.Title}' không đủ số lượng!");
-
-                var bookDetail = await _bookRepo.GetBookDetailAsync(item.BookId);
-                decimal currentPrice = bookDetail?.DiscountedPrice ?? book.Price;
-
-                var orderItem = new OrderItem
+                var order = new Order
                 {
-                    OrderItemId = IdGenerator.GenerateOrderItemId(),
-                    OrderId = order.OrderId,
-                    BookId = item.BookId,
-                    Quantity = item.Quantity,
-                    UnitPrice = currentPrice
+                    OrderId = IdGenerator.GenerateOrderId(),
+                    UserId = userId,
+                    ShippingAddress = dto.ShippingAddress,
+                    PhoneNumber = dto.PhoneNumber,
+                    Note = finalizePurchase ? dto.Note ?? string.Empty : BuildOrderNote(dto.Note, dto.VoucherCode),
+                    Status = finalizePurchase ? "Pending" : "PaymentPending",
+                    PaymentMethod = paymentMethod == "VNPAY" ? "VNPAY" : "COD",
+                    OrderDate = DateTime.UtcNow,
+                    TotalAmount = 0,
+                    OrderItems = new List<OrderItem>()
                 };
 
-                order.OrderItems.Add(orderItem);
-                
-                decimal itemTotal = currentPrice * item.Quantity;
-                totalAmount += itemTotal;
-                
-                bool isApplicableForVoucher = true;
+                decimal totalAmount = 0;
+                decimal applicableAmount = 0;
+                var hasHardcodedVoucher = false;
+
+                Voucher? appliedVoucher = null;
+                if (!string.IsNullOrEmpty(dto.VoucherCode))
+                {
+                    appliedVoucher = await _context.Vouchers.FirstOrDefaultAsync(v => v.Code == dto.VoucherCode && v.IsActive);
+                    if (appliedVoucher == null)
+                        throw new Exception("Mã giảm giá không hợp lệ!");
+
+                    var now = DateTime.UtcNow;
+                    if (now < appliedVoucher.StartDate)
+                        throw new Exception("Mã giảm giá chưa đến thời gian có thể sử dụng!");
+                    if (now > appliedVoucher.ExpirationDate)
+                        throw new Exception("Mã giảm giá đã hết hạn!");
+                    if (string.IsNullOrEmpty(appliedVoucher.ApplicableProductId) && string.IsNullOrEmpty(appliedVoucher.ApplicableCategoryId) && appliedVoucher.UsedCount >= appliedVoucher.Quantity)
+                        throw new Exception("Mã giảm giá đã hết số lượng sử dụng!");
+                }
+
+                foreach (var item in dto.Items)
+                {
+                    var book = await _bookRepo.GetByIdAsync(item.BookId);
+                    if (book == null)
+                        throw new Exception($"Sách {item.BookId} không tồn tại!");
+
+                    if (book.Stock < item.Quantity)
+                        throw new Exception($"Sách '{book.Title}' không đủ số lượng!");
+
+                    var bookDetail = await _bookRepo.GetBookDetailAsync(item.BookId);
+                    decimal currentPrice = bookDetail?.DiscountedPrice ?? book.Price;
+
+                    var orderItem = new OrderItem
+                    {
+                        OrderItemId = IdGenerator.GenerateOrderItemId(),
+                        OrderId = order.OrderId,
+                        BookId = item.BookId,
+                        Quantity = item.Quantity,
+                        UnitPrice = currentPrice
+                    };
+
+                    order.OrderItems.Add(orderItem);
+
+                    decimal itemTotal = currentPrice * item.Quantity;
+                    totalAmount += itemTotal;
+
+                    bool isApplicableForVoucher = true;
+                    if (appliedVoucher != null)
+                    {
+                        if (bookDetail?.DiscountVoucherCode == appliedVoucher.Code)
+                        {
+                            hasHardcodedVoucher = true;
+                            isApplicableForVoucher = false;
+                        }
+                        else if (!string.IsNullOrEmpty(appliedVoucher.ApplicableProductId) || !string.IsNullOrEmpty(appliedVoucher.ApplicableCategoryId))
+                        {
+                            bool isProductMatch = !string.IsNullOrEmpty(appliedVoucher.ApplicableProductId) && ("," + appliedVoucher.ApplicableProductId + ",").Contains("," + item.BookId + ",");
+                            bool isCategoryMatch = !string.IsNullOrEmpty(appliedVoucher.ApplicableCategoryId) && bookDetail?.CategoryId == appliedVoucher.ApplicableCategoryId && currentPrice >= appliedVoucher.MinOrderValue;
+
+                            if (!isProductMatch && !isCategoryMatch)
+                            {
+                                isApplicableForVoucher = false;
+                            }
+                        }
+                    }
+
+                    if (isApplicableForVoucher)
+                    {
+                        applicableAmount += itemTotal;
+                    }
+
+                    if (finalizePurchase)
+                    {
+                        book.Stock -= item.Quantity;
+                    }
+                }
+
                 if (appliedVoucher != null)
                 {
-                      if (bookDetail?.DiscountVoucherCode == appliedVoucher.Code)
-                      {
-                          // Sách đã được áp cứng mã voucher này rồi, không được tính thêm vào applicableAmount ở giỏ hàng
-                          isApplicableForVoucher = false;
-                      }
-                      else if (!string.IsNullOrEmpty(appliedVoucher.ApplicableProductId) || !string.IsNullOrEmpty(appliedVoucher.ApplicableCategoryId))
-                      {
-                          bool isProductMatch = !string.IsNullOrEmpty(appliedVoucher.ApplicableProductId) && ("," + appliedVoucher.ApplicableProductId + ",").Contains("," + item.BookId + ",");
-                          bool isCategoryMatch = !string.IsNullOrEmpty(appliedVoucher.ApplicableCategoryId) && bookDetail?.CategoryId == appliedVoucher.ApplicableCategoryId && currentPrice >= appliedVoucher.MinOrderValue;
-                          
-                          if (!isProductMatch && !isCategoryMatch)
-                          {
-                              isApplicableForVoucher = false;
-                          }
-                      }
-                  }
-                if (isApplicableForVoucher)
-                {
-                    applicableAmount += itemTotal;
-                }
-                
-                book.Stock -= item.Quantity;
-                await _bookRepo.UpdateAsync(book);
-            }
+                    if (totalAmount < appliedVoucher.MinOrderValue)
+                        throw new Exception($"Đơn hàng chưa đạt mức tối thiểu ({appliedVoucher.MinOrderValue:N0} đ) để áp dụng mã giảm giá!");
 
-            if (appliedVoucher != null)
-            {
-                if (totalAmount < appliedVoucher.MinOrderValue)
-                    throw new Exception($"Đơn hàng chưa đạt mức tối thiểu ({appliedVoucher.MinOrderValue:N0} đ) để áp dụng mã giảm giá!");
+                    decimal discount = appliedVoucher.DiscountType == "Percentage"
+                        ? applicableAmount * (appliedVoucher.DiscountAmount / 100m)
+                        : Math.Min(appliedVoucher.DiscountAmount, applicableAmount);
 
-                decimal discount = 0;
-                if (appliedVoucher.DiscountType == "Percentage")
-                {
-                    discount = applicableAmount * (appliedVoucher.DiscountAmount / 100m);
-                }
-                else
-                {
-                    discount = Math.Min(appliedVoucher.DiscountAmount, applicableAmount);
+                    totalAmount -= discount;
+                    if (totalAmount < 0) totalAmount = 0;
+
+                    if (finalizePurchase && string.IsNullOrEmpty(appliedVoucher.ApplicableProductId) && string.IsNullOrEmpty(appliedVoucher.ApplicableCategoryId) && !hasHardcodedVoucher)
+                    {
+                        appliedVoucher.UsedCount += 1;
+                        _context.Vouchers.Update(appliedVoucher);
+                    }
                 }
 
-                totalAmount -= discount;
-                if (totalAmount < 0) totalAmount = 0;
+                order.TotalAmount = totalAmount;
+                await _repo.AddAsync(order);
 
-                // Tăng số lượng đã dùng nếu không phải loại áp cứng sản phẩm/danh mục
-                bool hasHardcodedVoucher = order.OrderItems.Any(oi => {
-                    var bookDetail = _bookRepo.GetBookDetailAsync(oi.BookId).Result;
-                    return bookDetail?.DiscountVoucherCode == appliedVoucher.Code;
-                });
-
-                if (string.IsNullOrEmpty(appliedVoucher.ApplicableProductId) && string.IsNullOrEmpty(appliedVoucher.ApplicableCategoryId) && !hasHardcodedVoucher)
-                {
-                    appliedVoucher.UsedCount += 1;
-                    _context.Vouchers.Update(appliedVoucher);
-                }
-            }
-
-            order.TotalAmount = totalAmount;
-            await _repo.AddAsync(order);
-
-            if (appliedVoucher != null)
-            {
-                bool hasHardcodedVoucher = order.OrderItems.Any(oi => {
-                    var bookDetail = _bookRepo.GetBookDetailAsync(oi.BookId).Result;
-                    return bookDetail?.DiscountVoucherCode == appliedVoucher.Code;
-                });
-
-                if (string.IsNullOrEmpty(appliedVoucher.ApplicableProductId) && string.IsNullOrEmpty(appliedVoucher.ApplicableCategoryId) && !hasHardcodedVoucher)
+                if (appliedVoucher != null && finalizePurchase)
                 {
                     await _context.SaveChangesAsync();
                 }
-            }
 
-            var cart = await _cartRepo.GetUserCartAsync(userId);
-            if (cart != null && cart.CartItems.Any())
-            {
-                var bookIdsOrdered = dto.Items.Select(i => i.BookId).ToList();
-                var itemsToRemove = cart.CartItems.Where(ci => bookIdsOrdered.Contains(ci.BookId)).ToList();
-                
-                foreach (var itemToRemove in itemsToRemove)
+                if (finalizePurchase)
                 {
-                    await _cartRepo.DeleteCartItemAsync(itemToRemove.CartItemId);
-                    cart.CartItems.Remove(itemToRemove);
+                    await RemoveOrderedItemsFromCartAsync(userId, dto.Items.Select(i => i.BookId));
                 }
 
-                cart.TotalQuantity = cart.CartItems.Sum(x => x.Quantity);
-                cart.TotalPrice = cart.CartItems.Sum(x => x.TotalPrice);
-
-                await _cartRepo.UpdateCartAsync(cart);
+                await transaction.CommitAsync();
+                return await GetUserOrderDetailAsync(userId, order.OrderId) ?? throw new Exception("Không thể tạo đơn hàng!");
             }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
+        }
 
-            return await GetUserOrderDetailAsync(userId, order.OrderId) ?? throw new Exception("Không thể tạo đơn hàng!");
+        public async Task<bool> CompletePendingVnpayOrderAsync(string orderId)
+        {
+            await using var transaction = await _context.Database.BeginTransactionAsync();
+
+            try
+            {
+                var order = await _context.Orders
+                    .Include(o => o.OrderItems)
+                    .ThenInclude(oi => oi.Book)
+                    .FirstOrDefaultAsync(o => o.OrderId == orderId && o.Status == "PaymentPending" && o.PaymentMethod == "VNPAY");
+
+                if (order == null)
+                    return false;
+
+                foreach (var item in order.OrderItems)
+                {
+                    if (item.Book == null)
+                        throw new Exception($"Sách {item.BookId} không tồn tại!");
+
+                    if (item.Book.Stock < item.Quantity)
+                        throw new Exception($"Sách '{item.Book.Title}' không đủ số lượng để hoàn tất đơn VNPAY!");
+
+                    item.Book.Stock -= item.Quantity;
+                }
+
+                var voucherCode = ExtractVoucherCode(order.Note);
+                if (!string.IsNullOrWhiteSpace(voucherCode))
+                {
+                    var voucher = await _context.Vouchers.FirstOrDefaultAsync(v => v.Code == voucherCode && v.IsActive);
+                    if (voucher != null && string.IsNullOrEmpty(voucher.ApplicableProductId) && string.IsNullOrEmpty(voucher.ApplicableCategoryId))
+                    {
+                        var hasHardcodedVoucher = false;
+                        foreach (var item in order.OrderItems)
+                        {
+                            var bookDetail = await _bookRepo.GetBookDetailAsync(item.BookId);
+                            if (bookDetail?.DiscountVoucherCode == voucher.Code)
+                            {
+                                hasHardcodedVoucher = true;
+                                break;
+                            }
+                        }
+
+                        if (!hasHardcodedVoucher)
+                        {
+                            voucher.UsedCount += 1;
+                            _context.Vouchers.Update(voucher);
+                        }
+                    }
+                }
+
+                await RemoveOrderedItemsFromCartAsync(order.UserId, order.OrderItems.Select(i => i.BookId));
+
+                order.Status = "Processing";
+                order.Note = RemoveVoucherMarker(order.Note);
+                if (!order.Note.Contains("VNPAY", StringComparison.OrdinalIgnoreCase))
+                {
+                    order.Note = string.IsNullOrWhiteSpace(order.Note)
+                        ? "Thanh toán qua VNPAY sandbox"
+                        : $"{order.Note} | Thanh toán qua VNPAY sandbox";
+                }
+
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+                return true;
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
         }
 
         public async Task<bool> CancelUserOrderAsync(string userId, string orderId)
@@ -281,13 +335,13 @@ namespace BookStore.API.Services
             return true;
         }
 
-public async Task<IEnumerable<UserOrderDetailDto>> GetUserOrdersAsync(string userId)
+        public async Task<IEnumerable<UserOrderDetailDto>> GetUserOrdersAsync(string userId)
         {
             var orders = await _context.Orders
-                .Where(o => o.UserId == userId)
+                .Where(o => o.UserId == userId && o.Status != "PaymentPending")
                 .Include(o => o.OrderItems)
                 .ThenInclude(oi => oi.Book)
-                .ThenInclude(b => b.BookImages)
+                .ThenInclude(b => b!.BookImages)
                 .OrderByDescending(o => o.OrderDate)
                 .ToListAsync();
 
@@ -318,7 +372,7 @@ public async Task<IEnumerable<UserOrderDetailDto>> GetUserOrdersAsync(string use
                 .Where(o => o.OrderId == orderId && o.UserId == userId)
                 .Include(o => o.OrderItems)
                 .ThenInclude(oi => oi.Book)
-                .ThenInclude(b => b.BookImages)
+                .ThenInclude(b => b!.BookImages)
                 .FirstOrDefaultAsync();
 
             if (order == null) return null;
@@ -355,6 +409,64 @@ public async Task<IEnumerable<UserOrderDetailDto>> GetUserOrdersAsync(string use
             }
 
             return Task.CompletedTask;
+        }
+
+        private async Task RemoveOrderedItemsFromCartAsync(string userId, IEnumerable<string> bookIds)
+        {
+            var cart = await _cartRepo.GetUserCartAsync(userId);
+            if (cart == null || !cart.CartItems.Any())
+                return;
+
+            var orderedBookIds = bookIds.ToHashSet();
+            var itemsToRemove = cart.CartItems.Where(ci => orderedBookIds.Contains(ci.BookId)).ToList();
+
+            foreach (var itemToRemove in itemsToRemove)
+            {
+                await _cartRepo.DeleteCartItemAsync(itemToRemove.CartItemId);
+                cart.CartItems.Remove(itemToRemove);
+            }
+
+            cart.TotalQuantity = cart.CartItems.Sum(x => x.Quantity);
+            cart.TotalPrice = cart.CartItems.Sum(x => x.TotalPrice);
+
+            await _cartRepo.UpdateCartAsync(cart);
+        }
+
+        private static string BuildOrderNote(string? note, string? voucherCode)
+        {
+            var cleanNote = note ?? string.Empty;
+            return string.IsNullOrWhiteSpace(voucherCode)
+                ? cleanNote
+                : $"{cleanNote} [VoucherCode:{voucherCode}]".Trim();
+        }
+
+        private static string? ExtractVoucherCode(string? note)
+        {
+            const string marker = "[VoucherCode:";
+            if (string.IsNullOrWhiteSpace(note))
+                return null;
+
+            var start = note.IndexOf(marker, StringComparison.OrdinalIgnoreCase);
+            if (start < 0)
+                return null;
+
+            start += marker.Length;
+            var end = note.IndexOf(']', start);
+            return end > start ? note[start..end] : null;
+        }
+
+        private static string RemoveVoucherMarker(string note)
+        {
+            const string marker = "[VoucherCode:";
+            var start = note.IndexOf(marker, StringComparison.OrdinalIgnoreCase);
+            if (start < 0)
+                return note;
+
+            var end = note.IndexOf(']', start);
+            if (end < start)
+                return note;
+
+            return (note[..start] + note[(end + 1)..]).Trim();
         }
 
         private static string ResolvePaymentMethod(Order order)

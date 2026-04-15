@@ -18,7 +18,7 @@ namespace BookStore.API.Repositories
             return await _context.Carts
                 .Include(c => c.CartItems)
                     .ThenInclude(ci => ci.Book)
-                        .ThenInclude(b => b.BookImages)
+                        .ThenInclude(b => b!.BookImages)
                 .FirstOrDefaultAsync(c => c.UserId == userId);
         }
 
