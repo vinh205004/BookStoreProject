@@ -114,6 +114,16 @@ namespace BookStore.API.Services
                                              normalizedMessage.Contains("goi y") ||
                                              normalizedMessage.Contains("tu van") ||
                                              wantsBudgetRecommendation;
+            var wantsAiAdvice = !budget.HasValue &&
+                                !wantsTopSellers &&
+                                !wantsTopRated &&
+                                !wantsExpensiveBooks &&
+                                !wantsCheapBooks &&
+                                !wantsAuthor &&
+                                !wantsPrice &&
+                                !wantsStock &&
+                                !wantsDiscount &&
+                                IsAdvisoryIntent(normalizedMessage, queryWords);
 
             var books = await _context.Books
                 .AsNoTracking()
@@ -302,30 +312,21 @@ namespace BookStore.API.Services
                 };
             }
 
-            if (wantsGeneralRecommendation && matchedBooks.Count > 0 && !shouldIncludeDescription)
-            {
-                return new ChatResponseDto
-                {
-                    Response = BuildConsultingResponse("Mình gợi ý vài cuốn đáng thử trong kho", matchedBooks.Take(3))
-                };
-
-            }
-
             IEnumerable<BookContextItem> selectedBooksQuery = matchedBooks;
 
-            if (wantsGeneralRecommendation || wantsTopSellers)
+            if (wantsAiAdvice || wantsGeneralRecommendation || wantsTopSellers)
             {
                 selectedBooksQuery = selectedBooksQuery.Concat(topSellers);
             }
 
-            if (wantsGeneralRecommendation || wantsTopRated)
+            if (wantsAiAdvice || wantsGeneralRecommendation || wantsTopRated)
             {
                 selectedBooksQuery = selectedBooksQuery.Concat(topRated);
             }
 
             var selectedBooks = selectedBooksQuery
                 .DistinctBy(b => b.Id)
-                .Take(wantsGeneralRecommendation || wantsTopSellers || wantsTopRated ? 8 : 6)
+                .Take(wantsAiAdvice || wantsGeneralRecommendation || wantsTopSellers || wantsTopRated ? 8 : 6)
                 .ToList();
 
             if (selectedBooks.Count == 0)
@@ -356,17 +357,10 @@ namespace BookStore.API.Services
             });
 
             var systemInstruction = $"""
-                Bạn là AI tư vấn của nhà sách Tiến Thọ.
-                Chỉ dùng dữ liệu sách JSON sau, không bịa thêm sách: {contextJson}
-                Schema JSON: t=tên sách, a=tác giả, c=thể loại, p=giá gốc VNĐ, dp=giá sau ưu đãi, d=ưu đãi, v=mã voucher, s=số lượng đã bán, r=điểm đánh giá, desc=mô tả ngắn.
-                Quy tắc trả lời:
-                - Trả lời tiếng Việt, ngắn gọn tối đa 3 câu.
-                - Ưu tiên sách khớp trực tiếp với câu hỏi của khách; không tự chọn sách khác nếu đã có sách khớp.
-                - Khi gợi ý sách, nêu tên, giá và lý do phù hợp nếu có. Chỉ nêu tác giả khi khách hỏi tác giả.
-                - Trường s là số lượng đã bán, không phải số lượng tồn kho. Không nói "hiện còn" hoặc "còn ... quyển" nếu dữ liệu không có tồn kho.
-                - Nếu trường d có dữ liệu, phải nói sách đang có ưu đãi đó.
-                - Không thêm câu mời/chào/kết như "nếu bạn cần thêm...".
-                - Nếu không đủ dữ liệu để trả lời chắc chắn, nói rõ là chưa tìm thấy trong kho.
+                Bạn là AI tư vấn của nhà sách Tiến Thọ. Chỉ dùng JSON này, không bịa sách ngoài kho: {contextJson}
+                Schema: t=tên, a=tác giả, c=thể loại, p=giá, dp=giá ưu đãi, d=ưu đãi, v=voucher, s=đã bán, r=đánh giá, desc=mô tả.
+                Trả lời tiếng Việt tự nhiên như nhân viên tư vấn, tối đa 3 câu. Chọn 1-3 sách hợp nhất, nêu lý do ngắn dựa trên thể loại/đánh giá/ưu đãi/mô tả; tránh liệt kê máy móc.
+                Không gọi s là tồn kho. Không nói còn hàng nếu không có dữ liệu tồn kho. Nếu không đủ dữ liệu, nói chưa tìm thấy trong kho.
                 """;
 
             var apiKey = _config["ChatAnywhere:ApiKey"];
@@ -403,8 +397,8 @@ namespace BookStore.API.Services
             {
                 model = _config["ChatAnywhere:Model"] ?? "gpt-4o-mini",
                 messages = messages.ToArray(),
-                temperature = 0.2,
-                max_tokens = 300
+                temperature = 0.45,
+                max_tokens = 240
             };
 
             var client = _httpClientFactory.CreateClient("ChatAnywhere");
@@ -1033,6 +1027,24 @@ namespace BookStore.API.Services
                    normalizedMessage.Contains("khuyen mai") ||
                    normalizedMessage.Contains("sale") ||
                    normalizedMessage.Contains("voucher");
+        }
+
+        private static bool IsAdvisoryIntent(string normalizedMessage, IReadOnlyCollection<string> queryWords)
+        {
+            return queryWords.Count == 0 ||
+                   normalizedMessage.Contains("goi y") ||
+                   normalizedMessage.Contains("tu van") ||
+                   normalizedMessage.Contains("nen doc") ||
+                   normalizedMessage.Contains("nen mua") ||
+                   normalizedMessage.Contains("mua sach nao") ||
+                   normalizedMessage.Contains("chon sach nao") ||
+                   normalizedMessage.Contains("sach nao hay") ||
+                   normalizedMessage.Contains("sach hay") ||
+                   normalizedMessage.Contains("mua tang") ||
+                   normalizedMessage.Contains("tang ban") ||
+                   normalizedMessage.Contains("phu hop") ||
+                   normalizedMessage.Contains("nguoi moi") ||
+                   normalizedMessage.Contains("de doc");
         }
 
         private static int? TryParseRequestedQuantity(string normalizedMessage)
