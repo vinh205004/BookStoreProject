@@ -67,6 +67,8 @@ export interface OrderItem {
   imageUrl: string;
   quantity: number;
   unitPrice: number;
+  originalPrice?: number;
+  hardcodedVoucherCode?: string;
 }
 
 export interface Order {
@@ -77,6 +79,7 @@ export interface Order {
   totalAmount: number;
   status: string;
   paymentMethod?: string;
+  appliedVoucherCode?: string;
   orderDate: string;
   orderItems: OrderItem[];
 }

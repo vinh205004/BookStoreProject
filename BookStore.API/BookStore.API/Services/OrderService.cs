@@ -35,6 +35,7 @@ namespace BookStore.API.Services
                 TotalAmount = o.TotalAmount,
                 Status = o.Status,
                 PaymentMethod = ResolvePaymentMethod(o),
+                AppliedVoucherCode = o.AppliedVoucherCode ?? ExtractVoucherCode(o.Note),
                 ShippingAddress = o.ShippingAddress,
                 Note = o.Note,
                 OrderItems = o.OrderItems.Select(oi => new OrderItemDto
@@ -53,6 +54,7 @@ namespace BookStore.API.Services
         {
             var o = await _repo.GetByIdAsync(id);
             if (o == null) return null;
+            var activeVouchers = await GetActiveVouchersAsync();
 
             return new OrderDto
             {
@@ -64,17 +66,10 @@ namespace BookStore.API.Services
                 TotalAmount = o.TotalAmount,
                 Status = o.Status,
                 PaymentMethod = ResolvePaymentMethod(o),
+                AppliedVoucherCode = o.AppliedVoucherCode ?? ExtractVoucherCode(o.Note),
                 ShippingAddress = o.ShippingAddress,
                 Note = o.Note,
-                OrderItems = o.OrderItems.Select(oi => new OrderItemDto
-                {
-                    OrderItemId = oi.OrderItemId,
-                    BookId = oi.BookId,
-                    BookTitle = oi.Book?.Title ?? "Sách không tồn tại",
-                    ImageUrl = oi.Book?.BookImages.FirstOrDefault()?.ImageUrl ?? "",
-                    Quantity = oi.Quantity,
-                    UnitPrice = oi.UnitPrice
-                }).ToList()
+                OrderItems = o.OrderItems.Select(oi => MapOrderItemDto(oi, activeVouchers)).ToList()
             };
         }
 
@@ -114,7 +109,8 @@ namespace BookStore.API.Services
                     UserId = userId,
                     ShippingAddress = dto.ShippingAddress,
                     PhoneNumber = dto.PhoneNumber,
-                    Note = finalizePurchase ? dto.Note ?? string.Empty : BuildOrderNote(dto.Note, dto.VoucherCode),
+                    Note = dto.Note ?? string.Empty,
+                    AppliedVoucherCode = string.IsNullOrWhiteSpace(dto.VoucherCode) ? null : dto.VoucherCode,
                     Status = finalizePurchase ? "Pending" : "PaymentPending",
                     PaymentMethod = paymentMethod == "VNPAY" ? "VNPAY" : "COD",
                     OrderDate = DateTime.UtcNow,
@@ -266,7 +262,7 @@ namespace BookStore.API.Services
                     item.Book.Stock -= item.Quantity;
                 }
 
-                var voucherCode = ExtractVoucherCode(order.Note);
+                var voucherCode = order.AppliedVoucherCode ?? ExtractVoucherCode(order.Note);
                 if (!string.IsNullOrWhiteSpace(voucherCode))
                 {
                     var voucher = await _context.Vouchers.FirstOrDefaultAsync(v => v.Code == voucherCode && v.IsActive);
@@ -337,6 +333,7 @@ namespace BookStore.API.Services
 
         public async Task<IEnumerable<UserOrderDetailDto>> GetUserOrdersAsync(string userId)
         {
+            var activeVouchers = await GetActiveVouchersAsync();
             var orders = await _context.Orders
                 .Where(o => o.UserId == userId && o.Status != "PaymentPending")
                 .Include(o => o.OrderItems)
@@ -352,17 +349,11 @@ namespace BookStore.API.Services
                 TotalAmount = o.TotalAmount,
                 Status = o.Status,
                 PaymentMethod = ResolvePaymentMethod(o),
+                AppliedVoucherCode = o.AppliedVoucherCode ?? ExtractVoucherCode(o.Note),
                 ShippingAddress = o.ShippingAddress,
                 PhoneNumber = o.PhoneNumber,
                 Note = o.Note,
-                Items = o.OrderItems.Select(oi => new UserOrderItemDto
-                {
-                    BookId = oi.BookId,
-                    BookTitle = oi.Book?.Title ?? "Sách không tồn tại",
-                    ImageUrl = oi.Book?.BookImages.FirstOrDefault()?.ImageUrl ?? "",
-                    Quantity = oi.Quantity,
-                    UnitPrice = oi.UnitPrice
-                }).ToList()
+                Items = o.OrderItems.Select(oi => MapUserOrderItemDto(oi, activeVouchers)).ToList()
             });
         }
 
@@ -376,6 +367,7 @@ namespace BookStore.API.Services
                 .FirstOrDefaultAsync();
 
             if (order == null) return null;
+            var activeVouchers = await GetActiveVouchersAsync();
 
             return new UserOrderDetailDto
             {
@@ -384,17 +376,11 @@ namespace BookStore.API.Services
                 TotalAmount = order.TotalAmount,
                 Status = order.Status,
                 PaymentMethod = ResolvePaymentMethod(order),
+                AppliedVoucherCode = order.AppliedVoucherCode ?? ExtractVoucherCode(order.Note),
                 ShippingAddress = order.ShippingAddress,
                 PhoneNumber = order.PhoneNumber,
                 Note = order.Note,
-                Items = order.OrderItems.Select(oi => new UserOrderItemDto
-                {
-                    BookId = oi.BookId,
-                    BookTitle = oi.Book?.Title ?? "Sách không tồn tại",
-                    ImageUrl = oi.Book?.BookImages.FirstOrDefault()?.ImageUrl ?? "",
-                    Quantity = oi.Quantity,
-                    UnitPrice = oi.UnitPrice
-                }).ToList()
+                Items = order.OrderItems.Select(oi => MapUserOrderItemDto(oi, activeVouchers)).ToList()
             };
         }
 
@@ -409,6 +395,79 @@ namespace BookStore.API.Services
             }
 
             return Task.CompletedTask;
+        }
+
+        private async Task<List<Voucher>> GetActiveVouchersAsync()
+        {
+            var now = DateTime.UtcNow;
+            return await _context.Vouchers
+                .Where(v => v.IsActive && v.StartDate <= now && v.ExpirationDate >= now)
+                .ToListAsync();
+        }
+
+        private static OrderItemDto MapOrderItemDto(OrderItem item, IReadOnlyCollection<Voucher> activeVouchers)
+        {
+            var hardcodedVoucher = item.Book == null ? null : FindHardcodedVoucher(item.Book, activeVouchers);
+            var hasHardcodedDiscount = item.Book != null && hardcodedVoucher != null && item.UnitPrice < item.Book.Price;
+
+            return new OrderItemDto
+            {
+                OrderItemId = item.OrderItemId,
+                BookId = item.BookId,
+                BookTitle = item.Book?.Title ?? "Sách không tồn tại",
+                ImageUrl = item.Book?.BookImages.FirstOrDefault()?.ImageUrl ?? "",
+                Quantity = item.Quantity,
+                UnitPrice = item.UnitPrice,
+                OriginalPrice = hasHardcodedDiscount ? item.Book!.Price : null,
+                HardcodedVoucherCode = hasHardcodedDiscount ? hardcodedVoucher!.Code : null
+            };
+        }
+
+        private static UserOrderItemDto MapUserOrderItemDto(OrderItem item, IReadOnlyCollection<Voucher> activeVouchers)
+        {
+            var hardcodedVoucher = item.Book == null ? null : FindHardcodedVoucher(item.Book, activeVouchers);
+            var hasHardcodedDiscount = item.Book != null && hardcodedVoucher != null && item.UnitPrice < item.Book.Price;
+
+            return new UserOrderItemDto
+            {
+                BookId = item.BookId,
+                BookTitle = item.Book?.Title ?? "Sách không tồn tại",
+                ImageUrl = item.Book?.BookImages.FirstOrDefault()?.ImageUrl ?? "",
+                Quantity = item.Quantity,
+                UnitPrice = item.UnitPrice,
+                OriginalPrice = hasHardcodedDiscount ? item.Book!.Price : null,
+                HardcodedVoucherCode = hasHardcodedDiscount ? hardcodedVoucher!.Code : null
+            };
+        }
+
+        private static Voucher? FindHardcodedVoucher(Book book, IEnumerable<Voucher> vouchers)
+        {
+            return vouchers
+                .Where(v => IsVoucherApplicable(book, v))
+                .OrderByDescending(v => CalculateDiscountValue(book.Price, v))
+                .FirstOrDefault();
+        }
+
+        private static bool IsVoucherApplicable(Book book, Voucher voucher)
+        {
+            if (book.Price < voucher.MinOrderValue)
+            {
+                return false;
+            }
+
+            var appliesToProduct = !string.IsNullOrWhiteSpace(voucher.ApplicableProductId) &&
+                                   ("," + voucher.ApplicableProductId.Trim(',') + ",").Contains("," + book.BookId + ",");
+            var appliesToCategory = !string.IsNullOrWhiteSpace(voucher.ApplicableCategoryId) &&
+                                    voucher.ApplicableCategoryId == book.CategoryId;
+
+            return appliesToProduct || appliesToCategory;
+        }
+
+        private static decimal CalculateDiscountValue(decimal price, Voucher voucher)
+        {
+            return voucher.DiscountType == "Percentage"
+                ? price * voucher.DiscountAmount / 100m
+                : Math.Min(price, voucher.DiscountAmount);
         }
 
         private async Task RemoveOrderedItemsFromCartAsync(string userId, IEnumerable<string> bookIds)

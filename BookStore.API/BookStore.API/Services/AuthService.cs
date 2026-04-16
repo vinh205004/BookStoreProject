@@ -62,7 +62,10 @@ namespace BookStore.API.Services
             if (!BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash))
                 throw new Exception("Mật khẩu không chính xác!");
 
-            // 3. Nếu đúng, tiến hành tạo token JWT
+            if (user.IsLocked)
+                throw new Exception("Tài khoản đã bị khóa. Vui lòng liên hệ quản trị viên!");
+
+            // 3. Nếu đúng và tài khoản không bị khóa, tiến hành tạo token JWT
             return GenerateJwtToken(user);
         }
 

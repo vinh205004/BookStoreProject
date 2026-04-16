@@ -40,6 +40,9 @@ namespace BookStore.API.Models
 
         public string Note { get; set; } = string.Empty;
 
+        [MaxLength(50)]
+        public string? AppliedVoucherCode { get; set; }
+
         // Liên kết 1-nhiều với chi tiết đơn hàng
         public ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
     }

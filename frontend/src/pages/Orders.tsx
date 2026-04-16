@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Eye, ShoppingBag, Truck, CheckCircle, XCircle, Clock, Package, Search } from 'lucide-react';
+﻿import React, { useState, useEffect } from 'react';
+import { Eye, ShoppingBag, Truck, CheckCircle, XCircle, Clock, Package, Search, Copy, Download } from 'lucide-react';
 import { toast } from 'react-toastify';
 import axiosClient from '../api/axiosClient';
 import type { Order } from '../types';
@@ -10,6 +10,8 @@ import SortableHeader, { type SortDirection } from '../components/SortableHeader
 
 const ITEMS_PER_PAGE = 10;
 type OrderSortKey = 'orderDate' | 'totalAmount';
+type StatusFilter = 'All' | 'Pending' | 'Processing' | 'Shipped' | 'Delivered' | 'Cancelled';
+const STATUS_ORDER = ['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled'];
 
 // Cấu hình màu và Text cho từng trạng thái
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -25,12 +27,15 @@ const getPaymentMethodLabel = (method?: string) => {
   return method === 'VNPAY' ? 'VNPAY' : 'COD';
 };
 
+const formatCurrency = (value: number) => `${value.toLocaleString('vi-VN')} đ`;
+
 export default function Orders() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [sortKey, setSortKey] = useState<OrderSortKey>('orderDate');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('All');
   
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -76,11 +81,24 @@ export default function Orders() {
     }
   };
 
-  const filteredOrders = orders.filter((order) => 
+  const searchFilteredOrders = orders.filter((order) => 
     order.customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
     order.orderId.toString().includes(searchQuery) ||
     order.status.toLowerCase().includes(searchQuery.toLowerCase())
   );
+  const filteredOrders = statusFilter === 'All'
+    ? searchFilteredOrders
+    : searchFilteredOrders.filter(order => order.status === statusFilter);
+  const statusStats = STATUS_ORDER.map((status) => {
+    const statusOrders = searchFilteredOrders.filter(order => order.status === status);
+    return {
+      status,
+      count: statusOrders.length,
+      totalAmount: statusOrders.reduce((sum, order) => sum + order.totalAmount, 0),
+      config: STATUS_CONFIG[status],
+    };
+  });
+  const allOrdersTotalAmount = searchFilteredOrders.reduce((sum, order) => sum + order.totalAmount, 0);
   const sortedOrders = [...filteredOrders].sort((a, b) => {
     const aValue = sortKey === 'orderDate' ? new Date(a.orderDate).getTime() : a.totalAmount;
     const bValue = sortKey === 'orderDate' ? new Date(b.orderDate).getTime() : b.totalAmount;
@@ -95,9 +113,38 @@ export default function Orders() {
     setCurrentPage(1);
   };
 
+  const handleCopyOrderId = async (orderId: string) => {
+    try {
+      await navigator.clipboard.writeText(orderId);
+      toast.success('Đã copy mã đơn hàng!');
+    } catch {
+      toast.error('Không thể copy mã đơn hàng!');
+    }
+  };
+
+  const handleDownloadInvoice = async (orderId: string) => {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const response: any = await axiosClient.get(`/Orders/${orderId}/invoice`, { responseType: 'blob' });
+      const payload = response instanceof Blob ? response : response?.data;
+      const blob = payload instanceof Blob ? payload : new Blob([payload], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `hoa-don-${orderId}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
+      toast.error(error.response?.data?.error || 'Khong the tai hoa don!');
+    }
+  };
+
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, filteredOrders.length]);
+  }, [searchQuery, statusFilter, filteredOrders.length]);
 
   return (
     <div className="bg-white shadow-sm border border-slate-200 p-4 sm:p-6">
@@ -119,11 +166,41 @@ export default function Orders() {
           />
         </div>
       </div>
+      <div className="mb-6 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-6 gap-3">
+        <button
+          type="button"
+          onClick={() => setStatusFilter('All')}
+          className={`border p-3 text-left transition hover:shadow-sm ${statusFilter === 'All' ? 'border-slate-700 bg-slate-100 ring-2 ring-slate-200' : 'border-slate-200 bg-slate-50'}`}
+        >
+          <div className="text-xs font-bold uppercase text-slate-500">Tất cả</div>
+          <div className="mt-2 flex items-end justify-between gap-3">
+            <span className="text-xl font-bold text-slate-800">{searchFilteredOrders.length}</span>
+            <span className="text-sm font-bold text-slate-700 text-right">{formatCurrency(allOrdersTotalAmount)}</span>
+          </div>
+        </button>
+        {statusStats.map(({ status, count, totalAmount, config }) => (
+          <button
+            key={status}
+            type="button"
+            onClick={() => setStatusFilter(status as StatusFilter)}
+            className={`border p-3 text-left transition hover:shadow-sm ${config.color} ${statusFilter === status ? 'ring-2 ring-orange-300 border-orange-400' : ''}`}
+          >
+            <div className="flex items-center gap-1.5 text-xs font-bold uppercase">
+              {config.icon}
+              <span className="truncate">{config.label}</span>
+            </div>
+            <div className="mt-2 flex items-end justify-between gap-3">
+              <span className="text-xl font-bold">{count}</span>
+              <span className="text-sm font-bold text-right">{formatCurrency(totalAmount)}</span>
+            </div>
+          </button>
+        ))}
+      </div>
       <div className="overflow-x-auto -mx-4 sm:mx-0">
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="bg-slate-50 border-b border-slate-200 text-xs sm:text-sm text-slate-600 uppercase">
-              <th className="p-3 sm:p-4 font-semibold">Mã Đơn</th>
+              <th className="p-3 sm:p-4 font-semibold w-40">Mã Đơn</th>
               <th className="p-3 sm:p-4 font-semibold hidden sm:table-cell">Khách hàng</th>
               <SortableHeader active={sortKey === 'orderDate'} direction={sortDirection} onClick={() => handleSort('orderDate')} className="hidden sm:table-cell">Ngày đặt</SortableHeader>
               <SortableHeader active={sortKey === 'totalAmount'} direction={sortDirection} onClick={() => handleSort('totalAmount')}>Tổng tiền</SortableHeader>
@@ -140,7 +217,21 @@ export default function Orders() {
                 const statusInfo = STATUS_CONFIG[order.status] || STATUS_CONFIG['Pending'];
                 return (
                   <tr key={order.orderId} className="hover:bg-slate-50 transition-colors">
-                    <td className="p-3 sm:p-4 font-bold text-orange-600 text-xs sm:text-base">#ORD-{order.orderId}</td>
+                    <td className="p-3 sm:p-4 text-xs sm:text-base">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="min-w-0 max-w-28 truncate font-bold text-orange-600" title={`#ORD-${order.orderId}`}>
+                          #ORD-{order.orderId}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => handleCopyOrderId(order.orderId)}
+                          className="flex-shrink-0 text-slate-400 hover:text-orange-600 transition-colors"
+                          title="Copy mã đơn"
+                        >
+                          <Copy size={15} />
+                        </button>
+                      </div>
+                    </td>
                     <td className="p-3 sm:p-4 hidden sm:table-cell text-xs sm:text-base">
                       <div className="font-semibold text-slate-800">{order.customerName}</div>
                       <div className="text-xs sm:text-sm text-slate-500">{order.customerPhone}</div>
@@ -157,13 +248,24 @@ export default function Orders() {
                         {statusInfo.icon} {statusInfo.label}
                       </span>
                     </td>
-                    <td className="p-3 sm:p-4 flex justify-center">
+                    <td className="p-3 sm:p-4">
+                      <div className="flex justify-center gap-2">
+                        {order.status !== 'Cancelled' && (
+                          <button
+                            type="button"
+                            onClick={() => handleDownloadInvoice(order.orderId)}
+                            className="flex items-center gap-1 bg-blue-100 hover:bg-blue-200 text-blue-700 px-3 py-1.5 rounded-none transition-colors text-xs sm:text-sm font-medium"
+                          >
+                            <Download size={16} /> PDF
+                          </button>
+                        )}
                       <button 
                         onClick={() => handleOpenDetail(order)} 
                         className="flex items-center gap-1 bg-orange-100 hover:bg-orange-200 text-orange-700 px-3 py-1.5 rounded-none transition-colors text-xs sm:text-sm font-medium"
                       >
                         <Eye size={16} /> Chi tiết
                       </button>
+                      </div>
                     </td>
                   </tr>
                 );
@@ -189,6 +291,14 @@ export default function Orders() {
                 <div className="col-span-2"><span className="text-slate-500">Địa chỉ:</span> <span className="font-semibold">{selectedOrder.shippingAddress}</span></div>
                 <div className="col-span-2"><span className="text-slate-500">Ngày đặt:</span> <span className="font-semibold">{new Date(selectedOrder.orderDate).toLocaleString('vi-VN')}</span></div>
                 <div className="col-span-2"><span className="text-slate-500">Thanh toán:</span> <span className="font-semibold">{getPaymentMethodLabel(selectedOrder.paymentMethod)}</span></div>
+                {selectedOrder.appliedVoucherCode && (
+                  <div className="col-span-2">
+                    <span className="text-slate-500">Voucher đã áp:</span>{' '}
+                    <span className="inline-flex px-2 py-0.5 bg-green-100 text-green-700 border border-green-200 text-xs font-bold">
+                      {selectedOrder.appliedVoucherCode}
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -201,7 +311,22 @@ export default function Orders() {
                     <img src={item.imageUrl || 'https://via.placeholder.com/50'} alt={item.bookTitle} className="w-12 h-16 object-cover rounded-none border border-slate-200" />
                     <div className="flex-1 min-w-0">
                       <div className="font-semibold text-slate-800 line-clamp-2" title={item.bookTitle}>{item.bookTitle}</div>
-                      <div className="text-sm text-slate-500 mt-1">SL: {item.quantity} x {item.unitPrice.toLocaleString('vi-VN')} đ</div>
+                      {item.hardcodedVoucherCode && (
+                        <div className="mt-1 inline-flex px-2 py-0.5 bg-green-100 text-green-700 border border-green-200 text-xs font-bold">
+                          Áp cứng: {item.hardcodedVoucherCode}
+                        </div>
+                      )}
+                      <div className="text-sm text-slate-500 mt-1">
+                        SL: {item.quantity} x{' '}
+                        {item.originalPrice && item.originalPrice > item.unitPrice ? (
+                          <>
+                            <span className="line-through text-slate-400 mr-1">{item.originalPrice.toLocaleString('vi-VN')} đ</span>
+                            <span className="font-semibold text-red-500">{item.unitPrice.toLocaleString('vi-VN')} đ</span>
+                          </>
+                        ) : (
+                          <span>{item.unitPrice.toLocaleString('vi-VN')} đ</span>
+                        )}
+                      </div>
                     </div>
                     <div className="font-bold text-orange-600 whitespace-nowrap">
                       {(item.quantity * item.unitPrice).toLocaleString('vi-VN')} đ
@@ -251,3 +376,4 @@ export default function Orders() {
     </div>
   );
 }
+

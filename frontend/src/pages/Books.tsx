@@ -14,6 +14,13 @@ import SortableHeader, { type SortDirection } from '../components/SortableHeader
 const ITEMS_PER_PAGE = 10;
 type BookSortKey = 'price' | 'stock';
 
+const roundDimension = (value: number) => Math.round(value * 10) / 10;
+const parseDimensionInput = (value: string) => roundDimension(Number(value) || 0);
+const formatDimension = (value?: number) => value ? roundDimension(value).toLocaleString('vi-VN', {
+  minimumFractionDigits: 0,
+  maximumFractionDigits: 1
+}) : 'Chưa cập nhật';
+
 export default function Books() {
   const [books, setBooks] = useState<Book[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -163,8 +170,8 @@ export default function Books() {
         imageUrls, 
         isHidden: false,
         targetAudience,
-        length: length || undefined,
-        width: width || undefined,
+        length: length ? roundDimension(length) : undefined,
+        width: width ? roundDimension(width) : undefined,
         lengthUnit,
         pageCount: pageCount || undefined,
         discountedPrice: discountedPrice || undefined,
@@ -464,13 +471,13 @@ export default function Books() {
             <div className="grid grid-cols-3 gap-2">
               <div>
                 <label className="text-xs text-slate-600 mb-1 block">Dài</label>
-                <input type="number" value={length} onChange={(e) => setLength(Number(e.target.value))}
-                  className="w-full border border-slate-300 px-4 py-2 focus:ring-2 focus:ring-orange-500 outline-none" min={0}/>
+                <input type="number" value={length} onChange={(e) => setLength(parseDimensionInput(e.target.value))}
+                  className="w-full border border-slate-300 px-4 py-2 focus:ring-2 focus:ring-orange-500 outline-none" min={0} step={0.1}/>
               </div>
               <div>
                 <label className="text-xs text-slate-600 mb-1 block">Rộng</label>
-                <input type="number" value={width} onChange={(e) => setWidth(Number(e.target.value))}
-                  className="w-full border border-slate-300 px-4 py-2 focus:ring-2 focus:ring-orange-500 outline-none" min={0}/>
+                <input type="number" value={width} onChange={(e) => setWidth(parseDimensionInput(e.target.value))}
+                  className="w-full border border-slate-300 px-4 py-2 focus:ring-2 focus:ring-orange-500 outline-none" min={0} step={0.1}/>
               </div>
               <div>
                 <label className="text-xs text-slate-600 mb-1 block">Đơn vị</label>
@@ -542,8 +549,8 @@ export default function Books() {
             bgColor: 'blue',
             items: [
               { label: 'Đối tượng', value: selectedBook.targetAudience || 'Chưa cập nhật' },
-              { label: 'Dài', value: selectedBook.length ? `${selectedBook.length} ${selectedBook.lengthUnit}` : 'Chưa cập nhật' },
-              { label: 'Rộng', value: selectedBook.width ? `${selectedBook.width} ${selectedBook.lengthUnit}` : 'Chưa cập nhật' },
+              { label: 'Dài', value: selectedBook.length ? `${formatDimension(selectedBook.length)} ${selectedBook.lengthUnit}` : 'Chưa cập nhật' },
+              { label: 'Rộng', value: selectedBook.width ? `${formatDimension(selectedBook.width)} ${selectedBook.lengthUnit}` : 'Chưa cập nhật' },
               { label: 'Số trang', value: selectedBook.pageCount ? `${selectedBook.pageCount} trang` : 'Chưa cập nhật' }
             ]
           },

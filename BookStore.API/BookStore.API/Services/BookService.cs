@@ -104,8 +104,8 @@ namespace BookStore.API.Services
                 IsHidden = false,
                 CreatedAt = DateTime.UtcNow,
                 TargetAudience = dto.TargetAudience ?? "Trưởng thành (18+)",
-                Length = dto.Length,
-                Width = dto.Width,
+                Length = RoundDimension(dto.Length),
+                Width = RoundDimension(dto.Width),
                 LengthUnit = dto.LengthUnit ?? "cm",
                 PageCount = dto.PageCount,
                 DiscountedPrice = null,
@@ -139,8 +139,8 @@ namespace BookStore.API.Services
             book.CategoryId = dto.CategoryId;
             book.IsHidden = dto.IsHidden;
             book.TargetAudience = dto.TargetAudience ?? "Trưởng thành (18+)";
-            book.Length = dto.Length;
-            book.Width = dto.Width;
+            book.Length = RoundDimension(dto.Length);
+            book.Width = RoundDimension(dto.Width);
             book.LengthUnit = dto.LengthUnit ?? "cm";
             book.PageCount = dto.PageCount;
             book.DiscountedPrice = null;
@@ -149,6 +149,11 @@ namespace BookStore.API.Services
 
             await _bookRepo.UpdateAsync(book);
             return true;
+        }
+
+        private static decimal? RoundDimension(decimal? value)
+        {
+            return value.HasValue ? Math.Round(value.Value, 1, MidpointRounding.AwayFromZero) : null;
         }
 
         public async Task<bool> DeleteBookAsync(string id)

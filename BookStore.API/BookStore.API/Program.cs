@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using QuestPDF.Infrastructure;
 using System.Text;
 
 namespace BookStore.API
@@ -14,6 +15,8 @@ namespace BookStore.API
     {
         public static void Main(string[] args)
         {
+            QuestPDF.Settings.License = LicenseType.Community;
+
             var builder = WebApplication.CreateBuilder(args);
 
 
@@ -61,6 +64,7 @@ namespace BookStore.API
             builder.Services.AddScoped<IChatbotService, ChatbotService>();
             builder.Services.AddScoped<VnpayService>();
             builder.Services.AddScoped<IPaymentService, PaymentService>();
+            builder.Services.AddScoped<IInvoiceService, InvoiceService>();
             
             builder.Services.AddHttpClient("ChatAnywhere", client =>
             {
@@ -164,6 +168,34 @@ namespace BookStore.API
             app.UseHttpsRedirection();
 
             app.UseAuthentication();
+
+            app.Use(async (context, next) =>
+            {
+                if (context.User.Identity?.IsAuthenticated == true)
+                {
+                    var userId = context.User.FindFirst("UserId")?.Value;
+                    if (!string.IsNullOrWhiteSpace(userId))
+                    {
+                        using var scope = app.Services.CreateScope();
+                        var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+                        var isLocked = await dbContext.Users
+                            .AsNoTracking()
+                            .Where(u => u.UserId == userId)
+                            .Select(u => (bool?)u.IsLocked)
+                            .FirstOrDefaultAsync();
+
+                        if (isLocked == true)
+                        {
+                            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                            await context.Response.WriteAsJsonAsync(new { error = "Tài khoản đã bị khóa. Vui lòng liên hệ quản trị viên!" });
+                            return;
+                        }
+                    }
+                }
+
+                await next();
+            });
+
             app.UseAuthorization();
 
             if (app.Environment.IsDevelopment())

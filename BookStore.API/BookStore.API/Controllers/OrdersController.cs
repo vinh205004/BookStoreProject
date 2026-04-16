@@ -12,10 +12,12 @@ namespace BookStore.API.Controllers
     public class OrdersController : ControllerBase
     {
         private readonly IOrderService _orderService;
+        private readonly IInvoiceService _invoiceService;
 
-        public OrdersController(IOrderService orderService)
+        public OrdersController(IOrderService orderService, IInvoiceService invoiceService)
         {
             _orderService = orderService;
+            _invoiceService = invoiceService;
         }
 
         // Customer endpoints
@@ -76,6 +78,27 @@ namespace BookStore.API.Controllers
             }
         }
 
+        [HttpGet("user/{orderId}/invoice")]
+        public async Task<IActionResult> DownloadUserInvoice(string orderId)
+        {
+            try
+            {
+                var userId = User.FindFirst("UserId")?.Value;
+                if (string.IsNullOrEmpty(userId))
+                    return Unauthorized(new { error = "Không xác định được người dùng" });
+
+                var invoice = await _invoiceService.GenerateUserInvoiceAsync(userId, orderId);
+                if (invoice == null)
+                    return NotFound(new { message = "Không tìm thấy đơn hàng" });
+
+                return File(invoice.Content, "application/pdf", invoice.FileName);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+        }
+
         [HttpPut("user/{orderId}/cancel")]
         public async Task<IActionResult> CancelUserOrder(string orderId)
         {
@@ -113,6 +136,24 @@ namespace BookStore.API.Controllers
             var order = await _orderService.GetOrderByIdAsync(id);
             if (order == null) return NotFound(new { message = "Không tìm thấy đơn hàng" });
             return Ok(order);
+        }
+
+        [HttpGet("{id}/invoice")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> DownloadInvoice(string id)
+        {
+            try
+            {
+                var invoice = await _invoiceService.GenerateAdminInvoiceAsync(id);
+                if (invoice == null)
+                    return NotFound(new { message = "Không tìm thấy đơn hàng" });
+
+                return File(invoice.Content, "application/pdf", invoice.FileName);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
         }
 
         [HttpPut("{id}/status")]

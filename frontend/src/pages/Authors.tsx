@@ -281,7 +281,7 @@ export default function Authors() {
             <label className="block text-sm font-medium text-slate-700 mb-1">Tiểu sử</label>
             <textarea value={biography} onChange={(e) => setBiography(e.target.value)} rows={4} className="w-full border border-slate-300 px-4 py-2 focus:ring-2 focus:ring-orange-500 outline-none"></textarea>
           </div>
-          <div className="flex justify-end gap-3 mt-4">
+          <div className="col-span-1 sm:col-span-2 flex justify-end gap-3 mt-4">
             <Button type="button" variant="secondary" onClick={() => setIsModalOpen(false)}>Hủy</Button>
             <Button type="submit" variant="primary" disabled={!name}>Lưu</Button>
           </div>

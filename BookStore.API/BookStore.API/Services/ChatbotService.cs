@@ -25,7 +25,8 @@ namespace BookStore.API.Services
             "hay", "nhat", "tu", "van", "giup", "voi", "gia", "bao", "nhieu",
             "hang", "ton", "kho", "giam", "uu", "dai", "khuyen", "mai", "sale",
             "voucher", "dang", "con", "het", "duoi", "tren", "tu", "den", "toi",
-            "khoang", "nho", "hon", "lon", "qua", "khong", "tac", "ai", "ma", "duoc"
+            "khoang", "nho", "hon", "lon", "qua", "khong", "tac", "ai", "ma", "duoc",
+            "thoi", "nhe", "nha", "lay", "chon"
         };
 
         private static readonly string[] DescriptionIntentWords =
@@ -95,6 +96,16 @@ namespace BookStore.API.Services
             var priceFilter = TryParsePriceFilter(normalizedMessage);
             var budget = TryParseBudget(normalizedMessage);
             var requestedQuantity = TryParseRequestedQuantity(normalizedMessage);
+
+            if (IsQuantityOnlyFollowUp(normalizedMessage, queryWords, requestedQuantity) &&
+                request.History != null &&
+                request.History.Any())
+            {
+                var context = ExtractConversationContext(request.History);
+                priceFilter ??= context.PriceFilter;
+                budget ??= context.Budget ?? context.PriceFilter?.MaxPrice;
+            }
+
             var wantsBudgetRecommendation = budget.HasValue ||
                                             normalizedMessage.Contains("nen mua") ||
                                             normalizedMessage.Contains("mua sach nao") ||
@@ -252,8 +263,19 @@ namespace BookStore.API.Services
 
             if (budget.HasValue)
             {
-                var quantity = requestedQuantity ?? 3;
                 var budgetCandidates = GetBudgetCandidateBooks(searchableBooks, queryWords);
+                if (!requestedQuantity.HasValue)
+                {
+                    var recommendedBooks = SelectBudgetRecommendations(budgetCandidates, budget.Value, 3);
+                    return new ChatResponseDto
+                    {
+                        Response = recommendedBooks.Count == 0
+                            ? $"Chưa tìm thấy sách phù hợp trong kho với ngân sách {FormatPrice(budget.Value)}."
+                            : BuildBudgetSuggestionResponse(budget.Value, recommendedBooks)
+                    };
+                }
+
+                var quantity = requestedQuantity.Value;
                 var affordableBooks = SelectBooksWithinBudget(budgetCandidates, budget.Value, quantity);
 
                 return new ChatResponseDto
@@ -284,8 +306,9 @@ namespace BookStore.API.Services
             {
                 return new ChatResponseDto
                 {
-                    Response = BuildBookListResponse("Bạn có thể tham khảo", matchedBooks.Take(5))
+                    Response = BuildConsultingResponse("Mình gợi ý vài cuốn đáng thử trong kho", matchedBooks.Take(3))
                 };
+
             }
 
             IEnumerable<BookContextItem> selectedBooksQuery = matchedBooks;
@@ -487,7 +510,7 @@ namespace BookStore.API.Services
                 var unicodeCategory = CharUnicodeInfo.GetUnicodeCategory(character);
                 if (unicodeCategory != UnicodeCategory.NonSpacingMark)
                 {
-                    builder.Append(character == 'đ' ? 'd' : character);
+                    builder.Append(character == '\u0111' ? 'd' : character);
                 }
             }
 
@@ -542,6 +565,57 @@ namespace BookStore.API.Services
                 });
 
             return $"{title}: {string.Join("; ", lines)}.";
+        }
+
+        private static string BuildConsultingResponse(string opening, IEnumerable<BookContextItem> books)
+        {
+            var selectedBooks = books.Take(3).ToList();
+            if (selectedBooks.Count == 0)
+            {
+                return "Mình chưa tìm thấy sách phù hợp trong kho hiện tại.";
+            }
+
+            var suggestions = selectedBooks.Select((book, index) =>
+                $"{index + 1}. {book.Title} - {BuildConsultingReason(book)}");
+
+            var favorite = selectedBooks
+                .OrderByDescending(CalculateRecommendationScore)
+                .First();
+
+            return $"{opening}: {string.Join("; ", suggestions)}. Nếu chưa có gu rõ, mình nghiêng về \"{favorite.Title}\" vì lựa chọn này khá an toàn để bắt đầu.";
+        }
+
+        private static string BuildConsultingReason(BookContextItem book)
+        {
+            var priceText = book.DiscountedPrice.HasValue
+                ? $"đang có ưu đãi, còn {FormatPrice(book.DiscountedPrice.Value)}"
+                : $"giá {FormatPrice(book.Price)}";
+
+            var reasons = new List<string>();
+            if (book.Rating >= 4.5)
+            {
+                reasons.Add("điểm đánh giá tốt");
+            }
+            else if (book.Rating >= 4)
+            {
+                reasons.Add("phản hồi khá ổn");
+            }
+
+            if (book.Sold >= 4)
+            {
+                reasons.Add("đang được nhiều khách chọn");
+            }
+
+            if (!string.IsNullOrWhiteSpace(book.Category))
+            {
+                reasons.Add($"thuộc nhóm {book.Category}");
+            }
+
+            var reasonText = reasons.Count > 0
+                ? string.Join(", ", reasons.Take(2))
+                : "dễ đọc và phù hợp để tham khảo";
+
+            return $"{priceText}, {reasonText}";
         }
 
         private static void ApplyBestVoucher(BookContextItem book, IReadOnlyCollection<Voucher> activeVouchers)
@@ -815,6 +889,22 @@ namespace BookStore.API.Services
             return bestCombo;
         }
 
+        private static List<BookContextItem> SelectBudgetRecommendations(IEnumerable<BookContextItem> books, decimal budget, int limit)
+        {
+            return books
+                .Where(b => b.EffectivePrice <= budget)
+                .OrderByDescending(CalculateRecommendationScore)
+                .ThenBy(b => b.EffectivePrice)
+                .Take(limit)
+                .ToList();
+        }
+
+        private static string BuildBudgetSuggestionResponse(decimal budget, IReadOnlyCollection<BookContextItem> books)
+        {
+            return BuildConsultingResponse($"Với ngân sách {FormatPrice(budget)}, mình sẽ ưu tiên mấy cuốn dễ chọn này", books);
+
+        }
+
         private static double CalculateRecommendationScore(BookContextItem book)
         {
             return book.Rating * 1000 + book.Sold * 100 + (double)(book.Price / 100000m);
@@ -956,6 +1046,44 @@ namespace BookStore.API.Services
             return quantity > 0 ? quantity : null;
         }
 
+        private static bool IsQuantityOnlyFollowUp(
+            string normalizedMessage,
+            IReadOnlyCollection<string> queryWords,
+            int? requestedQuantity)
+        {
+            if (!requestedQuantity.HasValue || queryWords.Count > 0)
+            {
+                return false;
+            }
+
+            return !TryParseBudget(normalizedMessage).HasValue &&
+                   TryParsePriceFilter(normalizedMessage) == null &&
+                   !IsDiscountIntent(normalizedMessage) &&
+                   !IsStockIntent(normalizedMessage) &&
+                   !IsAuthorIntent(normalizedMessage) &&
+                   !IsPriceIntent(normalizedMessage);
+        }
+
+        private static ConversationContext ExtractConversationContext(IEnumerable<ChatMessageDto> history)
+        {
+            foreach (var message in history
+                         .Where(m => !string.IsNullOrWhiteSpace(m.Text))
+                         .Reverse()
+                         .Take(MaxHistoryMessages))
+            {
+                var normalizedText = NormalizeVietnamese(message.Text);
+                var budget = TryParseBudget(normalizedText);
+                var priceFilter = TryParsePriceFilter(normalizedText);
+
+                if (budget.HasValue || priceFilter != null)
+                {
+                    return new ConversationContext(budget, priceFilter);
+                }
+            }
+
+            return new ConversationContext(null, null);
+        }
+
         private static string CleanBotResponse(string response)
         {
             var lines = response
@@ -980,8 +1108,8 @@ namespace BookStore.API.Services
 
             var trimmed = value.Trim();
             return trimmed.Contains('%') ||
-                   trimmed.Contains('₫') ||
-                   trimmed.Contains('đ') ||
+                   trimmed.Contains("\u20ab") ||
+                   trimmed.Contains("\u0111") ||
                    trimmed.Contains('d') ||
                    trimmed.StartsWith('-')
                 ? trimmed
@@ -1041,5 +1169,7 @@ namespace BookStore.API.Services
         }
 
         private sealed record PriceFilter(decimal? MinPrice, decimal? MaxPrice);
+
+        private sealed record ConversationContext(decimal? Budget, PriceFilter? PriceFilter);
     }
 }

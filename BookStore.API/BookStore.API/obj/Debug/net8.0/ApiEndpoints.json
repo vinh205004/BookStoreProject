@@ -815,6 +815,48 @@
     "ReturnTypes": []
   },
   {
+    "ContainingType": "BookStore.API.Controllers.OrdersController",
+    "Method": "CancelUserOrder",
+    "RelativePath": "api/Orders/user/{orderId}/cancel",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "orderId",
+        "Type": "System.String",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "BookStore.API.Controllers.PaymentsController",
+    "Method": "VnpayReturn",
+    "RelativePath": "api/Payments/vnpay-return",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "BookStore.API.Controllers.PaymentsController",
+    "Method": "CreateVnpayPayment",
+    "RelativePath": "api/Payments/vnpay/create",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "dto",
+        "Type": "BookStore.API.DTOs.CreateVnpayPaymentDto",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
     "ContainingType": "BookStore.API.Controllers.ProductsController",
     "Method": "GetProductDetail",
     "RelativePath": "api/Products/{id}",

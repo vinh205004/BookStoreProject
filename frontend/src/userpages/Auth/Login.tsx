@@ -31,12 +31,12 @@ export default function Login() {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const response: any = await axiosClient.post('/Auth/login', formData);
       const token = response.token;
-      
+
       if (!token) {
         toast.error('Tài khoản hoặc mật khẩu không chính xác!');
         return;
       }
-      
+
       localStorage.setItem('token', token);
 
       try {
@@ -45,13 +45,11 @@ export default function Login() {
         console.error('Lỗi khi đồng bộ giỏ hàng:', err);
       }
 
-      // Decode token để lấy role
       const payload = decodeToken(token);
       const role = payload?.['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'] || payload?.['role'];
 
       toast.success('Đăng nhập thành công!');
-      
-      // Redirect dựa vào role
+
       if (role === 'Admin') {
         navigate('/admin');
       } else {
@@ -59,9 +57,10 @@ export default function Login() {
       }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
-      const errorMessage = error?.response?.data?.error || 
-                          error?.message || 
-                          'Đăng nhập thất bại!';
+      const apiMessage = error?.response?.data?.error || error?.response?.data?.message;
+      const errorMessage = apiMessage?.includes('Tài khoản đã bị khóa')
+        ? 'Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên!'
+        : apiMessage || error?.message || 'Đăng nhập thất bại!';
       toast.error(errorMessage);
       console.error('Login error:', error);
     } finally {
@@ -72,15 +71,15 @@ export default function Login() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-50 to-blue-50 px-4">
       <div className="w-full max-w-md relative">
-        <Link 
-          to="/" 
+        <Link
+          to="/"
           className="absolute -top-12 left-0 flex items-center text-slate-600 hover:text-orange-500 transition-colors font-medium"
         >
           <ArrowLeft size={18} className="mr-2" />
           Về trang chủ
         </Link>
         <div className="bg-white rounded-none shadow-xl p-8">
-          <h1 className="text-3xl font-bold text-center mb-2 text-gray-800">Đăng Nhập</h1>
+          <h1 className="text-3xl font-bold text-center mb-2 text-gray-800">Đăng nhập</h1>
           <p className="text-center text-gray-600 mb-8">Đăng nhập vào tài khoản của bạn</p>
 
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -126,7 +125,7 @@ export default function Login() {
               className="w-full bg-orange-500 hover:bg-orange-600 disabled:bg-gray-400 text-white font-bold py-2 rounded-lg transition flex items-center justify-center gap-2"
             >
               <LogIn size={20} />
-              {loading ? 'Đang xử lý...' : 'Đăng Nhập'}
+              {loading ? 'Đang xử lý...' : 'Đăng nhập'}
             </button>
           </form>
 

@@ -12,6 +12,8 @@ namespace BookStore.API.DTOs
         public string ImageUrl { get; set; } = string.Empty;
         public int Quantity { get; set; }
         public decimal UnitPrice { get; set; }
+        public decimal? OriginalPrice { get; set; }
+        public string? HardcodedVoucherCode { get; set; }
     }
 
     public class OrderDto
@@ -24,6 +26,7 @@ namespace BookStore.API.DTOs
         public decimal TotalAmount { get; set; }
         public string Status { get; set; } = string.Empty;
         public string PaymentMethod { get; set; } = string.Empty;
+        public string? AppliedVoucherCode { get; set; }
         public string ShippingAddress { get; set; } = string.Empty;
         public string Note { get; set; } = string.Empty;
 

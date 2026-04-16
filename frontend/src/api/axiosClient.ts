@@ -15,10 +15,9 @@ const axiosClient = axios.create({
   },
 });
 
-// Interceptor: Trước khi gửi request đi, tự động nhét Token vào Header
 axiosClient.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('token'); // Lấy token từ LocalStorage
+    const token = localStorage.getItem('token');
     if (token && token !== 'null' && token !== 'undefined') {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -29,26 +28,25 @@ axiosClient.interceptors.request.use(
   }
 );
 
-// Interceptor: Xử lý lỗi trả về
 axiosClient.interceptors.response.use(
   (response) => {
     return response.data;
   },
   (error: AxiosError) => {
-    // Log the full error for debugging
+    const requestUrl = error.config?.url || '';
+    const isLoginRequest = requestUrl.includes('/Auth/login');
+
     if (error.response?.status !== 401) {
       console.error('API Error:', {
         status: error.response?.status,
         data: error.response?.data,
         message: error.message
       });
-    } else {
-      // Auto logout on 401
+    } else if (!isLoginRequest) {
       localStorage.removeItem('token');
       window.location.href = '/login';
     }
-    
-    // Reject với error object có structure nhất quán
+
     const apiError: ApiError = new Error(error.message);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     apiError.response = {
@@ -56,7 +54,7 @@ axiosClient.interceptors.response.use(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       data: (error.response?.data as any) || {}
     };
-    
+
     return Promise.reject(apiError);
   }
 );

@@ -156,13 +156,13 @@ export default function Publishers() {
       </div>
 
       <div className="overflow-x-auto -mx-4 sm:mx-0">
-        <table className="w-full text-left border-collapse">
+        <table className="w-full table-fixed text-left border-collapse">
           <thead>
             <tr className="bg-slate-50 border-b border-slate-200 text-xs sm:text-sm text-slate-600 uppercase">
-              <th className="p-3 sm:p-4 font-semibold">Tên NXB</th>
-              <th className="p-3 sm:p-4 font-semibold hidden sm:table-cell">Thông tin liên hệ / Mô tả</th>
-              <th className="p-3 sm:p-4 font-semibold">Trạng thái</th>
-              <th className="p-3 sm:p-4 font-semibold text-center">Thao tác</th>
+              <th className="p-3 sm:p-4 font-semibold w-1/4">Tên NXB</th>
+              <th className="p-3 sm:p-4 font-semibold hidden sm:table-cell w-2/5">Thông tin liên hệ / Mô tả</th>
+              <th className="p-3 sm:p-4 font-semibold w-32">Trạng thái</th>
+              <th className="p-3 sm:p-4 font-semibold text-center w-32">Thao tác</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-200 text-slate-700">
@@ -171,8 +171,17 @@ export default function Publishers() {
             ) : (
               paginatedData.map((pub) => (
                 <tr key={pub.publisherId} className="hover:bg-slate-50">
-                  <td className="p-3 sm:p-4 font-semibold flex items-center gap-2 text-xs sm:text-base"><Building2 size={18} className="text-slate-400 flex-shrink-0"/> {pub.name}</td>
-                  <td className="p-3 sm:p-4 hidden sm:table-cell text-xs sm:text-base">{pub.description}</td>
+                  <td className="p-3 sm:p-4 font-semibold text-xs sm:text-base">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <Building2 size={18} className="text-slate-400 flex-shrink-0"/>
+                      <span className="truncate" title={pub.name}>{pub.name}</span>
+                    </div>
+                  </td>
+                  <td className="p-3 sm:p-4 hidden sm:table-cell text-xs sm:text-base">
+                    <div className="truncate" title={pub.description || 'Chưa cập nhật'}>
+                      {pub.description || <span className="text-slate-400 italic">Chưa cập nhật</span>}
+                    </div>
+                  </td>
                   <td className="p-3 sm:p-4">
                     <span className={`px-3 py-1 rounded-none text-xs font-bold ${pub.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
                       {pub.isActive ? 'Hợp tác' : 'Ngừng'}

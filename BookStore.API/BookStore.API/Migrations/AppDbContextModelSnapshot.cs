@@ -267,6 +267,10 @@ namespace BookStore.API.Migrations
                     b.Property<string>("OrderId")
                         .HasColumnType("text");
 
+                    b.Property<string>("AppliedVoucherCode")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
                     b.Property<string>("Note")
                         .IsRequired()
                         .HasColumnType("text");

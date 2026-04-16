@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { ArrowLeft, ChevronDown, Package, XCircle } from 'lucide-react';
+import { ArrowLeft, ChevronDown, Download, Package, XCircle } from 'lucide-react';
 import { toast } from 'react-toastify';
 import axiosClient from '../../api/axiosClient';
 
@@ -10,6 +10,8 @@ interface OrderItem {
   imageUrl: string;
   quantity: number;
   unitPrice: number;
+  originalPrice?: number;
+  hardcodedVoucherCode?: string;
 }
 
 interface Order {
@@ -18,6 +20,7 @@ interface Order {
   totalAmount: number;
   status: string;
   paymentMethod?: string;
+  appliedVoucherCode?: string;
   shippingAddress: string;
   phoneNumber: string;
   note: string;
@@ -106,6 +109,27 @@ export default function MyOrders() {
   };
 
   const canCancelOrder = (status: string) => status === 'Pending' || status === 'Processing';
+  const canDownloadInvoice = (status: string) => status !== 'Cancelled';
+
+  const handleDownloadInvoice = async (orderId: string) => {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const response: any = await axiosClient.get(`/Orders/user/${orderId}/invoice`, { responseType: 'blob' });
+      const payload = response instanceof Blob ? response : response?.data;
+      const blob = payload instanceof Blob ? payload : new Blob([payload], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `hoa-don-${orderId}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
+      toast.error(error.response?.data?.error || 'Không thể tải hóa đơn!');
+    }
+  };
 
   const handleCancelOrder = async (orderId: string) => {
     if (!window.confirm('Bạn có chắc muốn hủy đơn hàng này?')) return;
@@ -211,6 +235,17 @@ export default function MyOrders() {
                         <div className="flex-1 min-w-0">
                           <p className="font-semibold text-gray-800 leading-5 break-words">{item.bookTitle}</p>
                           <p className="text-sm text-gray-600">Số lượng: {item.quantity}</p>
+                          {item.hardcodedVoucherCode && (
+                            <div className="mt-1 inline-flex px-2 py-0.5 bg-green-100 text-green-700 border border-green-200 text-xs font-bold">
+                              Áp cứng: {item.hardcodedVoucherCode}
+                            </div>
+                          )}
+                          {item.originalPrice && item.originalPrice > item.unitPrice && (
+                            <p className="text-sm text-gray-500 mt-1">
+                              Giá gốc: <span className="line-through">{item.originalPrice.toLocaleString()}₫</span>
+                              <span className="ml-2 text-red-500 font-semibold">Sau ưu đãi: {item.unitPrice.toLocaleString()}₫</span>
+                            </p>
+                          )}
                           <p className="text-orange-500 font-bold">{(item.unitPrice * item.quantity).toLocaleString()}₫</p>
                         </div>
                       </div>
@@ -224,6 +259,14 @@ export default function MyOrders() {
                   <p className="text-gray-700 mb-2">{order.shippingAddress}</p>
                   <p className="text-sm text-gray-600">Điện thoại: {order.phoneNumber}</p>
                   <p className="text-sm text-gray-600 mt-2">Thanh toán: {getPaymentMethodText(order.paymentMethod)}</p>
+                  {order.appliedVoucherCode && (
+                    <p className="text-sm text-gray-600 mt-2">
+                      Voucher đã áp:{' '}
+                      <span className="inline-flex px-2 py-0.5 bg-green-100 text-green-700 border border-green-200 text-xs font-bold">
+                        {order.appliedVoucherCode}
+                      </span>
+                    </p>
+                  )}
                   {order.note && <p className="text-sm text-gray-600 mt-2">Ghi chú: {order.note}</p>}
                 </div>
 
@@ -243,8 +286,19 @@ export default function MyOrders() {
                   </div>
                 </div>
 
-                {canCancelOrder(order.status) && (
-                  <div className="flex justify-end mb-4">
+                {(canDownloadInvoice(order.status) || canCancelOrder(order.status)) && (
+                  <div className="flex flex-wrap justify-end gap-3 mb-4">
+                    {canDownloadInvoice(order.status) && (
+                      <button
+                        type="button"
+                        onClick={() => handleDownloadInvoice(order.orderId)}
+                        className="inline-flex items-center gap-2 bg-blue-100 hover:bg-blue-200 text-blue-700 font-bold px-4 py-2 rounded transition"
+                      >
+                        <Download size={18} />
+                        {order.status === 'Delivered' ? 'Tải hóa đơn' : 'Tải phiếu đặt hàng'}
+                      </button>
+                    )}
+                    {canCancelOrder(order.status) && (
                     <button
                       type="button"
                       onClick={() => handleCancelOrder(order.orderId)}
@@ -253,6 +307,7 @@ export default function MyOrders() {
                       <XCircle size={18} />
                       Hủy đơn hàng
                     </button>
+                    )}
                   </div>
                 )}
 
@@ -268,3 +323,5 @@ export default function MyOrders() {
     </div>
   );
 }
+
+
