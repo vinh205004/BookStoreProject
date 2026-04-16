@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect, useCallback } from 'react';
+import { Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { DollarSign, BookOpen, ShoppingBag, Users, TrendingUp, TrendingDown, Calendar, Star, MessageSquare } from 'lucide-react';
 import axiosClient from '../api/axiosClient';
 import { toast } from 'react-toastify';
@@ -13,8 +14,30 @@ type MonthlyRevenuePoint = {
   orders: number;
 };
 
+type OrderStatusPoint = {
+  status: string;
+  label: string;
+  count: number;
+  totalAmount: number;
+};
+
+type ChartTab = 'revenue' | 'status';
+
 const formatCurrency = (value: number) =>
   new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
+
+const ORDER_STATUS_COLORS: Record<string, string> = {
+  Pending: '#f59e0b',
+  Processing: '#3b82f6',
+  Shipped: '#8b5cf6',
+  Delivered: '#22c55e',
+  Cancelled: '#ef4444'
+};
+
+const buildBookPlaceholder = (title?: string) => {
+  const initial = encodeURIComponent((title || 'S').trim().charAt(0).toUpperCase() || 'S');
+  return `data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='110' viewBox='0 0 80 110'%3E%3Crect width='80' height='110' fill='%23f1f5f9'/%3E%3Crect x='10' y='10' width='60' height='90' fill='%23ffffff' stroke='%23cbd5e1'/%3E%3Ctext x='40' y='62' text-anchor='middle' font-family='Arial' font-size='26' font-weight='700' fill='%23f97316'%3E${initial}%3C/text%3E%3C/svg%3E`;
+};
 
 const escapeExcelCell = (value: string | number) =>
   String(value ?? '')
@@ -113,6 +136,8 @@ export default function AdminDashboard() {
   });
 
   const [monthlyRevenue, setMonthlyRevenue] = useState<MonthlyRevenuePoint[]>([]);
+  const [statusSummary, setStatusSummary] = useState<OrderStatusPoint[]>([]);
+  const [activeChartTab, setActiveChartTab] = useState<ChartTab>('revenue');
   const [categorySales, setCategorySales] = useState<{ name: string; value: number; books?: { title: string, quantity: number }[] }[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<{ name: string; books: { title: string, quantity: number }[] } | null>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -146,10 +171,16 @@ export default function AdminDashboard() {
       
       // axios interceptor already returns response.data
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { stats, monthlyRevenue, categorySales, topSellingProducts, topRatedProducts } = response as any;
+      const { stats, monthlyRevenue, statusSummary, categorySales, topSellingProducts, topRatedProducts } = response as any;
       
       setStats(stats);
       setMonthlyRevenue(normalizeMonthlyRevenue(monthlyRevenue));
+      setStatusSummary(Array.isArray(statusSummary) ? statusSummary.map((item: any) => ({
+        status: String(item.status ?? ''),
+        label: String(item.label ?? item.status ?? ''),
+        count: Number(item.count ?? 0),
+        totalAmount: Number(item.totalAmount ?? 0)
+      })) : []);
       setCategorySales(categorySales);
       setTopSellingProducts(topSellingProducts);
       setTopRatedProducts(topRatedProducts);
@@ -247,8 +278,9 @@ export default function AdminDashboard() {
   if (initialLoad) return <div className="p-8 text-center text-slate-500">Đang tải biểu đồ...</div>;
 
   const totalCategoryBooks = categorySales.reduce((sum, item) => sum + item.value, 0);
-  const maxMonthlyRevenue = Math.max(...monthlyRevenue.map(item => item.revenue), 0);
-  const hasMonthlyRevenue = maxMonthlyRevenue > 0;
+  const hasMonthlyRevenue = monthlyRevenue.some(item => item.revenue > 0);
+  const totalStatusOrders = statusSummary.reduce((sum, item) => sum + item.count, 0);
+  const statusChartData = statusSummary.filter(item => item.count > 0);
   const currentDate = new Date();
   const setCurrentMonthFilter = () => {
     setSelectedMonth(currentDate.getMonth() + 1);
@@ -273,6 +305,32 @@ export default function AdminDashboard() {
         item.orders
       ])
     );
+  };
+  const handleExportStatusSummary = () => {
+    const rows = statusSummary.map(item => {
+      const percentage = totalStatusOrders > 0 ? `${((item.count / totalStatusOrders) * 100).toFixed(1)}%` : '0%';
+      return [
+        item.label,
+        item.count,
+        percentage,
+        item.totalAmount
+      ];
+    });
+
+    exportTableToExcel(
+      `ti-le-trang-thai-don-${selectedMonth}-${selectedYear}.xls`,
+      `Tỉ lệ trạng thái đơn hàng ${selectedMonth}/${selectedYear}`,
+      ['Trạng thái', 'Số đơn', 'Tỉ lệ', 'Tổng tiền'],
+      rows
+    );
+  };
+  const handleExportMainChart = () => {
+    if (activeChartTab === 'status') {
+      handleExportStatusSummary();
+      return;
+    }
+
+    handleExportRevenue();
   };
   const handleExportCategorySales = () => {
     const rows = categorySales.flatMap(item => {
@@ -356,15 +414,35 @@ export default function AdminDashboard() {
         {/* DOANH THU THÁNG */}
         <div className="bg-white h-[470px] p-4 sm:p-6 rounded-none shadow-sm border border-slate-100 lg:col-span-2 flex flex-col">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-3">
-            <h3 className="text-lg font-bold text-slate-800">BIỂU ĐỒ DOANH THU</h3>
+            <div>
+              <h3 className="text-lg font-bold text-slate-800">
+                {activeChartTab === 'revenue' ? 'BIỂU ĐỒ DOANH THU' : `TỈ LỆ TRẠNG THÁI ĐƠN HÀNG ${selectedMonth}/${selectedYear}`}
+              </h3>
+              <div className="mt-3 inline-flex border border-slate-200 bg-slate-50">
+                <button
+                  type="button"
+                  onClick={() => setActiveChartTab('revenue')}
+                  className={`px-3 py-1.5 text-xs font-bold transition-colors ${activeChartTab === 'revenue' ? 'bg-orange-500 text-black' : 'text-slate-600 hover:bg-slate-100'}`}
+                >
+                  Doanh thu
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveChartTab('status')}
+                  className={`px-3 py-1.5 text-xs font-bold transition-colors ${activeChartTab === 'status' ? 'bg-orange-500 text-black' : 'text-slate-600 hover:bg-slate-100'}`}
+                >
+                  Trạng thái đơn
+                </button>
+              </div>
+            </div>
             <div className="flex flex-wrap items-center gap-2">
               <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-none">
-                <span className="text-sm text-slate-500 font-medium">Theo năm đang chọn:</span>
-                <span className="font-bold text-orange-600 text-sm">{selectedYear}</span>
+                <span className="text-sm text-slate-500 font-medium">{activeChartTab === 'revenue' ? 'Theo năm:' : 'Theo tháng:'}</span>
+                <span className="font-bold text-orange-600 text-sm">{activeChartTab === 'revenue' ? selectedYear : `${selectedMonth}/${selectedYear}`}</span>
               </div>
               <button
                 type="button"
-                onClick={handleExportRevenue}
+                onClick={handleExportMainChart}
                 style={{ width: 140, height: 45 }}
                 className="inline-flex flex-none items-center justify-center bg-orange-500 hover:bg-orange-600 text-black border border-orange-500 text-xs font-bold transition-colors"
               >
@@ -372,38 +450,81 @@ export default function AdminDashboard() {
               </button>
             </div>
           </div>
-          <div className="min-h-0 flex-1 w-full">
-            {!hasMonthlyRevenue ? (
+          <div className="h-[310px] w-full">
+            {activeChartTab === 'revenue' && !hasMonthlyRevenue ? (
               <div className="flex h-full flex-col items-center justify-center text-slate-400">
                 <DollarSign size={48} className="mb-3 opacity-20" />
                 <p className="italic">Chưa có doanh thu nào trong năm {selectedYear}</p>
               </div>
+            ) : activeChartTab === 'status' && totalStatusOrders === 0 ? (
+              <div className="flex h-full flex-col items-center justify-center text-slate-400">
+                <ShoppingBag size={48} className="mb-3 opacity-20" />
+                <p className="italic">Chưa có đơn hàng nào trong tháng {selectedMonth}/{selectedYear}</p>
+              </div>
+            ) : activeChartTab === 'revenue' ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={monthlyRevenue} margin={{ top: 12, right: 20, left: 0, bottom: 8 }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+                  <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
+                  <YAxis
+                    axisLine={false}
+                    tickLine={false}
+                    width={70}
+                    tick={{ fill: '#64748b', fontSize: 12 }}
+                    tickFormatter={(value) => `${Math.round(Number(value) / 1000000)}M`}
+                  />
+                  <Tooltip
+                    cursor={{ fill: '#f8fafc' }}
+                    formatter={(value: any, name: any) => {
+                      if (name === 'revenue') return [formatCurrency(Number(value)), 'Doanh thu'];
+                      return [value, 'Số đơn'];
+                    }}
+                    labelFormatter={(label) => `${label}/${selectedYear}`}
+                  />
+                  <Bar dataKey="revenue" fill="#f97316" maxBarSize={44} name="revenue" />
+                </BarChart>
+              </ResponsiveContainer>
             ) : (
-              <div className="h-full overflow-visible">
-                <div className="grid h-full w-full grid-cols-12 gap-1 sm:gap-2 border-l border-b border-slate-200 px-2 sm:px-3 pt-4 pb-8">
-                  {monthlyRevenue.map((item, index) => {
-                    const height = Math.max((item.revenue / maxMonthlyRevenue) * 100, item.revenue > 0 ? 6 : 0);
-                    const tooltipPosition = index === 0
-                      ? 'left-0'
-                      : index === monthlyRevenue.length - 1
-                        ? 'right-0'
-                        : 'left-1/2 -translate-x-1/2';
+              <div className="grid h-full grid-cols-1 md:grid-cols-[minmax(0,1fr)_220px] gap-4">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={statusChartData}
+                      dataKey="count"
+                      nameKey="label"
+                      cx="50%"
+                      cy="50%"
+                      outerRadius="78%"
+                      innerRadius="45%"
+                      paddingAngle={2}
+                    >
+                      {statusChartData.map((entry) => (
+                        <Cell key={entry.status} fill={ORDER_STATUS_COLORS[entry.status] || '#64748b'} />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      formatter={(value: any, _name: any, props: any) => {
+                        const item = props.payload as OrderStatusPoint;
+                        const percentage = totalStatusOrders > 0 ? ((Number(value) / totalStatusOrders) * 100).toFixed(1) : '0';
+                        return [`${value} đơn (${percentage}%)`, item.label];
+                      }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
 
+                <div className="flex flex-col justify-center gap-2 overflow-y-auto pr-1">
+                  {statusSummary.map((item) => {
+                    const percentage = totalStatusOrders > 0 ? ((item.count / totalStatusOrders) * 100).toFixed(1) : '0.0';
                     return (
-                      <div key={item.month} className="group relative flex h-full min-w-0 flex-col items-center justify-end gap-2">
-                        <div className={`pointer-events-none absolute top-2 z-10 hidden w-36 border border-slate-200 bg-white p-2 text-[11px] leading-4 shadow-lg group-hover:block sm:w-44 sm:text-xs ${tooltipPosition}`}>
-                          <div className="font-bold text-slate-800">{item.month}/{selectedYear}</div>
-                          <div className="mt-1 text-orange-600">{formatCurrency(item.revenue)}</div>
-                          <div className="text-slate-500">{item.orders} đơn đã giao</div>
+                      <div key={item.status} className="flex items-center gap-2 text-sm">
+                        <span className="h-3 w-3 flex-shrink-0" style={{ backgroundColor: ORDER_STATUS_COLORS[item.status] || '#64748b' }} />
+                        <div className="min-w-0 flex-1">
+                          <div className="flex justify-between gap-2">
+                            <span className="font-semibold text-slate-700 truncate">{item.label}</span>
+                            <span className="font-bold text-slate-900 whitespace-nowrap">{percentage}%</span>
+                          </div>
+                          <div className="text-xs text-slate-500">{item.count} đơn - {formatCurrency(item.totalAmount)}</div>
                         </div>
-                        <div className="flex h-full w-full items-end justify-center">
-                          <div
-                            className="w-full max-w-8 sm:max-w-10 bg-orange-500 transition-all hover:bg-orange-600"
-                            style={{ height: `${height}%` }}
-                            title={`${item.month}: ${formatCurrency(item.revenue)} - ${item.orders} đơn`}
-                          />
-                        </div>
-                        <span className="absolute -bottom-6 text-[10px] sm:text-xs font-medium text-slate-500">{item.month.replace('Thg ', 'T')}</span>
                       </div>
                     );
                   })}
@@ -531,7 +652,14 @@ export default function AdminDashboard() {
                   <div className={`w-8 h-8 rounded-none flex items-center justify-center font-bold text-sm mr-4 ${index === 0 ? 'bg-yellow-100 text-yellow-600' : index === 1 ? 'bg-slate-200 text-slate-600' : index === 2 ? 'bg-orange-100 text-orange-800' : 'bg-gray-50 text-gray-400'} group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors`}>
                     #{index + 1}
                   </div>
-                  <img src={p.img} alt={p.title} className="w-12 h-16 object-cover rounded-none bg-slate-200 mr-4" />
+                  <img
+                    src={p.img || buildBookPlaceholder(p.title)}
+                    alt={p.title}
+                    onError={(event) => {
+                      event.currentTarget.src = buildBookPlaceholder(p.title);
+                    }}
+                    className="w-12 h-16 object-cover rounded-none bg-slate-200 mr-4"
+                  />
                   <div className="flex-1">
                     <h4 className="font-semibold text-slate-800 line-clamp-1 group-hover:text-blue-600 transition-colors">{p.title}</h4>
                     <p className="text-orange-500 font-bold text-sm">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(p.price)}</p>
@@ -564,7 +692,14 @@ export default function AdminDashboard() {
                     <div className={`w-8 h-8 rounded-none flex items-center justify-center font-bold text-sm mr-4 ${index === 0 ? 'bg-yellow-100 text-yellow-600' : index === 1 ? 'bg-slate-200 text-slate-600' : index === 2 ? 'bg-orange-100 text-orange-800' : 'bg-gray-50 text-gray-400'} group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors`}>
                       #{index + 1}
                     </div>
-                    <img src={p.img} alt={p.title} className="w-12 h-16 object-cover rounded-none bg-slate-200 mr-4" />
+                    <img
+                      src={p.img || buildBookPlaceholder(p.title)}
+                      alt={p.title}
+                      onError={(event) => {
+                        event.currentTarget.src = buildBookPlaceholder(p.title);
+                      }}
+                      className="w-12 h-16 object-cover rounded-none bg-slate-200 mr-4"
+                    />
                     <div className="flex-1">
                       <h4 className="font-semibold text-slate-800 line-clamp-1 group-hover:text-blue-600 transition-colors">{p.title}</h4>
                       <div className="flex items-center text-yellow-500 mt-1">

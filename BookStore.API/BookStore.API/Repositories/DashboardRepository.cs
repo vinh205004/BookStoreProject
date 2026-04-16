@@ -81,6 +81,38 @@ namespace BookStore.API.Repositories
                 });
             }
 
+            var statusLabels = new Dictionary<string, string>
+            {
+                ["Pending"] = "Chờ xác nhận",
+                ["Processing"] = "Đang xử lý",
+                ["Shipped"] = "Đang giao hàng",
+                ["Delivered"] = "Giao thành công",
+                ["Cancelled"] = "Đã hủy"
+            };
+
+            var statusSummaryData = await _context.Orders
+                .Where(o => o.Status != "PaymentPending" && o.OrderDate.Year == year && o.OrderDate.Month == month)
+                .GroupBy(o => o.Status)
+                .Select(g => new
+                {
+                    Status = g.Key,
+                    Count = g.Count(),
+                    TotalAmount = g.Sum(o => o.TotalAmount)
+                })
+                .ToDictionaryAsync(x => x.Status);
+
+            var statusSummary = statusLabels.Select(item =>
+            {
+                statusSummaryData.TryGetValue(item.Key, out var value);
+                return new
+                {
+                    status = item.Key,
+                    label = item.Value,
+                    count = value?.Count ?? 0,
+                    totalAmount = value?.TotalAmount ?? 0
+                };
+            }).ToList();
+
             // 3. Tỷ lệ Category (Danh mục sách đã bán) - Group by category, then return items with book details
             var categorySalesQuery = await _context.OrderItems
                 .Include(oi => oi.Book)
@@ -120,7 +152,7 @@ namespace BookStore.API.Repositories
                     title = g.Key.Title,
                     price = g.Key.Price,
                     sold = g.Sum(oi => oi.Quantity),
-                    img = g.Key.BookImages?.OrderBy(i => i.ImageId).FirstOrDefault()?.ImageUrl ?? "https://via.placeholder.com/50"
+                    img = g.Key.BookImages?.OrderBy(i => i.ImageId).FirstOrDefault()?.ImageUrl ?? ""
                 })
                 .OrderByDescending(x => x.sold)
                 .Take(5)
@@ -146,7 +178,7 @@ namespace BookStore.API.Repositories
                     price = g.Key.Price,
                     rating = Math.Round(g.Average(r => r.Rating), 1),
                     reviews = g.Count(),
-                    img = g.Key.BookImages?.OrderBy(i => i.ImageId).FirstOrDefault()?.ImageUrl ?? "https://via.placeholder.com/50",
+                    img = g.Key.BookImages?.OrderBy(i => i.ImageId).FirstOrDefault()?.ImageUrl ?? "",
                     commentList = g.Select(r => new 
                     { 
                         id = r.ReviewId, 
@@ -184,6 +216,7 @@ namespace BookStore.API.Repositories
                     totalBooks 
                 },
                 monthlyRevenue,
+                statusSummary,
                 categorySales = categorySalesData,
                 topSellingProducts = topSelling,
                 topRatedProducts = topRated
