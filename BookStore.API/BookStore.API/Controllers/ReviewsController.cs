@@ -1,5 +1,7 @@
 using BookStore.API.DTOs;
+using BookStore.API.Hubs;
 using BookStore.API.Services;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -14,11 +16,13 @@ namespace BookStore.API.Controllers
     {
         private readonly IReviewService _reviewService;
         private readonly IReviewReplyService _reviewReplyService;
+        private readonly IHubContext<NotificationHub> _notificationHub;
 
-        public ReviewsController(IReviewService reviewService, IReviewReplyService reviewReplyService)
+        public ReviewsController(IReviewService reviewService, IReviewReplyService reviewReplyService, IHubContext<NotificationHub> notificationHub)
         {
             _reviewService = reviewService;
             _reviewReplyService = reviewReplyService;
+            _notificationHub = notificationHub;
         }
 
         [HttpGet("book/{bookId}")]
@@ -57,6 +61,15 @@ namespace BookStore.API.Controllers
                 if (string.IsNullOrEmpty(userId)) return Unauthorized();
 
                 var review = await _reviewService.AddReviewAsync(dto, userId);
+                await _notificationHub.Clients.Group("Admins").SendAsync("NewReviewCreated", new
+                {
+                    reviewId = review.ReviewId,
+                    bookId = review.BookId,
+                    userName = review.UserName,
+                    rating = review.Rating,
+                    comment = review.Comment
+                });
+
                 return CreatedAtAction(nameof(GetReviewById), new { id = review.ReviewId }, review);
             }
             catch (InvalidOperationException ex)
@@ -124,6 +137,32 @@ namespace BookStore.API.Controllers
                 if (string.IsNullOrEmpty(userId)) return Unauthorized();
 
                 var reply = await _reviewReplyService.AddReplyAsync(reviewId, dto, userId, isAdmin);
+                var review = await _reviewService.GetReviewByIdAsync(reviewId);
+                if (isAdmin)
+                {
+                    if (review != null && review.UserId != userId)
+                    {
+                        await _notificationHub.Clients.User(review.UserId).SendAsync("ReviewReplied", new
+                        {
+                            reviewId = review.ReviewId,
+                            bookId = review.BookId,
+                            replyId = reply.ReplyId,
+                            content = reply.Content
+                        });
+                    }
+                }
+                else if (review != null)
+                {
+                    await _notificationHub.Clients.Group("Admins").SendAsync("ReviewReplyCreated", new
+                    {
+                        reviewId = review.ReviewId,
+                        bookId = review.BookId,
+                        replyId = reply.ReplyId,
+                        userName = reply.UserName,
+                        content = reply.Content
+                    });
+                }
+
                 return Ok(reply);
             }
             catch (InvalidOperationException ex)

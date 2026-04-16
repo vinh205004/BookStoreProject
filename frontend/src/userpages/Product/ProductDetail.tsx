@@ -1,6 +1,6 @@
 ﻿/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, BookOpen, Building2, Star, ShoppingCart, UserCircle, X } from 'lucide-react';
 import { toast } from 'react-toastify';
@@ -121,28 +121,49 @@ export default function ProductDetail() {
   const [editReplyComment, setEditReplyComment] = useState('');
   const [submittingEditReply, setSubmittingEditReply] = useState(false);
 
+  const loadReviews = useCallback(async (showLoading = true) => {
+    if (!id) return;
+
+    try {
+      if (showLoading) {
+        setLoadingReviews(true);
+      }
+
+      const [res, canReviewRes] = await Promise.all([
+        axiosClient.get(`/Reviews/book/${id}`),
+        currentUserId ? axiosClient.get(`/Reviews/book/${id}/can-review`).catch(() => ({ canReview: false })) : Promise.resolve({ canReview: false })
+      ]);
+      setReviews((res as any) || []);
+      if ((canReviewRes as any)?.canReview !== undefined) {
+        setCanReview((canReviewRes as any).canReview);
+      }
+    } catch (error) {
+      console.error("Failed to load reviews:", error);
+    } finally {
+      if (showLoading) {
+        setLoadingReviews(false);
+      }
+    }
+  }, [id, currentUserId]);
+
   useEffect(() => {
-    const loadReviews = async () => {
-      if (id) {
-        try {
-          setLoadingReviews(true);
-          const [res, canReviewRes] = await Promise.all([
-            axiosClient.get(`/Reviews/book/${id}`),
-            currentUserId ? axiosClient.get(`/Reviews/book/${id}/can-review`).catch(() => ({ canReview: false })) : Promise.resolve({ canReview: false })
-          ]);
-          setReviews((res as any) || []);
-          if ((canReviewRes as any)?.canReview !== undefined) {
-             setCanReview((canReviewRes as any).canReview);
-          }
-        } catch (error) {
-          console.error("Failed to load reviews:", error);
-        } finally {
-          setLoadingReviews(false);
+    loadReviews();
+  }, [loadReviews]);
+
+  useEffect(() => {
+    const handleReviewReplied = (event: Event) => {
+      const payload = (event as CustomEvent<{ bookId?: string; reviewId?: string }>).detail;
+      if (!payload?.bookId || payload.bookId === id) {
+        loadReviews(false);
+        if (payload?.bookId === id) {
+          setActiveTab('reviews');
         }
       }
     };
-    loadReviews();
-  }, [id, currentUserId]);
+
+    window.addEventListener('review-replied', handleReviewReplied);
+    return () => window.removeEventListener('review-replied', handleReviewReplied);
+  }, [id, loadReviews]);
 
   const handleSubmitReview = async (e: React.FormEvent) => {
     e.preventDefault();

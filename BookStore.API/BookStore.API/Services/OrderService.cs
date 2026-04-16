@@ -1,9 +1,11 @@
 ﻿using BookStore.API.Data;
 using BookStore.API.DTOs;
+using BookStore.API.Hubs;
 using BookStore.API.Models;
 using BookStore.API.Repositories;
 using BookStore.API.Utilities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.SignalR;
 
 namespace BookStore.API.Services
 {
@@ -13,13 +15,15 @@ namespace BookStore.API.Services
         private readonly IBookRepository _bookRepo;
         private readonly ICartRepository _cartRepo;
         private readonly AppDbContext _context;
+        private readonly IHubContext<NotificationHub> _notificationHub;
 
-        public OrderService(IOrderRepository repo, IBookRepository bookRepo, ICartRepository cartRepo, AppDbContext context)
+        public OrderService(IOrderRepository repo, IBookRepository bookRepo, ICartRepository cartRepo, AppDbContext context, IHubContext<NotificationHub> notificationHub)
         {
             _repo = repo;
             _bookRepo = bookRepo;
             _cartRepo = cartRepo;
             _context = context;
+            _notificationHub = notificationHub;
         }
 
         public async Task<IEnumerable<OrderDto>> GetAllOrdersAsync()
@@ -92,6 +96,7 @@ namespace BookStore.API.Services
 
             order.Status = dto.Status;
             await _repo.UpdateAsync(order);
+            await NotifyOrderStatusChangedAsync(order);
             return true;
         }
 
@@ -230,7 +235,13 @@ namespace BookStore.API.Services
                 }
 
                 await transaction.CommitAsync();
-                return await GetUserOrderDetailAsync(userId, order.OrderId) ?? throw new Exception("Không thể tạo đơn hàng!");
+                var createdOrder = await GetUserOrderDetailAsync(userId, order.OrderId) ?? throw new Exception("Không thể tạo đơn hàng!");
+                if (finalizePurchase)
+                {
+                    await NotifyNewOrderCreatedAsync(order);
+                }
+
+                return createdOrder;
             }
             catch
             {
@@ -302,6 +313,8 @@ namespace BookStore.API.Services
 
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
+                await NotifyNewOrderCreatedAsync(order);
+                await NotifyOrderStatusChangedAsync(order);
                 return true;
             }
             catch
@@ -330,6 +343,15 @@ namespace BookStore.API.Services
                 : $"{order.Note} | Khách hàng đã hủy đơn";
 
             await _context.SaveChangesAsync();
+            await _notificationHub.Clients.Group("Admins").SendAsync("OrderCancelledByCustomer", new
+            {
+                orderId = order.OrderId,
+                userId = order.UserId,
+                status = order.Status,
+                statusText = GetStatusText(order.Status),
+                totalAmount = order.TotalAmount
+            });
+
             return true;
         }
 
@@ -539,6 +561,45 @@ namespace BookStore.API.Services
             }
 
             return "COD";
+        }
+
+        private async Task NotifyOrderStatusChangedAsync(Order order)
+        {
+            await _notificationHub.Clients.User(order.UserId).SendAsync("OrderStatusChanged", new
+            {
+                orderId = order.OrderId,
+                status = order.Status,
+                statusText = GetStatusText(order.Status),
+                totalAmount = order.TotalAmount,
+                paymentMethod = ResolvePaymentMethod(order)
+            });
+        }
+
+        private async Task NotifyNewOrderCreatedAsync(Order order)
+        {
+            await _notificationHub.Clients.Group("Admins").SendAsync("NewOrderCreated", new
+            {
+                orderId = order.OrderId,
+                userId = order.UserId,
+                status = order.Status,
+                statusText = GetStatusText(order.Status),
+                totalAmount = order.TotalAmount,
+                paymentMethod = ResolvePaymentMethod(order)
+            });
+        }
+
+        private static string GetStatusText(string status)
+        {
+            return status switch
+            {
+                "Pending" => "Chờ xác nhận",
+                "Processing" => "Đang xử lý",
+                "Shipped" => "Đang giao hàng",
+                "Delivered" => "Giao thành công",
+                "Cancelled" => "Đã hủy",
+                "PaymentPending" => "Chờ thanh toán",
+                _ => status
+            };
         }
     }
 }

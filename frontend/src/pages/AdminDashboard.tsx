@@ -235,6 +235,15 @@ export default function AdminDashboard() {
     fetchDashboardData();
   }, [fetchDashboardData]);
 
+  useEffect(() => {
+    const handleReviewsUpdated = () => {
+      fetchDashboardData();
+    };
+
+    window.addEventListener('admin-reviews-updated', handleReviewsUpdated);
+    return () => window.removeEventListener('admin-reviews-updated', handleReviewsUpdated);
+  }, [fetchDashboardData]);
+
   if (initialLoad) return <div className="p-8 text-center text-slate-500">Đang tải biểu đồ...</div>;
 
   const totalCategoryBooks = categorySales.reduce((sum, item) => sum + item.value, 0);

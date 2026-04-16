@@ -44,6 +44,15 @@ export default function Orders() {
   // eslint-disable-next-line react-hooks/immutability
   useEffect(() => { fetchOrders(); }, []);
 
+  useEffect(() => {
+    const handleRealtimeOrdersUpdated = () => {
+      fetchOrders();
+    };
+
+    window.addEventListener('admin-orders-updated', handleRealtimeOrdersUpdated);
+    return () => window.removeEventListener('admin-orders-updated', handleRealtimeOrdersUpdated);
+  }, []);
+
   const fetchOrders = async () => {
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any

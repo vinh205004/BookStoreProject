@@ -1,4 +1,5 @@
 ﻿using BookStore.API.Data;
+using BookStore.API.Hubs;
 using BookStore.API.Repositories;
 using BookStore.API.Services;
 using BookStore.API.Utilities;
@@ -6,6 +7,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Microsoft.AspNetCore.SignalR;
 using QuestPDF.Infrastructure;
 using System.Text;
 
@@ -28,6 +30,8 @@ namespace BookStore.API
             
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
+            builder.Services.AddSignalR();
+            builder.Services.AddSingleton<IUserIdProvider, SignalRUserIdProvider>();
               // Add Scoped Services
               builder.Services.AddScoped<BookStore.API.Data.AppDbSeeder>();            builder.Services.AddDbContext<AppDbContext>(options =>
             options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -85,6 +89,21 @@ namespace BookStore.API
                         ValidAudience = builder.Configuration["Jwt:Audience"],
                         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
                     };
+                    options.Events = new JwtBearerEvents
+                    {
+                        OnMessageReceived = context =>
+                        {
+                            var accessToken = context.Request.Query["access_token"];
+                            var path = context.HttpContext.Request.Path;
+
+                            if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/hubs/notifications"))
+                            {
+                                context.Token = accessToken;
+                            }
+
+                            return Task.CompletedTask;
+                        }
+                    };
                 });
             builder.Services.AddSwaggerGen(c =>
             {
@@ -122,9 +141,10 @@ namespace BookStore.API
             builder.Services.AddCors(options =>
             {
                 options.AddPolicy("AllowAll",
-                    b => b.AllowAnyOrigin()
+                    b => b.SetIsOriginAllowed(_ => true)
                           .AllowAnyMethod()
-                          .AllowAnyHeader());
+                          .AllowAnyHeader()
+                          .AllowCredentials());
             });
 
             var app = builder.Build();
@@ -215,6 +235,7 @@ namespace BookStore.API
             }
 
             app.MapControllers();
+            app.MapHub<NotificationHub>("/hubs/notifications");
             app.Run();
         }
     }

@@ -4,6 +4,7 @@ import 'react-toastify/dist/ReactToastify.css';
 
 // Auth & Layout
 import ProtectedRoute from './components/ProtectedRoute';
+import RealtimeNotifications from './components/RealtimeNotifications';
 import Login from './userpages/Auth/Login';
 import Register from './userpages/Auth/Register';
 
@@ -74,6 +75,7 @@ function App() {
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
 
+      <RealtimeNotifications />
       <ToastContainer position="top-right" autoClose={3000} />
     </BrowserRouter>
   );

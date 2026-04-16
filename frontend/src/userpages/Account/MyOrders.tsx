@@ -39,6 +39,19 @@ export default function MyOrders() {
   }, []);
 
   useEffect(() => {
+    const handleOrderStatusChanged = async (event: Event) => {
+      const payload = (event as CustomEvent<{ orderId?: string }>).detail;
+      await fetchOrders();
+      if (payload?.orderId) {
+        setExpandedOrder(payload.orderId);
+      }
+    };
+
+    window.addEventListener('order-status-changed', handleOrderStatusChanged);
+    return () => window.removeEventListener('order-status-changed', handleOrderStatusChanged);
+  }, []);
+
+  useEffect(() => {
     const params = new URLSearchParams(location.search);
     const payment = params.get('payment');
     const orderId = params.get('orderId');
