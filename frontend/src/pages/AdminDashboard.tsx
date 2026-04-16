@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect, useCallback } from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
 import { DollarSign, BookOpen, ShoppingBag, Users, TrendingUp, TrendingDown, Calendar, Star, MessageSquare } from 'lucide-react';
 import axiosClient from '../api/axiosClient';
 import { toast } from 'react-toastify';
@@ -8,18 +7,90 @@ import { toast } from 'react-toastify';
 // Random colors for pie chart
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#ffc658', '#a4de6c'];
 
+type MonthlyRevenuePoint = {
+  month: string;
+  revenue: number;
+  orders: number;
+};
+
+const formatCurrency = (value: number) =>
+  new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
+
+const escapeExcelCell = (value: string | number) =>
+  String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+
+const exportTableToExcel = (filename: string, sheetTitle: string, headers: string[], rows: Array<Array<string | number>>) => {
+  const tableRows = [
+    `<tr>${headers.map(header => `<th>${escapeExcelCell(header)}</th>`).join('')}</tr>`,
+    ...rows.map(row => `<tr>${row.map(cell => `<td>${escapeExcelCell(cell)}</td>`).join('')}</tr>`)
+  ].join('');
+
+  const html = `
+    <html>
+      <head>
+        <meta charset="UTF-8" />
+        <style>
+          table { border-collapse: collapse; font-family: Arial, sans-serif; }
+          th, td { border: 1px solid #999; padding: 8px; }
+          th { background: #f97316; color: #111; font-weight: bold; }
+          caption { font-size: 18px; font-weight: bold; margin-bottom: 12px; text-align: left; }
+        </style>
+      </head>
+      <body>
+        <table>
+          <caption>${escapeExcelCell(sheetTitle)}</caption>
+          ${tableRows}
+        </table>
+      </body>
+    </html>
+  `;
+
+  const blob = new Blob(['\ufeff', html], { type: 'application/vnd.ms-excel;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename.endsWith('.xls') ? filename : `${filename}.xls`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+};
+
+const normalizeMonthlyRevenue = (items: unknown): MonthlyRevenuePoint[] => {
+  const rows = Array.isArray(items) ? items : [];
+
+  return Array.from({ length: 12 }, (_, index) => {
+    const monthNumber = index + 1;
+    const found = rows.find((item: any) => {
+      const label = String(item?.month ?? '');
+      const parsedMonth = Number(label.replace(/\D/g, ''));
+      return parsedMonth === monthNumber;
+    }) as any;
+
+    return {
+      month: found?.month ?? `Thg ${monthNumber}`,
+      revenue: Number(found?.revenue ?? 0),
+      orders: Number(found?.orders ?? 0)
+    };
+  });
+};
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const StatCard = ({ title, value, icon, color, trend }: any) => (
-  <div className="bg-white p-4 sm:p-5 rounded-none shadow-sm border border-slate-100 flex items-center space-x-3">
-    <div className={`p-3 rounded-none ${color} text-white`}>
+  <div className="bg-white h-[112px] p-4 rounded-none shadow-sm border border-slate-100 flex items-center gap-3 min-w-0">
+    <div className={`p-3 rounded-none ${color} text-white flex-shrink-0`}>
       {icon}
     </div>
-    <div>
-      <p className="text-xs text-slate-500 font-medium mb-1">{title}</p>
-      <h3 className="text-lg sm:text-xl font-bold text-slate-800 tracking-tight">{value}</h3>
+    <div className="min-w-0 flex-1">
+      <p className="text-xs text-slate-500 font-medium mb-1 line-clamp-2 leading-4">{title}</p>
+      <h3 className="text-base sm:text-lg font-bold text-slate-800 tracking-tight truncate">{value}</h3>
     </div>
     {trend !== undefined && trend !== null && (
-      <div className={`ml-auto flex flex-col items-end ${trend > 0 ? 'text-green-500' : trend < 0 ? 'text-red-500' : 'text-slate-400'}`}>
+      <div className={`flex flex-col items-end flex-shrink-0 ${trend > 0 ? 'text-green-500' : trend < 0 ? 'text-red-500' : 'text-slate-400'}`}>
         {trend > 0 ? <TrendingUp size={16} /> : trend < 0 ? <TrendingDown size={16} /> : <TrendingUp size={16} className="opacity-0" />}
         <span className="text-xs font-semibold mt-0.5">{trend > 0 ? '+' : ''}{trend}%</span>
       </div>
@@ -33,13 +104,15 @@ export default function AdminDashboard() {
     totalOrders: 0,
     currentMonthRevenue: 0,
     currentMonthOrders: 0,
+    currentMonthActiveOrders: 0,
+    currentMonthCancelledOrders: 0,
     totalUsers: 0,
     totalBooks: 0,
     revenueTrend: 0,
     ordersTrend: 0
   });
 
-  const [monthlyRevenue, setMonthlyRevenue] = useState<{ month: string; revenue: number }[]>([]);
+  const [monthlyRevenue, setMonthlyRevenue] = useState<MonthlyRevenuePoint[]>([]);
   const [categorySales, setCategorySales] = useState<{ name: string; value: number; books?: { title: string, quantity: number }[] }[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<{ name: string; books: { title: string, quantity: number }[] } | null>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -49,7 +122,6 @@ export default function AdminDashboard() {
   const [expandedBookId, setExpandedBookId] = useState<number | null>(null);
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
-  const [chartYear, setChartYear] = useState(new Date().getFullYear());
   const [loading, setLoading] = useState(true);
   const [initialLoad, setInitialLoad] = useState(true);
 
@@ -68,7 +140,7 @@ export default function AdminDashboard() {
         params: {
           month: selectedMonth,
           year: selectedYear,
-          chartYear: chartYear
+          chartYear: selectedYear
         }
       });
       
@@ -77,7 +149,7 @@ export default function AdminDashboard() {
       const { stats, monthlyRevenue, categorySales, topSellingProducts, topRatedProducts } = response as any;
       
       setStats(stats);
-      setMonthlyRevenue(monthlyRevenue);
+      setMonthlyRevenue(normalizeMonthlyRevenue(monthlyRevenue));
       setCategorySales(categorySales);
       setTopSellingProducts(topSellingProducts);
       setTopRatedProducts(topRatedProducts);
@@ -89,7 +161,7 @@ export default function AdminDashboard() {
       setLoading(false);
       setInitialLoad(false);
     }
-  }, [selectedMonth, selectedYear, chartYear]);
+  }, [selectedMonth, selectedYear]);
 
   const handleReplySubmit = async (reviewId: string) => {
     if (!replyComment.trim()) {
@@ -166,6 +238,52 @@ export default function AdminDashboard() {
   if (initialLoad) return <div className="p-8 text-center text-slate-500">Đang tải biểu đồ...</div>;
 
   const totalCategoryBooks = categorySales.reduce((sum, item) => sum + item.value, 0);
+  const maxMonthlyRevenue = Math.max(...monthlyRevenue.map(item => item.revenue), 0);
+  const hasMonthlyRevenue = maxMonthlyRevenue > 0;
+  const currentDate = new Date();
+  const setCurrentMonthFilter = () => {
+    setSelectedMonth(currentDate.getMonth() + 1);
+    setSelectedYear(currentDate.getFullYear());
+  };
+  const setPreviousMonthFilter = () => {
+    const previousMonthDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
+    setSelectedMonth(previousMonthDate.getMonth() + 1);
+    setSelectedYear(previousMonthDate.getFullYear());
+  };
+  const setCurrentYearFilter = () => {
+    setSelectedYear(currentDate.getFullYear());
+  };
+  const handleExportRevenue = () => {
+    exportTableToExcel(
+      `doanh-thu-${selectedYear}.xls`,
+      `Biểu đồ doanh thu năm ${selectedYear}`,
+      ['Tháng', 'Doanh thu', 'Số đơn đã giao'],
+      monthlyRevenue.map(item => [
+        item.month,
+        item.revenue,
+        item.orders
+      ])
+    );
+  };
+  const handleExportCategorySales = () => {
+    const rows = categorySales.flatMap(item => {
+      const books = item.books && item.books.length > 0 ? item.books : [{ title: '', quantity: 0 }];
+
+      return books.map(book => [
+        item.name,
+        item.value,
+        book.title,
+        book.quantity
+      ]);
+    });
+
+    exportTableToExcel(
+      `san-luong-danh-muc-${selectedMonth}-${selectedYear}.xls`,
+      `Sản lượng bán theo danh mục ${selectedMonth}/${selectedYear}`,
+      ['Danh mục', 'Tổng số cuốn', 'Sách', 'Số cuốn của sách'],
+      rows
+    );
+  };
 
   return (
     <div className={`p-6 max-w-7xl mx-auto space-y-6 transition-opacity duration-300 ${loading ? 'opacity-50' : 'opacity-100'}`}>
@@ -174,9 +292,8 @@ export default function AdminDashboard() {
         <p className="text-sm text-slate-500 mt-1">Theo dõi doanh thu, đánh giá và thống kê bán hàng.</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* PHẦN 1: BỘ LỌC THÁNG NĂM + 1 HÀNG DOANH THU ĐƠN HÀNG 1 THÁNG */}
-        <div className="flex flex-col space-y-4">
+      <div className="space-y-5">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
           <div className="flex space-x-2 items-center bg-white border border-slate-200 p-2 rounded-none shadow-sm self-start">
             <Calendar size={18} className="text-slate-400" />
             <select 
@@ -200,75 +317,108 @@ export default function AdminDashboard() {
             </select>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <StatCard title={`Doanh Thu T${selectedMonth}/${selectedYear}`} value={new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(stats.currentMonthRevenue)} icon={<DollarSign size={20} />} color="bg-orange-400" trend={stats.revenueTrend} />
-            <StatCard title={`Đơn Hàng T${selectedMonth}/${selectedYear}`} value={stats.currentMonthOrders} icon={<ShoppingBag size={20} />} color="bg-blue-400" trend={stats.ordersTrend} />
+          <div className="flex flex-wrap gap-2">
+            <button onClick={setCurrentMonthFilter} className="px-3 py-1.5 bg-orange-100 text-orange-700 border border-orange-200 text-xs font-bold hover:bg-orange-200">
+              Tháng này
+            </button>
+            <button onClick={setPreviousMonthFilter} className="px-3 py-1.5 bg-slate-100 text-slate-700 border border-slate-200 text-xs font-bold hover:bg-slate-200">
+              Tháng trước
+            </button>
+            <button onClick={setCurrentYearFilter} className="px-3 py-1.5 bg-slate-100 text-slate-700 border border-slate-200 text-xs font-bold hover:bg-slate-200">
+              Năm nay
+            </button>
           </div>
         </div>
 
-        {/* PHẦN 2: 2 HÀNG x 2 CỘT CHO 4 Ô TỔNG (bên phải) */}
-        <div className="flex flex-col">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 h-full">
-            <StatCard title="Tổng Doanh Thu" value={new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(stats.totalRevenue)} icon={<DollarSign size={20} />} color="bg-orange-500" />
-            <StatCard title="Tổng Đơn Hàng " value={stats.totalOrders} icon={<ShoppingBag size={20} />} color="bg-blue-500" />
-            <StatCard title="Tổng Khách Hàng" value={stats.totalUsers} icon={<Users size={20} />} color="bg-green-500" />
-            <StatCard title="Tổng Sản Phẩm" value={stats.totalBooks} icon={<BookOpen size={20} />} color="bg-purple-500" />
-          </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+          <StatCard title={`Doanh Thu T${selectedMonth}/${selectedYear}`} value={new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(stats.currentMonthRevenue)} icon={<DollarSign size={20} />} color="bg-orange-400" trend={stats.revenueTrend} />
+          <StatCard title={`Đơn Đã Giao T${selectedMonth}/${selectedYear}`} value={stats.currentMonthOrders} icon={<ShoppingBag size={20} />} color="bg-blue-400" trend={stats.ordersTrend} />
+          <StatCard title="Đơn Đang Xử Lý" value={stats.currentMonthActiveOrders} icon={<ShoppingBag size={20} />} color="bg-purple-400" />
+          <StatCard title="Đơn Đã Hủy" value={stats.currentMonthCancelledOrders} icon={<ShoppingBag size={20} />} color="bg-red-400" />
+          <StatCard title="Tổng Doanh Thu" value={new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(stats.totalRevenue)} icon={<DollarSign size={20} />} color="bg-orange-500" />
+          <StatCard title="Tổng Đơn Hàng Hợp Lệ" value={stats.totalOrders} icon={<ShoppingBag size={20} />} color="bg-blue-500" />
+          <StatCard title="Tổng Khách Hàng" value={stats.totalUsers} icon={<Users size={20} />} color="bg-green-500" />
+          <StatCard title="Tổng Sản Phẩm" value={stats.totalBooks} icon={<BookOpen size={20} />} color="bg-purple-500" />
         </div>
       </div>
 
       {/* CHARTS */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* DOANH THU THÁNG */}
-        <div className="bg-white p-4 sm:p-6 rounded-none shadow-sm border border-slate-100 lg:col-span-2">
+        <div className="bg-white h-[470px] p-4 sm:p-6 rounded-none shadow-sm border border-slate-100 lg:col-span-2 flex flex-col">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-3">
             <h3 className="text-lg font-bold text-slate-800">BIỂU ĐỒ DOANH THU</h3>
-            <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-none">
-              <span className="text-sm text-slate-500 font-medium">Năm:</span>
-              <select 
-                value={chartYear} 
-                onChange={(e) => setChartYear(Number(e.target.value))}
-                className="bg-transparent border-none outline-none font-bold text-orange-600 cursor-pointer text-sm"
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-none">
+                <span className="text-sm text-slate-500 font-medium">Theo năm đang chọn:</span>
+                <span className="font-bold text-orange-600 text-sm">{selectedYear}</span>
+              </div>
+              <button
+                type="button"
+                onClick={handleExportRevenue}
+                style={{ width: 140, height: 45 }}
+                className="inline-flex flex-none items-center justify-center bg-orange-500 hover:bg-orange-600 text-black border border-orange-500 text-xs font-bold transition-colors"
               >
-                {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i).map(y => (
-                  <option key={y} value={y}>{y}</option>
-                ))}
-              </select>
+                Xuất Excel
+              </button>
             </div>
           </div>
-          <div className="overflow-x-auto">
-            <div style={{ minWidth: '600px' }}>
-              {monthlyRevenue.every(m => m.revenue === 0) ? (
-                <div className="flex flex-col items-center justify-center h-[320px] text-slate-400">
-                  <DollarSign size={48} className="mb-3 opacity-20" />
-                  <p className="italic">Chưa có doanh thu nào trong năm {chartYear}</p>
+          <div className="min-h-0 flex-1 w-full">
+            {!hasMonthlyRevenue ? (
+              <div className="flex h-full flex-col items-center justify-center text-slate-400">
+                <DollarSign size={48} className="mb-3 opacity-20" />
+                <p className="italic">Chưa có doanh thu nào trong năm {selectedYear}</p>
+              </div>
+            ) : (
+              <div className="h-full overflow-visible">
+                <div className="grid h-full w-full grid-cols-12 gap-1 sm:gap-2 border-l border-b border-slate-200 px-2 sm:px-3 pt-4 pb-8">
+                  {monthlyRevenue.map((item, index) => {
+                    const height = Math.max((item.revenue / maxMonthlyRevenue) * 100, item.revenue > 0 ? 6 : 0);
+                    const tooltipPosition = index === 0
+                      ? 'left-0'
+                      : index === monthlyRevenue.length - 1
+                        ? 'right-0'
+                        : 'left-1/2 -translate-x-1/2';
+
+                    return (
+                      <div key={item.month} className="group relative flex h-full min-w-0 flex-col items-center justify-end gap-2">
+                        <div className={`pointer-events-none absolute top-2 z-10 hidden w-36 border border-slate-200 bg-white p-2 text-[11px] leading-4 shadow-lg group-hover:block sm:w-44 sm:text-xs ${tooltipPosition}`}>
+                          <div className="font-bold text-slate-800">{item.month}/{selectedYear}</div>
+                          <div className="mt-1 text-orange-600">{formatCurrency(item.revenue)}</div>
+                          <div className="text-slate-500">{item.orders} đơn đã giao</div>
+                        </div>
+                        <div className="flex h-full w-full items-end justify-center">
+                          <div
+                            className="w-full max-w-8 sm:max-w-10 bg-orange-500 transition-all hover:bg-orange-600"
+                            style={{ height: `${height}%` }}
+                            title={`${item.month}: ${formatCurrency(item.revenue)} - ${item.orders} đơn`}
+                          />
+                        </div>
+                        <span className="absolute -bottom-6 text-[10px] sm:text-xs font-medium text-slate-500">{item.month.replace('Thg ', 'T')}</span>
+                      </div>
+                    );
+                  })}
                 </div>
-              ) : (
-                <BarChart width={700} height={320} data={monthlyRevenue} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#eee" />
-                  <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{fill: '#888'}} />
-                  <YAxis 
-                    axisLine={false} 
-                    tickLine={false} 
-                    tick={{fill: '#888'}}
-                    tickFormatter={(value) => `${(value / 1000000).toFixed(0)}M`}
-                  />
-                  <Tooltip 
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    formatter={(value: any) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(Number(value))}
-                    cursor={{fill: '#f8f9fa'}}
-                  />
-                  <Bar dataKey="revenue" fill="#f97316" radius={[4, 4, 0, 0]} maxBarSize={40} isAnimationActive={false} />
-                </BarChart>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         </div>
 
         {/* TỶ LỆ DANH MỤC */}
-        <div className="bg-white p-4 sm:p-6 rounded-none shadow-sm border border-slate-100 flex flex-col relative min-h-[400px]">
+        <div className="bg-white h-[470px] p-4 sm:p-6 rounded-none shadow-sm border border-slate-100 flex flex-col relative">
           <div className="flex flex-col mb-6 gap-3">
-            <h4 className="text-lg font-bold text-slate-800">TỶ LỆ BÁN THEO DANH MỤC {selectedMonth}/{selectedYear}</h4>
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+              <h4 className="text-lg font-bold text-slate-800">SẢN LƯỢNG BÁN THEO DANH MỤC {selectedMonth}/{selectedYear}</h4>
+              <button
+                type="button"
+                onClick={handleExportCategorySales}
+                disabled={categorySales.length === 0}
+                style={{ width: 140, height: 45 }}
+                className="self-start inline-flex flex-none items-center justify-center bg-orange-500 hover:bg-orange-600 disabled:bg-slate-200 disabled:text-slate-400 disabled:border-slate-200 text-black border border-orange-500 text-xs font-bold transition-colors"
+              >
+                Xuất Excel
+              </button>
+            </div>
             {totalCategoryBooks > 0 && (
               <div>
                 <span className="px-3 py-1.5 bg-blue-50 text-blue-600 rounded-none text-xs font-bold border border-blue-100">
@@ -280,7 +430,7 @@ export default function AdminDashboard() {
           
           <div className="flex-1 relative overflow-hidden">
             {/* VÙNG THEO DÕI NỘI DUNG HOẶC MODAL CHI TIẾT */}
-            <div className={`transition-all duration-300 w-full h-[320px] overflow-y-auto pr-2 ${selectedCategory ? 'opacity-0 pointer-events-none absolute top-0' : 'opacity-100 relative'}`}>
+            <div className={`transition-all duration-300 w-full h-full overflow-y-auto pr-2 ${selectedCategory ? 'opacity-0 pointer-events-none absolute top-0' : 'opacity-100 relative'}`}>
               {categorySales.length > 0 ? (
                 <div className="space-y-4">
                   {categorySales.map((item, index) => {
@@ -298,7 +448,7 @@ export default function AdminDashboard() {
                             </div>
                             <button 
                               onClick={() => setSelectedCategory({ name: item.name, books: item.books || [] })}
-                              className="text-xs bg-blue-100 text-blue-600 px-3 py-1.5 rounded-none hover:bg-blue-200 transition font-bold"
+                              className="text-xs bg-blue-100 text-blue-600 px-3 py-1.5 rounded-none hover:bg-blue-200 transition font-bold whitespace-nowrap min-w-[72px]"
                             >
                               Chi tiết
                             </button>
@@ -395,7 +545,7 @@ export default function AdminDashboard() {
         {/* TOP RATED */}
         <div className="bg-white rounded-none shadow-sm border border-slate-100 overflow-hidden">
           <div className="p-5 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
-            <h3 className="font-bold text-slate-800">Top 5 Đánh Giá Cao Nhất {selectedMonth}/{selectedYear}</h3>
+            <h3 className="font-bold text-slate-800">Đánh Giá Nổi Bật {selectedMonth}/{selectedYear}</h3>
           </div>
           <div className="divide-y divide-slate-100 p-2">
             {topRatedProducts.length > 0 ? (

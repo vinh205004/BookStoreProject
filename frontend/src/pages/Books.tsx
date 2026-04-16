@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 import Select from 'react-select';
 import React, { useState, useEffect, useCallback } from 'react';
 import { Plus, Edit, Trash2, ArchiveRestore, List, BookOpenText, Search, Eye } from 'lucide-react';

@@ -26,7 +26,7 @@ namespace BookStore.API.Repositories
             var totalRevenueAmount = await _context.Orders
                 .Where(o => o.Status == "Delivered")
                 .SumAsync(o => (decimal?)o.TotalAmount) ?? 0;
-            var totalOrdersCount = await _context.Orders.CountAsync();
+            var totalOrdersCount = await _context.Orders.CountAsync(o => o.Status != "PaymentPending");
 
             var currentMonthRevenue = await _context.Orders
                 .Where(o => o.Status == "Delivered" && o.OrderDate.Month == month && o.OrderDate.Year == year)
@@ -36,8 +36,18 @@ namespace BookStore.API.Repositories
                 .Where(o => o.Status == "Delivered" && o.OrderDate.Month == prevMonth && o.OrderDate.Year == prevYear)
                 .SumAsync(o => (decimal?)o.TotalAmount) ?? 0;
                 
-            var currentMonthOrders = await _context.Orders.CountAsync(o => o.OrderDate.Month == month && o.OrderDate.Year == year);
-            var prevMonthOrders = await _context.Orders.CountAsync(o => o.OrderDate.Month == prevMonth && o.OrderDate.Year == prevYear);
+            var currentMonthOrders = await _context.Orders.CountAsync(o =>
+                o.Status == "Delivered" && o.OrderDate.Month == month && o.OrderDate.Year == year);
+            var prevMonthOrders = await _context.Orders.CountAsync(o =>
+                o.Status == "Delivered" && o.OrderDate.Month == prevMonth && o.OrderDate.Year == prevYear);
+            var currentMonthActiveOrders = await _context.Orders.CountAsync(o =>
+                o.Status != "PaymentPending" &&
+                o.Status != "Delivered" &&
+                o.Status != "Cancelled" &&
+                o.OrderDate.Month == month &&
+                o.OrderDate.Year == year);
+            var currentMonthCancelledOrders = await _context.Orders.CountAsync(o =>
+                o.Status == "Cancelled" && o.OrderDate.Month == month && o.OrderDate.Year == year);
 
             var totalUsers = await _context.Users.CountAsync(u => u.Role != "Admin");
             var totalBooks = await _context.Books.CountAsync();
@@ -49,14 +59,26 @@ namespace BookStore.API.Repositories
             var monthlyRevenue = new List<object>();
             int currentYear = DateTime.UtcNow.Year;
             int maxMonth = chartYear == currentYear ? DateTime.UtcNow.Month : 12;
+            var monthlyRevenueData = await _context.Orders
+                .Where(o => o.Status == "Delivered" && o.OrderDate.Year == chartYear)
+                .GroupBy(o => o.OrderDate.Month)
+                .Select(g => new
+                {
+                    Month = g.Key,
+                    Revenue = g.Sum(o => o.TotalAmount),
+                    Orders = g.Count()
+                })
+                .ToDictionaryAsync(x => x.Month);
 
             for (int i = 1; i <= maxMonth; i++)
             {
-                var rev = await _context.Orders
-                    .Where(o => o.Status == "Delivered" && o.OrderDate.Year == chartYear && o.OrderDate.Month == i)
-                    .SumAsync(o => (decimal?)o.TotalAmount) ?? 0;
-
-                monthlyRevenue.Add(new { month = $"Thg {i}", revenue = rev });
+                monthlyRevenueData.TryGetValue(i, out var item);
+                monthlyRevenue.Add(new
+                {
+                    month = $"Thg {i}",
+                    revenue = item?.Revenue ?? 0,
+                    orders = item?.Orders ?? 0
+                });
             }
 
             // 3. Tỷ lệ Category (Danh mục sách đã bán) - Group by category, then return items with book details
@@ -154,6 +176,8 @@ namespace BookStore.API.Repositories
                     totalOrders = totalOrdersCount, 
                     currentMonthRevenue = currentMonthRevenue,
                     currentMonthOrders = currentMonthOrders,
+                    currentMonthActiveOrders = currentMonthActiveOrders,
+                    currentMonthCancelledOrders = currentMonthCancelledOrders,
                     revenueTrend = Math.Round(revenueTrend, 2),
                     ordersTrend = Math.Round(ordersTrend, 2),
                     totalUsers, 
