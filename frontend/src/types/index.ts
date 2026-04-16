@@ -44,6 +44,7 @@ export interface Publisher {
   name: string;
   description: string;
   isActive: boolean;
+  bookCount?: number;
 }
 export interface Voucher {
   voucherId: string;
@@ -73,7 +74,9 @@ export interface OrderItem {
 
 export interface Order {
   orderId: string;
+  userId?: string;
   customerName: string;
+  customerEmail?: string;
   customerPhone: string;
   shippingAddress: string;
   totalAmount: number;

@@ -6,6 +6,7 @@ import type { Publisher } from '../types';
 import Modal from '../components/ui/Modal';
 import Button from '../components/ui/Button';
 import Pagination from '../components/Pagination';
+import SortableHeader, { type SortDirection } from '../components/SortableHeader';
 
 const ITEMS_PER_PAGE = 10;
 
@@ -13,6 +14,7 @@ export default function Publishers() {
   const [publishers, setPublishers] = useState<Publisher[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [showTrash, setShowTrash] = useState(false);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -111,8 +113,13 @@ export default function Publishers() {
   );
   
   const displayData = showTrash ? filteredTrash : filteredActive;
-  const totalPages = Math.ceil(displayData.length / ITEMS_PER_PAGE);
-  const paginatedData = displayData.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+  const sortedData = [...displayData].sort((a, b) => {
+    const aValue = a.bookCount || 0;
+    const bValue = b.bookCount || 0;
+    return sortDirection === 'asc' ? aValue - bValue : bValue - aValue;
+  });
+  const totalPages = Math.ceil(sortedData.length / ITEMS_PER_PAGE);
+  const paginatedData = sortedData.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -161,13 +168,24 @@ export default function Publishers() {
             <tr className="bg-slate-50 border-b border-slate-200 text-xs sm:text-sm text-slate-600 uppercase">
               <th className="p-3 sm:p-4 font-semibold w-1/4">Tên NXB</th>
               <th className="p-3 sm:p-4 font-semibold hidden sm:table-cell w-2/5">Thông tin liên hệ / Mô tả</th>
+              <SortableHeader
+                active
+                direction={sortDirection}
+                onClick={() => {
+                  setSortDirection(current => current === 'desc' ? 'asc' : 'desc');
+                  setCurrentPage(1);
+                }}
+                className="text-center w-28"
+              >
+                Số sách
+              </SortableHeader>
               <th className="p-3 sm:p-4 font-semibold w-32">Trạng thái</th>
               <th className="p-3 sm:p-4 font-semibold text-center w-32">Thao tác</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-200 text-slate-700">
             {displayData.length === 0 ? (
-              <tr><td colSpan={4} className="p-8 text-center text-slate-500">Chưa có dữ liệu.</td></tr>
+              <tr><td colSpan={5} className="p-8 text-center text-slate-500">Chưa có dữ liệu.</td></tr>
             ) : (
               paginatedData.map((pub) => (
                 <tr key={pub.publisherId} className="hover:bg-slate-50">
@@ -181,6 +199,9 @@ export default function Publishers() {
                     <div className="truncate" title={pub.description || 'Chưa cập nhật'}>
                       {pub.description || <span className="text-slate-400 italic">Chưa cập nhật</span>}
                     </div>
+                  </td>
+                  <td className="p-3 sm:p-4 text-center text-xs sm:text-base font-semibold text-slate-700">
+                    {pub.bookCount ?? 0} cuốn
                   </td>
                   <td className="p-3 sm:p-4">
                     <span className={`px-3 py-1 rounded-none text-xs font-bold ${pub.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>

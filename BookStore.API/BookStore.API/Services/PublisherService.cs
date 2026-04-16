@@ -19,7 +19,8 @@ namespace BookStore.API.Services
                 PublisherId = c.PublisherId,
                 Name = c.Name,
                 Description = c.Description,
-                IsActive = c.IsActive
+                IsActive = c.IsActive,
+                BookCount = c.Books.Count(b => !b.IsHidden)
             });
         }
 
@@ -33,7 +34,8 @@ namespace BookStore.API.Services
                 PublisherId = c.PublisherId,
                 Name = c.Name,
                 Description = c.Description,
-                IsActive = c.IsActive
+                IsActive = c.IsActive,
+                BookCount = c.Books.Count(b => !b.IsHidden)
             };
         }
 
@@ -56,7 +58,8 @@ namespace BookStore.API.Services
                 PublisherId = newPublisher.PublisherId,
                 Name = newPublisher.Name,
                 Description = newPublisher.Description,
-                IsActive = newPublisher.IsActive
+                IsActive = newPublisher.IsActive,
+                BookCount = 0
             };
         }
 

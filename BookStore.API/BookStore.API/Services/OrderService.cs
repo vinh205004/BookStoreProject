@@ -28,6 +28,7 @@ namespace BookStore.API.Services
             return orders.Where(o => o.Status != "PaymentPending").Select(o => new OrderDto
             {
                 OrderId = o.OrderId,
+                UserId = o.UserId,
                 CustomerName = o.User?.FullName ?? "Khách vãng lai",
                 CustomerEmail = o.User?.Email ?? "",
                 CustomerPhone = o.PhoneNumber,
@@ -59,6 +60,7 @@ namespace BookStore.API.Services
             return new OrderDto
             {
                 OrderId = o.OrderId,
+                UserId = o.UserId,
                 CustomerName = o.User?.FullName ?? "Khách vãng lai",
                 CustomerEmail = o.User?.Email ?? "",
                 CustomerPhone = o.PhoneNumber,

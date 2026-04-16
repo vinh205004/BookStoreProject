@@ -3,16 +3,35 @@ import { Edit, Lock, Unlock, Eye, Users as UsersIcon, Search } from 'lucide-reac
 import { toast } from 'react-toastify';
 import axiosClient from '../api/axiosClient';
 import { getCurrentUserId } from '../utils/tokenUtils';
-import type { User } from '../types';
+import type { Order, User } from '../types';
 import Modal from '../components/ui/Modal';
 import DetailModal from '../components/ui/DetailModal';
 import Button from '../components/ui/Button';
 import Pagination from '../components/Pagination';
 
 const ITEMS_PER_PAGE = 10;
+const STATUS_LABELS: Record<string, string> = {
+  Pending: 'Chờ xác nhận',
+  Processing: 'Đang xử lý',
+  Shipped: 'Đang giao',
+  Delivered: 'Giao thành công',
+  Cancelled: 'Đã hủy'
+};
+
+const STATUS_CLASSES: Record<string, string> = {
+  Pending: 'bg-yellow-100 text-yellow-700 border-yellow-200',
+  Processing: 'bg-blue-100 text-blue-700 border-blue-200',
+  Shipped: 'bg-purple-100 text-purple-700 border-purple-200',
+  Delivered: 'bg-green-100 text-green-700 border-green-200',
+  Cancelled: 'bg-red-100 text-red-700 border-red-200'
+};
+
+const formatCurrency = (value: number) => value.toLocaleString('vi-VN') + ' đ';
 
 export default function Users() {
   const [users, setUsers] = useState<User[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [isOrdersLoading, setIsOrdersLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -33,10 +52,24 @@ export default function Users() {
     }
   }, []);
 
+  const fetchOrders = useCallback(async () => {
+    setIsOrdersLoading(true);
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const data: any = await axiosClient.get('/Orders');
+      setOrders(data);
+    } catch {
+      toast.error('Lỗi khi tải danh sách đơn hàng!');
+    } finally {
+      setIsOrdersLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchUsers();
-  }, [fetchUsers]);
+    fetchOrders();
+  }, [fetchUsers, fetchOrders]);
 
   const normalizedSearch = searchQuery.toLowerCase();
   const filteredUsers = users.filter((user) =>
@@ -46,6 +79,13 @@ export default function Users() {
   );
   const totalPages = Math.ceil(filteredUsers.length / ITEMS_PER_PAGE);
   const paginatedUsers = filteredUsers.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+  const selectedUserOrders = useMemo(() => {
+    if (!selectedUser) return [];
+    return orders
+      .filter(order => order.userId === selectedUser.userId)
+      .sort((a, b) => new Date(b.orderDate).getTime() - new Date(a.orderDate).getTime());
+  }, [orders, selectedUser]);
+  const selectedUserOrderTotal = selectedUserOrders.reduce((sum, order) => sum + Number(order.totalAmount || 0), 0);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -86,6 +126,48 @@ export default function Users() {
     } catch (error: any) {
       toast.error(error.response?.data?.error || 'Có lỗi khi cập nhật quyền!');
     }
+  };
+
+  const renderOrderSummary = () => {
+    if (isOrdersLoading) {
+      return <span className="text-slate-500 font-normal">Đang tải đơn hàng...</span>;
+    }
+
+    if (selectedUserOrders.length === 0) {
+      return <span className="text-slate-500 font-normal">Khách hàng chưa có đơn hàng nào.</span>;
+    }
+
+    return (
+      <div className="mt-2 space-y-3 font-normal">
+        <div className="flex flex-wrap items-center justify-between gap-2 border border-slate-200 bg-white px-3 py-2">
+          <span className="font-semibold text-slate-700">Tổng {selectedUserOrders.length} đơn</span>
+          <span className="font-bold text-orange-600">{formatCurrency(selectedUserOrderTotal)}</span>
+        </div>
+        <div className="max-h-64 overflow-y-auto border border-slate-200 bg-white">
+          {selectedUserOrders.map(order => {
+            const statusClass = STATUS_CLASSES[order.status] || 'bg-slate-100 text-slate-700 border-slate-200';
+            return (
+              <div key={order.orderId} className="grid grid-cols-[1fr_auto] gap-3 border-b border-slate-100 p-3 last:border-b-0">
+                <div className="min-w-0">
+                  <div className="truncate font-semibold text-slate-900" title={order.orderId}>
+                    {order.orderId}
+                  </div>
+                  <div className="text-xs text-slate-500">
+                    {new Date(order.orderDate).toLocaleString('vi-VN')}
+                  </div>
+                  <span className={`mt-2 inline-flex border px-2 py-0.5 text-xs font-semibold ${statusClass}`}>
+                    {STATUS_LABELS[order.status] || order.status}
+                  </span>
+                </div>
+                <div className="whitespace-nowrap text-right font-bold text-slate-900">
+                  {formatCurrency(Number(order.totalAmount || 0))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -232,6 +314,13 @@ export default function Users() {
               { label: 'Quyền', value: selectedUser.role },
               { label: 'Trạng thái', value: <span className={selectedUser.isLocked ? 'text-red-600' : 'text-green-600'}>{selectedUser.isLocked ? 'Đã khóa' : 'Bình thường'}</span> },
               { label: 'Ngày tạo', value: new Date(selectedUser.createdAt).toLocaleString('vi-VN') }
+            ]
+          },
+          {
+            title: 'Đơn hàng của khách',
+            bgColor: 'blue',
+            items: [
+              { label: 'Danh sách', value: renderOrderSummary() }
             ]
           }
         ] : []}

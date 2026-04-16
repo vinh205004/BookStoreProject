@@ -150,7 +150,7 @@ export default function Categories() {
             placeholder="Tìm kiếm theo tên hoặc mô tả..." 
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full border border-slate-300 px-4 py-2 pl-10 focus:ring-2 focus:ring-orange-500 outline-none text-sm"
+            className="w-full border border-slate-300 px-4 py-2 pl-10 focus:ring-2 focus:ring-orange-500 outline-none"
           />
         </div>
       </div>

@@ -24,6 +24,10 @@ const formatDimension = (value?: number) => value ? roundDimension(value).toLoca
 export default function Books() {
   const [books, setBooks] = useState<Book[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [filterCategoryId, setFilterCategoryId] = useState('');
+  const [filterAuthorId, setFilterAuthorId] = useState('');
+  const [filterPublisherId, setFilterPublisherId] = useState('');
+  const [discountFilter, setDiscountFilter] = useState<'all' | 'discounted' | 'none'>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [sortKey, setSortKey] = useState<BookSortKey>('stock');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
@@ -229,23 +233,38 @@ export default function Books() {
   const authorOptions = authors.filter(a => a.isActive).map(a => ({ value: a.authorId, label: a.name }));
   const categoryOptions = categories.filter(c => c.isActive).map(c => ({ value: c.categoryId, label: c.name }));
   const publisherOptions = publishers.filter(p => p.isActive).map(p => ({ value: p.publisherId, label: p.name }));
+  const authorFilterOptions = [{ value: '', label: 'Tất cả tác giả' }, ...authorOptions];
+  const categoryFilterOptions = [{ value: '', label: 'Tất cả danh mục' }, ...categoryOptions];
+  const publisherFilterOptions = [{ value: '', label: 'Tất cả nhà xuất bản' }, ...publisherOptions];
   // PHÂN LỌA DỮ LIỆU SÁCH
   const activeBooks = books.filter(b => !b.isHidden);
   const trashBooks = books.filter(b => b.isHidden);
   
-  // TÌM KIẾM
-  const filteredActive = activeBooks.filter(b => 
-    b.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    b.authorName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    b.categoryName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    b.publisherName.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-  const filteredTrash = trashBooks.filter(b => 
-    b.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    b.authorName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    b.categoryName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    b.publisherName.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // TÌM KIẾM & LỌC
+  const filterBooks = (source: Book[]) => source.filter(b => {
+    const normalizedSearch = searchQuery.toLowerCase();
+    const matchesSearch =
+      b.title.toLowerCase().includes(normalizedSearch) ||
+      b.authorName.toLowerCase().includes(normalizedSearch) ||
+      b.categoryName.toLowerCase().includes(normalizedSearch) ||
+      b.publisherName.toLowerCase().includes(normalizedSearch);
+    const matchesCategory = !filterCategoryId || b.categoryId === filterCategoryId;
+    const matchesAuthor = !filterAuthorId || b.authorId === filterAuthorId;
+    const matchesPublisher = !filterPublisherId || b.publisherId === filterPublisherId;
+    const hasHardcodedDiscount = (
+      b.discountedPrice !== undefined &&
+      b.discountedPrice !== null &&
+      b.discountedPrice < b.price
+    ) || Boolean(b.discountBadge || b.discountVoucherCode);
+    const matchesDiscount =
+      discountFilter === 'all' ||
+      (discountFilter === 'discounted' && hasHardcodedDiscount) ||
+      (discountFilter === 'none' && !hasHardcodedDiscount);
+
+    return matchesSearch && matchesCategory && matchesAuthor && matchesPublisher && matchesDiscount;
+  });
+  const filteredActive = filterBooks(activeBooks);
+  const filteredTrash = filterBooks(trashBooks);
   
   const displayData = showTrash ? filteredTrash : filteredActive;
   const sortedData = [...displayData].sort((a, b) => {
@@ -264,7 +283,7 @@ export default function Books() {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, showTrash, displayData.length]);
+  }, [searchQuery, filterCategoryId, filterAuthorId, filterPublisherId, discountFilter, showTrash, displayData.length]);
 
   return (
     <div className="bg-white shadow-sm p-4 sm:p-6">
@@ -276,8 +295,8 @@ export default function Books() {
       </div>
 
       {/* TÌM KIẾM */}
-      <div className="mb-6 flex gap-2">
-        <div className="flex-1 relative">
+      <div className="mb-6 grid grid-cols-1 xl:grid-cols-[1fr_230px_230px_230px] gap-3">
+        <div className="relative">
           <Search size={18} className="absolute left-3 top-3 text-slate-400" />
           <input 
             type="text" 
@@ -287,6 +306,33 @@ export default function Books() {
             className="w-full border border-slate-300 px-4 py-2 pl-10 focus:ring-2 focus:ring-orange-500 outline-none"
           />
         </div>
+        <Select
+          options={categoryFilterOptions}
+          value={categoryFilterOptions.find(opt => opt.value === filterCategoryId) || categoryFilterOptions[0]}
+          onChange={(selectedOption) => setFilterCategoryId(selectedOption?.value || '')}
+          placeholder="Lọc theo danh mục"
+          isClearable={false}
+          className="react-select-container"
+          classNamePrefix="react-select"
+        />
+        <Select
+          options={authorFilterOptions}
+          value={authorFilterOptions.find(opt => opt.value === filterAuthorId) || authorFilterOptions[0]}
+          onChange={(selectedOption) => setFilterAuthorId(selectedOption?.value || '')}
+          placeholder="Lọc theo tác giả"
+          isClearable={false}
+          className="react-select-container"
+          classNamePrefix="react-select"
+        />
+        <Select
+          options={publisherFilterOptions}
+          value={publisherFilterOptions.find(opt => opt.value === filterPublisherId) || publisherFilterOptions[0]}
+          onChange={(selectedOption) => setFilterPublisherId(selectedOption?.value || '')}
+          placeholder="Lọc theo nhà xuất bản"
+          isClearable={false}
+          className="react-select-container"
+          classNamePrefix="react-select"
+        />
       </div>
 
       {/* HEADER & TABS */}
@@ -296,22 +342,34 @@ export default function Books() {
             onClick={() => setShowTrash(false)}
             className={`flex items-center gap-2 px-3 sm:px-4 py-2 font-medium text-sm transition-colors whitespace-nowrap ${!showTrash ? 'bg-orange-100 text-orange-700' : 'text-slate-500 hover:bg-slate-50'}`}
           >
-            <List size={20} /> Đang kinh doanh ({activeBooks.length})
+            <List size={20} /> Đang kinh doanh ({filteredActive.length})
           </button>
           
           <button 
             onClick={() => setShowTrash(true)}
             className={`flex items-center gap-2 px-3 sm:px-4 py-2 font-medium text-sm transition-colors whitespace-nowrap ${showTrash ? 'bg-red-100 text-red-700' : 'text-slate-500 hover:bg-slate-50'}`}
           >
-            <Trash2 size={20} /> Đã ngừng bán ({trashBooks.length})
+            <Trash2 size={20} /> Đã ngừng bán ({filteredTrash.length})
           </button>
         </div>
 
-        {!showTrash && (
-          <Button icon={<Plus size={20} />} onClick={() => handleOpenModal()}>
-            Thêm sách
-          </Button>
-        )}
+        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+          <select
+            value={discountFilter}
+            onChange={(e) => setDiscountFilter(e.target.value as 'all' | 'discounted' | 'none')}
+            className="w-full sm:w-48 border border-orange-500 px-4 py-2 focus:ring-2 focus:ring-orange-500 outline-none bg-orange-500 hover:bg-orange-600 text-black font-medium text-sm transition-colors"
+          >
+            <option value="all">Tất cả</option>
+            <option value="discounted">Đang áp giảm giá</option>
+            <option value="none">Chưa áp giảm giá</option>
+          </select>
+
+          {!showTrash && (
+            <Button icon={<Plus size={20} />} onClick={() => handleOpenModal()}>
+              Thêm sách
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* BẢNG DỮ LIỆU */}
