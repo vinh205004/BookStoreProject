@@ -179,7 +179,9 @@ namespace BookStore.API.Services
                             hasHardcodedVoucher = true;
                             isApplicableForVoucher = false;
                         }
-                        else if (!string.IsNullOrEmpty(appliedVoucher.ApplicableProductId) || !string.IsNullOrEmpty(appliedVoucher.ApplicableCategoryId))
+                        else if (appliedVoucher.IsHidden &&
+                                 (!string.IsNullOrEmpty(appliedVoucher.ApplicableProductId) ||
+                                  !string.IsNullOrEmpty(appliedVoucher.ApplicableCategoryId)))
                         {
                             bool isProductMatch = !string.IsNullOrEmpty(appliedVoucher.ApplicableProductId) && ("," + appliedVoucher.ApplicableProductId + ",").Contains("," + item.BookId + ",");
                             bool isCategoryMatch = !string.IsNullOrEmpty(appliedVoucher.ApplicableCategoryId) && bookDetail?.CategoryId == appliedVoucher.ApplicableCategoryId && currentPrice >= appliedVoucher.MinOrderValue;

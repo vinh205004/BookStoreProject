@@ -4,5 +4,11 @@ import tailwindcss from '@tailwindcss/vite'
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react(),tailwindcss(),],
+  plugins: [react(), tailwindcss()],
+  resolve: {
+    dedupe: ['react', 'react-dom', 'react-router', 'react-router-dom'],
+  },
+  optimizeDeps: {
+    include: ['react', 'react-dom', 'react-router', 'react-router-dom'],
+  },
 })

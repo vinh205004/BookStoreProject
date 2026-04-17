@@ -20,16 +20,17 @@ namespace BookStore.API.Services
         public async Task<CreateVnpayPaymentResponseDto> CreateVnpayPaymentAsync(string userId, CreateVnpayPaymentDto dto, HttpContext httpContext)
         {
             var createdOrder = await _orderService.CreateOrderAsync(userId, dto.Order, "VNPAY", finalizePurchase: false);
-            var order = await _context.Orders.FirstOrDefaultAsync(o => o.OrderId == createdOrder.OrderId);
+            var order = await _context.Orders.AsNoTracking().FirstOrDefaultAsync(o => o.OrderId == createdOrder.OrderId);
             if (order == null)
             {
                 throw new Exception("Khong tim thay don hang vua tao");
             }
 
-            var paymentUrl = _vnpayService.CreatePaymentUrl(order, httpContext);
+            var paymentUrl = _vnpayService.CreatePaymentUrl(order.OrderId, order.TotalAmount, httpContext);
             return new CreateVnpayPaymentResponseDto
             {
                 OrderId = order.OrderId,
+                Amount = order.TotalAmount,
                 PaymentUrl = paymentUrl
             };
         }

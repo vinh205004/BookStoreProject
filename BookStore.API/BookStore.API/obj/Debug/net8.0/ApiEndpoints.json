@@ -711,7 +711,7 @@
   },
   {
     "ContainingType": "BookStore.API.Program\u002B\u003C\u003Ec",
-    "Method": "\u003CMain\u003Eb__0_6",
+    "Method": "\u003CMain\u003Eb__0_7",
     "RelativePath": "api/dev/seed",
     "HttpMethod": "GET",
     "IsController": false,
@@ -755,6 +755,22 @@
     "ContainingType": "BookStore.API.Controllers.OrdersController",
     "Method": "GetById",
     "RelativePath": "api/Orders/{id}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.String",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "BookStore.API.Controllers.OrdersController",
+    "Method": "DownloadInvoice",
+    "RelativePath": "api/Orders/{id}/invoice",
     "HttpMethod": "GET",
     "IsController": true,
     "Order": 0,
@@ -819,6 +835,22 @@
     "Method": "CancelUserOrder",
     "RelativePath": "api/Orders/user/{orderId}/cancel",
     "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "orderId",
+        "Type": "System.String",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "BookStore.API.Controllers.OrdersController",
+    "Method": "DownloadUserInvoice",
+    "RelativePath": "api/Orders/user/{orderId}/invoice",
+    "HttpMethod": "GET",
     "IsController": true,
     "Order": 0,
     "Parameters": [

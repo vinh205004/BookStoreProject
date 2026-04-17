@@ -18,6 +18,11 @@ namespace BookStore.API.Services
 
         public string CreatePaymentUrl(Order order, HttpContext httpContext)
         {
+            return CreatePaymentUrl(order.OrderId, order.TotalAmount, httpContext);
+        }
+
+        public string CreatePaymentUrl(string orderId, decimal totalAmount, HttpContext httpContext)
+        {
             var paymentUrl = GetRequiredConfig("Vnpay:PaymentUrl");
             var returnUrl = GetRequiredConfig("Vnpay:ReturnUrl");
             var tmnCode = GetRequiredConfig("Vnpay:TmnCode");
@@ -28,15 +33,15 @@ namespace BookStore.API.Services
                 ["vnp_Version"] = "2.1.0",
                 ["vnp_Command"] = "pay",
                 ["vnp_TmnCode"] = tmnCode,
-                ["vnp_Amount"] = ((long)(order.TotalAmount * 100)).ToString(CultureInfo.InvariantCulture),
+                ["vnp_Amount"] = ((long)(totalAmount * 100)).ToString(CultureInfo.InvariantCulture),
                 ["vnp_CreateDate"] = createdAt.ToString("yyyyMMddHHmmss", CultureInfo.InvariantCulture),
                 ["vnp_CurrCode"] = "VND",
                 ["vnp_IpAddr"] = GetClientIpAddress(httpContext),
                 ["vnp_Locale"] = "vn",
-                ["vnp_OrderInfo"] = $"Thanh toan don hang {order.OrderId}",
+                ["vnp_OrderInfo"] = $"Thanh toan don hang {orderId}",
                 ["vnp_OrderType"] = "other",
                 ["vnp_ReturnUrl"] = returnUrl,
-                ["vnp_TxnRef"] = order.OrderId
+                ["vnp_TxnRef"] = orderId
             };
 
             var hashData = BuildHashData(parameters);

@@ -524,7 +524,15 @@ export default function Cart() {
             </div>
 
             <button
-              onClick={() => navigate('/checkout', { state: { appliedVoucherCode: appliedVoucher ? voucherCode : undefined, appliedDiscount: discountAmount, selectedItems } })}
+              onClick={() => {
+                const checkoutState = {
+                  appliedVoucherCode: appliedVoucher ? voucherCode : undefined,
+                  appliedDiscount: discountAmount,
+                  selectedItems
+                };
+                sessionStorage.setItem('checkoutState', JSON.stringify(checkoutState));
+                navigate('/checkout', { state: checkoutState });
+              }}
               disabled={selectedItems.length === 0 || loading}
               className="w-full bg-orange-500 hover:bg-orange-600 disabled:bg-gray-400 text-white font-bold py-3 rounded-lg transition mb-3"
             >

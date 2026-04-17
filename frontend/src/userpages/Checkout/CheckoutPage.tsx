@@ -24,6 +24,34 @@ interface CartResponse {
   totalItems?: number;
 }
 
+interface CheckoutState {
+  selectedItems: string[];
+  appliedVoucherCode?: string;
+  appliedDiscount: number;
+}
+
+const readCheckoutState = (routeState: unknown): CheckoutState => {
+  const state = (routeState || {}) as Partial<CheckoutState>;
+  if (Array.isArray(state.selectedItems)) {
+    return {
+      selectedItems: state.selectedItems,
+      appliedVoucherCode: state.appliedVoucherCode,
+      appliedDiscount: Number(state.appliedDiscount || 0)
+    };
+  }
+
+  try {
+    const stored = JSON.parse(sessionStorage.getItem('checkoutState') || '{}') as Partial<CheckoutState>;
+    return {
+      selectedItems: Array.isArray(stored.selectedItems) ? stored.selectedItems : [],
+      appliedVoucherCode: stored.appliedVoucherCode,
+      appliedDiscount: Number(stored.appliedDiscount || 0)
+    };
+  } catch {
+    return { selectedItems: [], appliedDiscount: 0 };
+  }
+};
+
 export default function CheckoutPage() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -37,11 +65,13 @@ export default function CheckoutPage() {
     note: '',
   });
 
+  const getCheckoutState = useCallback(() => readCheckoutState(location.state), [location.state]);
+
   const loadCart = useCallback(async () => {
     try {
       setLoading(true);
       const cartData: CartResponse = await axiosClient.get('/cart');
-      const selectedItemIds = location.state?.selectedItems || [];
+      const selectedItemIds = getCheckoutState().selectedItems;
       const selectedCartItems = selectedItemIds.length > 0 
         ? cartData.items.filter(item => selectedItemIds.includes(item.bookId))
         : cartData.items;
@@ -57,11 +87,18 @@ export default function CheckoutPage() {
       toast.error('Lỗi khi tải giỏ hàng!');
       navigate('/cart');
     }
-  }, [location.state?.selectedItems, navigate]);
+  }, [getCheckoutState, navigate]);
 
   useEffect(() => {
     loadCart();
   }, [loadCart]);
+
+  useEffect(() => {
+    const checkoutState = readCheckoutState(location.state);
+    if (checkoutState.selectedItems.length > 0 || checkoutState.appliedVoucherCode) {
+      sessionStorage.setItem('checkoutState', JSON.stringify(checkoutState));
+    }
+  }, [location.state]);
 
   useEffect(() => {
     const refreshCheckoutCart = () => {
@@ -105,8 +142,9 @@ export default function CheckoutPage() {
   const totalPrice = cart.reduce((sum, item) => sum + getPrice(item) * item.quantity, 0);
   const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
 
-  const appliedVoucherCode = location.state?.appliedVoucherCode;
-  const appliedDiscount = location.state?.appliedDiscount || 0;
+  const checkoutState = readCheckoutState(location.state);
+  const appliedVoucherCode = checkoutState.appliedVoucherCode;
+  const appliedDiscount = checkoutState.appliedDiscount || 0;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -140,6 +178,14 @@ export default function CheckoutPage() {
         const response: any = await axiosClient.post('/Payments/vnpay/create', { order: orderData });
         if (!response.paymentUrl) {
           throw new Error('Không tạo được liên kết thanh toán VNPAY.');
+        }
+
+        if (typeof response.amount === 'number') {
+          console.info('VNPAY amount check', {
+            checkoutTotal: Math.max(0, totalPrice - appliedDiscount),
+            apiAmount: response.amount,
+            voucherCode: appliedVoucherCode
+          });
         }
 
         window.location.href = response.paymentUrl;
