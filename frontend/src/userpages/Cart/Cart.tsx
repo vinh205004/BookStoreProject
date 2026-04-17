@@ -32,31 +32,7 @@ export default function Cart() {
   const navigate = useNavigate();
   const [cart, setCart] = useState<Cart>({ items: [] });
   const [loading, setLoading] = useState(true);
-  const [voucherCode, setVoucherCode] = useState('');
-  const [appliedVoucher, setAppliedVoucher] = useState<any>(null);
-  const [discountAmount, setDiscountAmount] = useState(0);
-  const [books, setBooks] = useState<any[]>([]);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
-  const [availableVouchers, setAvailableVouchers] = useState<any[]>([]);
-
-  useEffect(() => {
-    const loadInitData = async () => {
-      try {
-        const data: any = await axiosClient.get('/Books');
-        setBooks(data || []);
-      } catch {
-        console.error('Failed to load books for cart');
-      }
-
-      try {
-        const data: any = await axiosClient.get('/Vouchers/active');
-        setAvailableVouchers(data || []);
-      } catch (e) {
-        console.log('Failed to fetch active vouchers', e);
-      }
-    };
-    loadInitData();
-  }, []);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/immutability
@@ -200,115 +176,6 @@ export default function Cart() {
   const getPrice = (item: CartItem) => {
     return item.discountedPrice ?? item.price;
   };
-
-  const handleApplyVoucher = async () => {
-    if (!voucherCode) {
-      toast.error('Vui lòng nhập mã giảm giá!');
-      return;
-    }
-
-    if (selectedItems.length === 0) {
-      toast.error('Vui lòng chọn ít nhất 1 sản phẩm!');
-      return;
-    }
-    
-    try {
-      const data = (await axiosClient.get(`/Vouchers/public/${voucherCode}`)) as any;
-      
-      // Check xem có sản phẩm nào áp được voucher không
-      const selectedCartItems = cart.items.filter(item => selectedItems.includes(item.bookId));
-      
-      const orderTotal = selectedCartItems.reduce((sum, item) => sum + getPrice(item) * item.quantity, 0);
-      if (orderTotal < data.minOrderValue) {
-        toast.error(`Đơn hàng (${selectedCartItems.length} sản phẩm) chưa đạt mức tối thiểu (${data.minOrderValue.toLocaleString('vi-VN')}₫)!`);
-        return;
-      }
-
-      let applicableTotal = 0;
-      let hasAlreadyHardcodedVoucher = false;
-
-      selectedCartItems.forEach(item => {
-        let isApplicable = true;
-        if (item.discountVoucherCode === data.code) {
-          isApplicable = false;
-          hasAlreadyHardcodedVoucher = true;
-        }
-        if (isApplicable) {
-          applicableTotal += getPrice(item) * item.quantity;
-        }
-      });
-
-      if (applicableTotal === 0) {
-        if (hasAlreadyHardcodedVoucher) {
-          toast.error('Sản phẩm đã được admin áp mã này rồi, không thể dùng lại!');
-        } else {
-          toast.error('Mã giảm giá này không áp dụng cho các sản phẩm được chọn!');
-        }
-        return;
-      }
-      
-      setAppliedVoucher(data);
-      toast.success('Áp dụng mã giảm giá thành công!');
-    } catch (error: any) {
-      setAppliedVoucher(null);
-      setDiscountAmount(0);
-      toast.error(error.response?.data?.message || 'Mã giảm giá không hợp lệ!');
-    }
-  };
-
-  useEffect(() => {
-    if (!appliedVoucher || !cart.items.length) {
-      setDiscountAmount(0);
-      return;
-    }
-
-    const selectedCartItems = cart.items.filter(item => selectedItems.includes(item.bookId));
-    let applicableTotal = 0;
-    let hasAlreadyHardcodedVoucher = false;
-    const orderTotal = selectedCartItems.reduce((sum, item) => sum + getPrice(item) * item.quantity, 0);
-
-    if (orderTotal < appliedVoucher.minOrderValue) {
-      toast.info(`Voucher đã bị gỡ do đơn hàng chưa đạt mức tối thiểu (${appliedVoucher.minOrderValue.toLocaleString('vi-VN')}₫)`);
-      setAppliedVoucher(null);
-      setDiscountAmount(0);
-      return;
-    }
-
-    selectedCartItems.forEach(item => {
-      let isApplicable = true;
-
-      // Chỉ check double-dip: sản phẩm đã có voucher này cứng rồi
-      if (item.discountVoucherCode === appliedVoucher.code) {
-        isApplicable = false;
-        hasAlreadyHardcodedVoucher = true;
-      }
-
-      if (isApplicable) {
-        applicableTotal += getPrice(item) * item.quantity;
-      }
-    });
-
-    let discount = 0;
-    if (appliedVoucher.discountType === 'Percentage') {
-      discount = applicableTotal * (appliedVoucher.discountAmount / 100);
-    } else {
-      discount = Math.min(appliedVoucher.discountAmount, applicableTotal);
-    }
-    
-    // Nếu không có item nào áp được voucher này
-    if (applicableTotal === 0) {
-      if (hasAlreadyHardcodedVoucher) {
-        toast.info('Voucher đã bị gỡ vì các sản phẩm đã có mã admin.');
-      } else {
-        toast.info('Voucher đã bị gỡ do thay đổi sản phẩm trong giỏ.');
-      }
-      setAppliedVoucher(null);
-      setDiscountAmount(0);
-      return;
-    }
-    
-    setDiscountAmount(discount);
-  }, [appliedVoucher, cart.items, books, selectedItems]);
 
   const selectedCartItemsForTotal = cart.items.filter(item => selectedItems.includes(item.bookId));
   const totalPrice = selectedCartItemsForTotal.reduce((sum, item) => sum + getPrice(item) * item.quantity, 0);
@@ -474,63 +341,18 @@ export default function Cart() {
               <span className="font-bold text-gray-800">{totalPrice.toLocaleString()}₫</span>
             </div>
 
-            {discountAmount > 0 && (
-              <div className="flex justify-between text-green-600 mb-4">
-                <span className="font-semibold">Giảm giá {appliedVoucher ? `(${appliedVoucher.code})` : ''}:</span>
-                <span className="font-bold">- {discountAmount.toLocaleString()}₫</span>
-              </div>
-            )}
-            
-            <div className="mb-6 border-b pb-6">
-              <label className="block text-sm font-bold text-gray-700 mb-2">Mã giảm giá</label>
-              <div className="flex gap-2">
-                <select
-                  value={voucherCode}
-                  onChange={(e) => setVoucherCode(e.target.value)}
-                  disabled={!!appliedVoucher || availableVouchers.length === 0}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 font-mono cursor-pointer disabled:bg-gray-100 disabled:cursor-not-allowed"
-                >
-                  <option value="">{availableVouchers.length > 0 ? '-- Chọn mã giảm giá --' : 'Không có mã giảm giá nào'}</option>
-                  {availableVouchers.map(v => (
-                    <option key={v.code} value={v.code}>
-                      [{v.code}] Giảm {v.discountType === 'Percentage' ? v.discountAmount + '%' : v.discountAmount.toLocaleString() + 'đ'} - Đơn từ {v.minOrderValue.toLocaleString()}đ {v.applicableProductId ? '(Hỗ trợ sản phẩm định sẵn)' : ''}
-                    </option>
-                  ))}
-                </select>
-                {!appliedVoucher ? (
-                  <button 
-                    type="button"
-                    onClick={handleApplyVoucher} 
-                    className="bg-gray-800 hover:bg-gray-900 disabled:bg-gray-400 text-white font-bold px-4 py-2 rounded-lg whitespace-nowrap transition-colors"
-                    disabled={!voucherCode || selectedItems.length === 0}
-                  >
-                    Áp dụng
-                  </button>
-                ) : (
-                  <button 
-                    type="button"
-                    onClick={() => { setAppliedVoucher(null); setVoucherCode(''); }} 
-                    className="bg-red-500 hover:bg-red-600 text-white font-bold px-4 py-2 rounded-lg whitespace-nowrap transition-colors"
-                  >
-                    Hủy
-                  </button>
-                )}
-              </div>
-            </div>
-
             <div className="flex justify-between mb-6">
               <span className="font-bold text-xl text-gray-800">Tổng cộng:</span>
-              <span className="font-bold text-2xl text-orange-500">{Math.max(0, totalPrice - discountAmount).toLocaleString()}₫</span>
+              <span className="font-bold text-2xl text-orange-500">{totalPrice.toLocaleString()}₫</span>
             </div>
 
             <button
               onClick={() => {
                 const checkoutState = {
-                  appliedVoucherCode: appliedVoucher ? voucherCode : undefined,
-                  appliedDiscount: discountAmount,
                   selectedItems
                 };
                 sessionStorage.setItem('checkoutState', JSON.stringify(checkoutState));
+                sessionStorage.removeItem('checkoutVoucherState');
                 navigate('/checkout', { state: checkoutState });
               }}
               disabled={selectedItems.length === 0 || loading}

@@ -36,7 +36,7 @@ namespace BookStore.API.Controllers
                 !v.IsHidden &&
                 (v.StartDate <= now || v.StartDate == default) && 
                 (v.ExpirationDate >= now || v.ExpirationDate == default) && 
-                (string.IsNullOrEmpty(v.ApplicableProductId) ? v.UsedCount < v.Quantity : true));
+                v.UsedCount < v.Quantity);
             return Ok(activeVouchers);
         }
 
@@ -54,14 +54,14 @@ namespace BookStore.API.Controllers
         public async Task<IActionResult> GetByCode(string code)
         {
             var rawVouchers = await _voucherService.GetAllVouchersAsync();
-            var voucher = rawVouchers.FirstOrDefault(v => v.Code.ToUpper() == code.ToUpper() && v.IsActive);
+            var voucher = rawVouchers.FirstOrDefault(v => v.Code.ToUpper() == code.ToUpper() && v.IsActive && !v.IsHidden);
             
             if (voucher == null) return NotFound(new { message = "Không tồn tại mã giảm giá này!" });
             
             var now = DateTime.UtcNow;
             if (now < voucher.StartDate) return BadRequest(new { message = "Mã giảm giá chưa tới thời gian bắt đầu!" });
             if (now > voucher.ExpirationDate) return BadRequest(new { message = "Mã giảm giá đã hết hạn!" });
-            if (string.IsNullOrEmpty(voucher.ApplicableProductId) && voucher.UsedCount >= voucher.Quantity) return BadRequest(new { message = "Mã giảm giá đã hết số lượng!" });
+            if (voucher.UsedCount >= voucher.Quantity) return BadRequest(new { message = "Mã giảm giá đã hết số lượng!" });
             
             return Ok(voucher);
         }

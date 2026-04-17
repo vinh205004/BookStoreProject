@@ -267,12 +267,16 @@ export default function AdminDashboard() {
   }, [fetchDashboardData]);
 
   useEffect(() => {
-    const handleReviewsUpdated = () => {
+    const handleDashboardRealtimeUpdated = () => {
       fetchDashboardData();
     };
 
-    window.addEventListener('admin-reviews-updated', handleReviewsUpdated);
-    return () => window.removeEventListener('admin-reviews-updated', handleReviewsUpdated);
+    window.addEventListener('admin-reviews-updated', handleDashboardRealtimeUpdated);
+    window.addEventListener('admin-orders-updated', handleDashboardRealtimeUpdated);
+    return () => {
+      window.removeEventListener('admin-reviews-updated', handleDashboardRealtimeUpdated);
+      window.removeEventListener('admin-orders-updated', handleDashboardRealtimeUpdated);
+    };
   }, [fetchDashboardData]);
 
   if (initialLoad) return <div className="p-8 text-center text-slate-500">Đang tải biểu đồ...</div>;

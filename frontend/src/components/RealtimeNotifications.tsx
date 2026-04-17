@@ -2,7 +2,6 @@ import { useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import * as signalR from '@microsoft/signalr';
 import { toast } from 'react-toastify';
-import { getUserRole } from '../utils/tokenUtils';
 
 const API_ORIGIN = 'https://localhost:7087';
 
@@ -53,13 +52,24 @@ export default function RealtimeNotifications() {
         connectionRef.current = null;
       }
 
-      const role = getUserRole();
       const connection = new signalR.HubConnectionBuilder()
         .withUrl(`${API_ORIGIN}/hubs/notifications`, {
           accessTokenFactory: () => localStorage.getItem('token') || ''
         })
         .withAutomaticReconnect()
         .build();
+
+      const joinAdminGroup = async () => {
+        try {
+          await connection.invoke('JoinAdminGroup');
+        } catch (error) {
+          console.debug('Realtime admin group skipped:', error);
+        }
+      };
+
+      connection.onreconnected(() => {
+        joinAdminGroup();
+      });
 
       connection.on('OrderStatusChanged', (payload: OrderNotification) => {
         toast.info(`Đơn #${payload.orderId} đã chuyển sang: ${payload.statusText || 'trạng thái mới'}`);
@@ -72,32 +82,44 @@ export default function RealtimeNotifications() {
       });
 
       connection.on('NewOrderCreated', (payload: OrderNotification) => {
-        if (role === 'Admin') {
-          const amount = formatCurrency(payload.totalAmount);
-          toast.info(`Có đơn hàng mới #${payload.orderId}${amount ? ` - ${amount}` : ''}`);
-          window.dispatchEvent(new CustomEvent('admin-orders-updated', { detail: payload }));
-        }
+        const amount = formatCurrency(payload.totalAmount);
+        toast.info(`Có đơn hàng mới #${payload.orderId}${amount ? ` - ${amount}` : ''}`);
+        window.dispatchEvent(new CustomEvent('admin-orders-updated', { detail: payload }));
       });
 
       connection.on('OrderCancelledByCustomer', (payload: OrderNotification) => {
-        if (role === 'Admin') {
-          toast.warning(`Khách hàng vừa hủy đơn #${payload.orderId}`);
-          window.dispatchEvent(new CustomEvent('admin-orders-updated', { detail: payload }));
-        }
+        toast.warning(`Khách hàng vừa hủy đơn #${payload.orderId}`);
+        window.dispatchEvent(new CustomEvent('admin-orders-updated', { detail: payload }));
       });
 
       connection.on('NewReviewCreated', (payload: ReviewNotification) => {
-        if (role === 'Admin') {
-          toast.info(`${payload.userName || 'Khách hàng'} vừa đánh giá ${payload.rating || ''} sao.`);
-          window.dispatchEvent(new CustomEvent('admin-reviews-updated', { detail: payload }));
-        }
+        toast.info(`${payload.userName || 'Khách hàng'} vừa đánh giá ${payload.rating || ''} sao.`);
+        window.dispatchEvent(new CustomEvent('admin-reviews-updated', { detail: payload }));
       });
 
       connection.on('ReviewReplyCreated', (payload: ReviewNotification) => {
-        if (role === 'Admin') {
-          toast.info(`${payload.userName || 'Khách hàng'} vừa phản hồi một đánh giá.`);
-          window.dispatchEvent(new CustomEvent('admin-reviews-updated', { detail: payload }));
-        }
+        toast.info(`${payload.userName || 'Khách hàng'} vừa phản hồi một đánh giá.`);
+        window.dispatchEvent(new CustomEvent('admin-reviews-updated', { detail: payload }));
+      });
+
+      connection.on('ReviewUpdatedByCustomer', (payload: ReviewNotification) => {
+        toast.info(`${payload.userName || 'Khách hàng'} vừa sửa đánh giá.`);
+        window.dispatchEvent(new CustomEvent('admin-reviews-updated', { detail: payload }));
+      });
+
+      connection.on('ReviewDeletedByCustomer', (payload: ReviewNotification) => {
+        toast.info('Khách hàng vừa xóa một đánh giá.');
+        window.dispatchEvent(new CustomEvent('admin-reviews-updated', { detail: payload }));
+      });
+
+      connection.on('ReviewReplyUpdatedByCustomer', (payload: ReviewNotification) => {
+        toast.info(`${payload.userName || 'Khách hàng'} vừa sửa phản hồi đánh giá.`);
+        window.dispatchEvent(new CustomEvent('admin-reviews-updated', { detail: payload }));
+      });
+
+      connection.on('ReviewReplyDeletedByCustomer', (payload: ReviewNotification) => {
+        toast.info('Khách hàng vừa xóa một phản hồi đánh giá.');
+        window.dispatchEvent(new CustomEvent('admin-reviews-updated', { detail: payload }));
       });
 
       try {
@@ -106,6 +128,8 @@ export default function RealtimeNotifications() {
           await connection.stop();
           return;
         }
+
+        await joinAdminGroup();
 
         connectionRef.current = connection;
         tokenRef.current = token;

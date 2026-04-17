@@ -1,0 +1,81 @@
+Using launch settings from BookStore.API\Properties\launchSettings.json...
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (25ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT c."CategoryId"
+      FROM "Categories" AS c
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (4ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT a."AuthorId"
+      FROM "Authors" AS a
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (1ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT p."PublisherId"
+      FROM "Publishers" AS p
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (3ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT b."BookId"
+      FROM "Books" AS b
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (2ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT v."VoucherId"
+      FROM "Vouchers" AS v
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (2ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT o."OrderId"
+      FROM "Orders" AS o
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (2ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT u."UserId"
+      FROM "Users" AS u
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (2ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT b."ImageId"
+      FROM "BookImages" AS b
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (3ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT c."CartId"
+      FROM "Carts" AS c
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (2ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT c."CartItemId"
+      FROM "CartItems" AS c
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (3ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT o."OrderItemId"
+      FROM "OrderItems" AS o
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (1ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT EXISTS (
+          SELECT 1
+          FROM "Users" AS u
+          WHERE u."Role" = 'Admin')
+info: Microsoft.Hosting.Lifetime[14]
+      Now listening on: https://localhost:7087
+info: Microsoft.Hosting.Lifetime[0]
+      Application started. Press Ctrl+C to shut down.
+info: Microsoft.Hosting.Lifetime[0]
+      Hosting environment: Development
+info: Microsoft.Hosting.Lifetime[0]
+      Content root path: D:\BookStoreProject\BookStore.API\BookStore.API
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (21ms) [Parameters=[@__dto_Username_0='?'], CommandType='Text', CommandTimeout='30']
+      SELECT u."UserId", u."Address", u."CreatedAt", u."Email", u."FullName", u."IsLocked", u."PasswordHash", u."PhoneNumber", u."Role", u."Username"
+      FROM "Users" AS u
+      WHERE u."Username" = @__dto_Username_0
+      LIMIT 2
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (1ms) [Parameters=[@__userId_0='?'], CommandType='Text', CommandTimeout='30']
+      SELECT u."IsLocked"
+      FROM "Users" AS u
+      WHERE u."UserId" = @__userId_0
+      LIMIT 1
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (1ms) [Parameters=[@__userId_0='?'], CommandType='Text', CommandTimeout='30']
+      SELECT u."IsLocked"
+      FROM "Users" AS u
+      WHERE u."UserId" = @__userId_0
+      LIMIT 1
+info: BookStore.API.Hubs.NotificationHub[0]
+      Admin realtime connected: UZ20e5xT4UbAUa_BOr9gDg
+info: BookStore.API.Hubs.NotificationHub[0]
+      Admin realtime group joined: UZ20e5xT4UbAUa_BOr9gDg

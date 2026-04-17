@@ -89,9 +89,16 @@ namespace BookStore.API.Services
             if (!validStatuses.Contains(dto.Status))
                 throw new Exception("Trạng thái đơn hàng không hợp lệ!");
 
-            if (dto.Status == "Cancelled" && order.Status != "Cancelled")
+            var previousStatus = order.Status;
+
+            if (dto.Status == "Cancelled" && previousStatus != "Cancelled")
             {
                 await RestoreOrderStockAsync(order);
+            }
+
+            if (dto.Status == "Delivered" && previousStatus != "Delivered")
+            {
+                await CountAppliedVoucherUsageAsync(order);
             }
 
             order.Status = dto.Status;
@@ -127,12 +134,11 @@ namespace BookStore.API.Services
 
                 decimal totalAmount = 0;
                 decimal applicableAmount = 0;
-                var hasHardcodedVoucher = false;
 
                 Voucher? appliedVoucher = null;
                 if (!string.IsNullOrEmpty(dto.VoucherCode))
                 {
-                    appliedVoucher = await _context.Vouchers.FirstOrDefaultAsync(v => v.Code == dto.VoucherCode && v.IsActive);
+                    appliedVoucher = await _context.Vouchers.FirstOrDefaultAsync(v => v.Code == dto.VoucherCode && v.IsActive && !v.IsHidden);
                     if (appliedVoucher == null)
                         throw new Exception("Mã giảm giá không hợp lệ!");
 
@@ -141,7 +147,7 @@ namespace BookStore.API.Services
                         throw new Exception("Mã giảm giá chưa đến thời gian có thể sử dụng!");
                     if (now > appliedVoucher.ExpirationDate)
                         throw new Exception("Mã giảm giá đã hết hạn!");
-                    if (string.IsNullOrEmpty(appliedVoucher.ApplicableProductId) && string.IsNullOrEmpty(appliedVoucher.ApplicableCategoryId) && appliedVoucher.UsedCount >= appliedVoucher.Quantity)
+                    if (appliedVoucher.UsedCount >= appliedVoucher.Quantity)
                         throw new Exception("Mã giảm giá đã hết số lượng sử dụng!");
                 }
 
@@ -176,7 +182,6 @@ namespace BookStore.API.Services
                     {
                         if (bookDetail?.DiscountVoucherCode == appliedVoucher.Code)
                         {
-                            hasHardcodedVoucher = true;
                             isApplicableForVoucher = false;
                         }
                         else if (appliedVoucher.IsHidden &&
@@ -216,11 +221,6 @@ namespace BookStore.API.Services
                     totalAmount -= discount;
                     if (totalAmount < 0) totalAmount = 0;
 
-                    if (finalizePurchase && string.IsNullOrEmpty(appliedVoucher.ApplicableProductId) && string.IsNullOrEmpty(appliedVoucher.ApplicableCategoryId) && !hasHardcodedVoucher)
-                    {
-                        appliedVoucher.UsedCount += 1;
-                        _context.Vouchers.Update(appliedVoucher);
-                    }
                 }
 
                 order.TotalAmount = totalAmount;
@@ -275,31 +275,6 @@ namespace BookStore.API.Services
                         throw new Exception($"Sách '{item.Book.Title}' không đủ số lượng để hoàn tất đơn VNPAY!");
 
                     item.Book.Stock -= item.Quantity;
-                }
-
-                var voucherCode = order.AppliedVoucherCode ?? ExtractVoucherCode(order.Note);
-                if (!string.IsNullOrWhiteSpace(voucherCode))
-                {
-                    var voucher = await _context.Vouchers.FirstOrDefaultAsync(v => v.Code == voucherCode && v.IsActive);
-                    if (voucher != null && string.IsNullOrEmpty(voucher.ApplicableProductId) && string.IsNullOrEmpty(voucher.ApplicableCategoryId))
-                    {
-                        var hasHardcodedVoucher = false;
-                        foreach (var item in order.OrderItems)
-                        {
-                            var bookDetail = await _bookRepo.GetBookDetailAsync(item.BookId);
-                            if (bookDetail?.DiscountVoucherCode == voucher.Code)
-                            {
-                                hasHardcodedVoucher = true;
-                                break;
-                            }
-                        }
-
-                        if (!hasHardcodedVoucher)
-                        {
-                            voucher.UsedCount += 1;
-                            _context.Vouchers.Update(voucher);
-                        }
-                    }
                 }
 
                 await RemoveOrderedItemsFromCartAsync(order.UserId, order.OrderItems.Select(i => i.BookId));
@@ -421,6 +396,23 @@ namespace BookStore.API.Services
             }
 
             return Task.CompletedTask;
+        }
+
+        private async Task CountAppliedVoucherUsageAsync(Order order)
+        {
+            var voucherCode = order.AppliedVoucherCode ?? ExtractVoucherCode(order.Note);
+            if (string.IsNullOrWhiteSpace(voucherCode))
+                return;
+
+            var voucher = await _context.Vouchers.FirstOrDefaultAsync(v => v.Code == voucherCode && v.IsActive && !v.IsHidden);
+            if (voucher == null)
+                return;
+
+            if (voucher.UsedCount >= voucher.Quantity)
+                throw new Exception("Mã giảm giá đã hết số lượng sử dụng!");
+
+            voucher.UsedCount += 1;
+            _context.Vouchers.Update(voucher);
         }
 
         private async Task<List<Voucher>> GetActiveVouchersAsync()

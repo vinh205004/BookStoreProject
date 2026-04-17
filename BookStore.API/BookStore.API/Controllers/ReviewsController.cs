@@ -96,6 +96,19 @@ namespace BookStore.API.Controllers
                 var result = await _reviewService.UpdateReviewAsync(id, dto, userId, isAdmin);
                 if (!result) return NotFound("Không tìm thấy đánh giá.");
 
+                if (!isAdmin)
+                {
+                    var review = await _reviewService.GetReviewByIdAsync(id);
+                    await _notificationHub.Clients.Group("Admins").SendAsync("ReviewUpdatedByCustomer", new
+                    {
+                        reviewId = id,
+                        bookId = review?.BookId,
+                        userName = review?.UserName,
+                        rating = review?.Rating,
+                        comment = review?.Comment
+                    });
+                }
+
                 return NoContent();
             }
             catch (UnauthorizedAccessException ex)
@@ -117,6 +130,15 @@ namespace BookStore.API.Controllers
 
                 var result = await _reviewService.DeleteReviewAsync(id, userId, isAdmin);
                 if (!result) return NotFound("Không tìm thấy đánh giá.");
+
+                if (!isAdmin)
+                {
+                    await _notificationHub.Clients.Group("Admins").SendAsync("ReviewDeletedByCustomer", new
+                    {
+                        reviewId = id,
+                        userId
+                    });
+                }
 
                 return NoContent();
             }
@@ -188,6 +210,16 @@ namespace BookStore.API.Controllers
 
                 var result = await _reviewReplyService.UpdateReplyAsync(replyId, dto, userId, isAdmin);
                 if (!result) return NotFound("Không tìm thấy phản hồi.");
+                if (!isAdmin)
+                {
+                    await _notificationHub.Clients.Group("Admins").SendAsync("ReviewReplyUpdatedByCustomer", new
+                    {
+                        replyId,
+                        userId,
+                        content = dto.Content
+                    });
+                }
+
                 return NoContent();
             }
             catch (UnauthorizedAccessException ex)
@@ -208,6 +240,15 @@ namespace BookStore.API.Controllers
 
                 var result = await _reviewReplyService.DeleteReplyAsync(replyId, userId, isAdmin);
                 if (!result) return NotFound("Không tìm thấy phản hồi.");
+                if (!isAdmin)
+                {
+                    await _notificationHub.Clients.Group("Admins").SendAsync("ReviewReplyDeletedByCustomer", new
+                    {
+                        replyId,
+                        userId
+                    });
+                }
+
                 return NoContent();
             }
             catch (UnauthorizedAccessException ex)

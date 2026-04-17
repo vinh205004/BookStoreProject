@@ -16,12 +16,22 @@ interface CartItem {
   discountedPrice?: number;
   discountBadge?: string;
   discountVoucherCode?: string;
+  categoryId?: string;
 }
 
 interface CartResponse {
   items: CartItem[];
   totalPrice?: number;
   totalItems?: number;
+}
+
+interface Voucher {
+  code: string;
+  discountType: 'Direct' | 'Percentage';
+  discountAmount: number;
+  minOrderValue: number;
+  applicableProductId?: string;
+  applicableCategoryId?: string;
 }
 
 interface CheckoutState {
@@ -52,6 +62,23 @@ const readCheckoutState = (routeState: unknown): CheckoutState => {
   }
 };
 
+const readCheckoutVoucherCode = () => {
+  try {
+    const stored = JSON.parse(sessionStorage.getItem('checkoutVoucherState') || '{}') as { voucherCode?: string };
+    return stored.voucherCode || '';
+  } catch {
+    return '';
+  }
+};
+
+const persistCheckoutVoucherCode = (code: string) => {
+  if (code) {
+    sessionStorage.setItem('checkoutVoucherState', JSON.stringify({ voucherCode: code }));
+  } else {
+    sessionStorage.removeItem('checkoutVoucherState');
+  }
+};
+
 export default function CheckoutPage() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -64,21 +91,50 @@ export default function CheckoutPage() {
     phoneNumber: '',
     note: '',
   });
+  const [availableVouchers, setAvailableVouchers] = useState<Voucher[]>([]);
+  const [voucherCode, setVoucherCode] = useState(() => readCheckoutVoucherCode());
+  const [appliedVoucher, setAppliedVoucher] = useState<Voucher | null>(null);
+  const [appliedDiscount, setAppliedDiscount] = useState(0);
 
   const getCheckoutState = useCallback(() => readCheckoutState(location.state), [location.state]);
+
+  const restoreVoucherFromStorage = useCallback(async () => {
+    if (appliedVoucher) {
+      return;
+    }
+
+    const storedVoucherCode = readCheckoutVoucherCode();
+    if (!storedVoucherCode) {
+      return;
+    }
+
+    try {
+      const voucher = (await axiosClient.get(`/Vouchers/public/${storedVoucherCode}`)) as Voucher;
+      setVoucherCode(voucher.code);
+      setAppliedVoucher(voucher);
+    } catch {
+      setVoucherCode('');
+      setAppliedVoucher(null);
+      setAppliedDiscount(0);
+      persistCheckoutVoucherCode('');
+    }
+  }, [appliedVoucher]);
 
   const loadCart = useCallback(async () => {
     try {
       setLoading(true);
       const cartData: CartResponse = await axiosClient.get('/cart');
       const selectedItemIds = getCheckoutState().selectedItems;
-      const selectedCartItems = selectedItemIds.length > 0 
+      const selectedCartItems = selectedItemIds.length > 0
         ? cartData.items.filter(item => selectedItemIds.includes(item.bookId))
         : cartData.items;
+      const checkoutItems = selectedItemIds.length > 0 && selectedCartItems.length === 0
+        ? cartData.items
+        : selectedCartItems;
 
-      setCart(selectedCartItems);
+      setCart(checkoutItems);
 
-      if (selectedCartItems.length === 0) {
+      if (checkoutItems.length === 0 && !readCheckoutVoucherCode()) {
         navigate('/cart');
       }
       setLoading(false);
@@ -94,6 +150,44 @@ export default function CheckoutPage() {
   }, [loadCart]);
 
   useEffect(() => {
+    restoreVoucherFromStorage();
+  }, [restoreVoucherFromStorage]);
+
+  useEffect(() => {
+    const loadVouchers = async () => {
+      try {
+        const data = (await axiosClient.get('/Vouchers/active')) as Voucher[];
+        setAvailableVouchers(data || []);
+      } catch {
+        setAvailableVouchers([]);
+      }
+    };
+
+    loadVouchers();
+  }, []);
+
+  useEffect(() => {
+    if (appliedVoucher || availableVouchers.length === 0) {
+      return;
+    }
+
+    try {
+      const stored = JSON.parse(sessionStorage.getItem('checkoutVoucherState') || '{}') as { voucherCode?: string };
+      if (stored.voucherCode) {
+        const voucher = availableVouchers.find(v => v.code === stored.voucherCode);
+        if (voucher) {
+          setVoucherCode(voucher.code);
+          setAppliedVoucher(voucher);
+        } else {
+          restoreVoucherFromStorage();
+        }
+      }
+    } catch {
+      sessionStorage.removeItem('checkoutVoucherState');
+    }
+  }, [appliedVoucher, availableVouchers, restoreVoucherFromStorage]);
+
+  useEffect(() => {
     const checkoutState = readCheckoutState(location.state);
     if (checkoutState.selectedItems.length > 0 || checkoutState.appliedVoucherCode) {
       sessionStorage.setItem('checkoutState', JSON.stringify(checkoutState));
@@ -104,12 +198,11 @@ export default function CheckoutPage() {
     const refreshCheckoutCart = () => {
       setSubmitting(false);
       loadCart();
+      restoreVoucherFromStorage();
     };
 
-    const handlePageShow = (event: PageTransitionEvent) => {
-      if (event.persisted) {
-        refreshCheckoutCart();
-      }
+    const handlePageShow = () => {
+      refreshCheckoutCart();
     };
 
     const handleVisibilityChange = () => {
@@ -127,7 +220,7 @@ export default function CheckoutPage() {
       window.removeEventListener('focus', refreshCheckoutCart);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [loadCart]);
+  }, [loadCart, restoreVoucherFromStorage]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -142,9 +235,103 @@ export default function CheckoutPage() {
   const totalPrice = cart.reduce((sum, item) => sum + getPrice(item) * item.quantity, 0);
   const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
 
-  const checkoutState = readCheckoutState(location.state);
-  const appliedVoucherCode = checkoutState.appliedVoucherCode;
-  const appliedDiscount = checkoutState.appliedDiscount || 0;
+  const appliedVoucherCode = appliedVoucher?.code;
+
+  const handleApplyVoucher = async () => {
+    if (!voucherCode) {
+      toast.error('Vui lòng chọn mã giảm giá!');
+      return;
+    }
+
+    try {
+      const data = (await axiosClient.get(`/Vouchers/public/${voucherCode}`)) as Voucher;
+      const orderTotal = cart.reduce((sum, item) => sum + getPrice(item) * item.quantity, 0);
+
+      if (orderTotal < data.minOrderValue) {
+        toast.error(`Đơn hàng chưa đạt mức tối thiểu (${data.minOrderValue.toLocaleString('vi-VN')}₫)!`);
+        return;
+      }
+
+      let applicableTotal = 0;
+      let hasAlreadyHardcodedVoucher = false;
+
+      cart.forEach(item => {
+        let isApplicable = true;
+        if (item.discountVoucherCode === data.code) {
+          isApplicable = false;
+          hasAlreadyHardcodedVoucher = true;
+        }
+
+        if (isApplicable) {
+          applicableTotal += getPrice(item) * item.quantity;
+        }
+      });
+
+      if (applicableTotal === 0) {
+        toast.error(hasAlreadyHardcodedVoucher
+          ? 'Sản phẩm đã được admin áp mã này rồi, không thể dùng lại!'
+          : 'Mã giảm giá này không áp dụng cho các sản phẩm đã chọn!');
+        return;
+      }
+
+      setAppliedVoucher(data);
+      persistCheckoutVoucherCode(data.code);
+      toast.success('Áp dụng mã giảm giá thành công!');
+    } catch (error) {
+      const axiosError = error as any;
+      setAppliedVoucher(null);
+      setAppliedDiscount(0);
+      persistCheckoutVoucherCode('');
+      toast.error(axiosError.response?.data?.message || 'Mã giảm giá không hợp lệ!');
+    }
+  };
+
+  useEffect(() => {
+    if (!appliedVoucher || cart.length === 0) {
+      setAppliedDiscount(0);
+      return;
+    }
+
+    const orderTotal = cart.reduce((sum, item) => sum + getPrice(item) * item.quantity, 0);
+    if (orderTotal < appliedVoucher.minOrderValue) {
+      toast.info(`Voucher đã bị gỡ do đơn hàng chưa đạt mức tối thiểu (${appliedVoucher.minOrderValue.toLocaleString('vi-VN')}₫)`);
+      setAppliedVoucher(null);
+      setAppliedDiscount(0);
+      persistCheckoutVoucherCode('');
+      return;
+    }
+
+    let applicableTotal = 0;
+    let hasAlreadyHardcodedVoucher = false;
+
+    cart.forEach(item => {
+      let isApplicable = true;
+      if (item.discountVoucherCode === appliedVoucher.code) {
+        isApplicable = false;
+        hasAlreadyHardcodedVoucher = true;
+      }
+
+      if (isApplicable) {
+        applicableTotal += getPrice(item) * item.quantity;
+      }
+    });
+
+    if (applicableTotal === 0) {
+      toast.info(hasAlreadyHardcodedVoucher
+        ? 'Voucher đã bị gỡ vì các sản phẩm đã có mã admin.'
+        : 'Voucher đã bị gỡ do thay đổi sản phẩm trong giỏ.');
+      setAppliedVoucher(null);
+      setAppliedDiscount(0);
+      persistCheckoutVoucherCode('');
+      return;
+    }
+
+    const discount = appliedVoucher.discountType === 'Percentage'
+      ? applicableTotal * (appliedVoucher.discountAmount / 100)
+      : Math.min(appliedVoucher.discountAmount, applicableTotal);
+
+    setAppliedDiscount(discount);
+  }, [appliedVoucher, cart]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -174,18 +361,17 @@ export default function CheckoutPage() {
       };
 
       if (paymentMethod === 'vnpay') {
+        sessionStorage.setItem('checkoutState', JSON.stringify({
+          selectedItems: cart.map(item => item.bookId)
+        }));
+        if (appliedVoucherCode) {
+          persistCheckoutVoucherCode(appliedVoucherCode);
+        }
+
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const response: any = await axiosClient.post('/Payments/vnpay/create', { order: orderData });
         if (!response.paymentUrl) {
           throw new Error('Không tạo được liên kết thanh toán VNPAY.');
-        }
-
-        if (typeof response.amount === 'number') {
-          console.info('VNPAY amount check', {
-            checkoutTotal: Math.max(0, totalPrice - appliedDiscount),
-            apiAmount: response.amount,
-            voucherCode: appliedVoucherCode
-          });
         }
 
         window.location.href = response.paymentUrl;
@@ -209,6 +395,7 @@ export default function CheckoutPage() {
       
       // Dispatch custom event to update badge
       window.dispatchEvent(new Event('cart-updated'));
+      persistCheckoutVoucherCode('');
       
       toast.success('Đơn hàng đã được tạo thành công!');
       navigate(`/orders?orderId=${response.orderId}`);
@@ -378,6 +565,48 @@ export default function CheckoutPage() {
               <div className="flex justify-between">
                 <span className="text-gray-600">Tạm tính:</span>
                 <span className="font-bold text-orange-500">{totalPrice.toLocaleString()}₫</span>
+              </div>
+              <div className="border-t border-gray-100 pt-3">
+                <label className="block text-sm font-bold text-gray-700 mb-2">Mã giảm giá</label>
+                <div className="flex gap-2">
+                  <select
+                    value={voucherCode}
+                    onChange={(e) => setVoucherCode(e.target.value)}
+                    disabled={!!appliedVoucher || availableVouchers.length === 0 || submitting}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 font-mono cursor-pointer disabled:bg-gray-100 disabled:cursor-not-allowed"
+                  >
+                    <option value="">{availableVouchers.length > 0 ? '-- Chọn mã giảm giá --' : 'Không có mã giảm giá nào'}</option>
+                    {availableVouchers.map(v => (
+                      <option key={v.code} value={v.code}>
+                        [{v.code}] Giảm {v.discountType === 'Percentage' ? v.discountAmount + '%' : v.discountAmount.toLocaleString('vi-VN') + 'đ'} - Đơn từ {v.minOrderValue.toLocaleString('vi-VN')}đ
+                      </option>
+                    ))}
+                  </select>
+                  {!appliedVoucher ? (
+                    <button
+                      type="button"
+                      onClick={handleApplyVoucher}
+                      className="bg-gray-800 hover:bg-gray-900 disabled:bg-gray-400 text-white font-bold px-4 py-2 rounded-lg whitespace-nowrap transition-colors"
+                      disabled={!voucherCode || submitting}
+                    >
+                      Áp dụng
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setAppliedVoucher(null);
+                        setAppliedDiscount(0);
+                        setVoucherCode('');
+                        persistCheckoutVoucherCode('');
+                      }}
+                      className="bg-red-500 hover:bg-red-600 text-white font-bold px-4 py-2 rounded-lg whitespace-nowrap transition-colors"
+                      disabled={submitting}
+                    >
+                      Hủy
+                    </button>
+                  )}
+                </div>
               </div>
               {appliedVoucherCode && appliedDiscount > 0 && (
                 <div className="flex justify-between text-green-600 mt-2">
