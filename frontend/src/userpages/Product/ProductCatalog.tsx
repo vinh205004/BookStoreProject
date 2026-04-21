@@ -289,12 +289,12 @@ export default function ProductCatalog() {
 
       <div className="flex gap-6">
         {/* Filters - Desktop */}
-        <aside className="hidden lg:block w-64 flex-shrink-0 sticky top-24 self-start max-h-[calc(100vh-6rem)] overflow-y-auto z-10 custom-scrollbar">
+        <aside className="hidden lg:block w-64 flex-shrink-0 sticky top-24 self-start z-10">
           <div className={`bg-white shadow transition-opacity duration-300 ${loading ? 'opacity-70' : 'opacity-100'}`}>
             <div className="bg-orange-500 px-4 py-4">
               <h2 className="text-lg font-bold uppercase text-white">{"Bộ lọc sách"}</h2>
             </div>
-            <div className="p-6">
+            <div className="max-h-[calc(100vh-10rem)] overflow-y-auto p-6 custom-scrollbar">
               <div className="flex items-center justify-between sm:hidden mb-4">
                 <h2 className="font-bold">{"Bộ lọc"}</h2>
                 <button onClick={() => setShowFilters(!showFilters)}>

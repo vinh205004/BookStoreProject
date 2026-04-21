@@ -10,6 +10,8 @@ import { getGuestCart, removeFromGuestCart, updateGuestCartQuantity, clearGuestC
 import Breadcrumb from '../../components/Breadcrumb';
 import OrangeButton from '../../components/OrangeButton';
 import PageTitle from '../../components/PageTitle';
+import Pagination from '../../components/Pagination';
+import CompactBookSidebar from '../../components/CompactBookSidebar';
 
 interface CartItem {
   cartItemId?: string; // Added for API reference
@@ -31,15 +33,29 @@ interface Cart {
   totalItems?: number;
 }
 
+interface SidebarBook {
+  bookId: string;
+  title: string;
+  price: number;
+  discountedPrice?: number;
+  soldQuantity?: number;
+  imageUrls?: string[];
+  mainImageUrl?: string;
+}
+
 export default function Cart() {
   const navigate = useNavigate();
   const [cart, setCart] = useState<Cart>({ items: [] });
   const [loading, setLoading] = useState(true);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [topSellingBooks, setTopSellingBooks] = useState<SidebarBook[]>([]);
+  const itemsPerPage = 6;
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/immutability
     loadCart();
+    loadTopSellingBooks();
   }, []);
 
   const loadCart = async () => {
@@ -59,6 +75,18 @@ export default function Cart() {
       // Set empty cart on error
       setCart({ items: [], totalPrice: 0, totalItems: 0 });
       setLoading(false);
+    }
+  };
+
+  const loadTopSellingBooks = async () => {
+    try {
+      const date = new Date();
+      const response: SidebarBook[] = await axiosClient.get(
+        `/Books/top-selling?month=${date.getMonth() + 1}&year=${date.getFullYear()}&count=5`
+      );
+      setTopSellingBooks(response || []);
+    } catch {
+      setTopSellingBooks([]);
     }
   };
 
@@ -183,6 +211,14 @@ export default function Cart() {
   const selectedCartItemsForTotal = cart.items.filter(item => selectedItems.includes(item.bookId));
   const totalPrice = selectedCartItemsForTotal.reduce((sum, item) => sum + getPrice(item) * item.quantity, 0);
   const totalItems = selectedCartItemsForTotal.reduce((sum, item) => sum + item.quantity, 0);
+  const totalPages = Math.max(1, Math.ceil(cart.items.length / itemsPerPage));
+  const paginatedItems = cart.items.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
 
   const toggleSelectItem = (bookId: string) => {
     setSelectedItems(prev => 
@@ -237,19 +273,20 @@ export default function Cart() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Cart Items */}
         <div className="lg:col-span-2">
-          <div className="space-y-4">
-            {cart.items.length > 0 && (
-              <div className="flex items-center gap-2 mb-4 bg-white p-4 rounded-lg shadow">
-                <input 
-                  type="checkbox" 
-                  checked={selectedItems.length === cart.items.length && cart.items.length > 0}
-                  onChange={toggleSelectAll}
-                  className="w-5 h-5 text-orange-500 focus:ring-orange-500 border-gray-300 rounded cursor-pointer"
-                />
-                <label className="font-semibold text-gray-700 cursor-pointer" onClick={toggleSelectAll}>Chọn tất cả các sản phẩm</label>
-              </div>
-            )}
-            {cart.items.map(item => (
+          {cart.items.length > 0 && (
+            <div className="mb-4 flex items-center gap-2 bg-white p-4 rounded-lg shadow">
+              <input 
+                type="checkbox" 
+                checked={selectedItems.length === cart.items.length && cart.items.length > 0}
+                onChange={toggleSelectAll}
+                className="w-5 h-5 text-orange-500 focus:ring-orange-500 border-gray-300 rounded cursor-pointer"
+              />
+              <label className="font-semibold text-gray-700 cursor-pointer" onClick={toggleSelectAll}>Chọn tất cả các sản phẩm</label>
+            </div>
+          )}
+
+          <div className={`space-y-4 ${paginatedItems.length > 3 ? 'max-h-[34rem] overflow-y-auto pr-2 custom-scrollbar' : ''}`}>
+            {paginatedItems.map(item => (
               <div key={item.bookId} className="flex gap-4 bg-white p-4 rounded-lg shadow items-center">
                 <input 
                   type="checkbox"
@@ -321,27 +358,26 @@ export default function Cart() {
             ))}
           </div>
 
+          <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
+
           <button
             onClick={clearCart}
             className="mt-4 text-red-500 hover:text-red-700 font-semibold transition"
           >
             Xóa tất cả
           </button>
-        </div>
 
-        {/* Summary */}
-        <div className="lg:col-span-1">
-          <div className="bg-white p-6 rounded-lg shadow sticky top-20">
-            <h2 className="text-xl font-bold text-gray-800 mb-4">Tóm tắt đơn hàng</h2>
+          <div className="mt-8 bg-white p-6 rounded-lg shadow">
+            <h2 className="mb-4 text-xl font-bold uppercase italic text-orange-500">Tóm tắt giỏ hàng</h2>
 
-            <div className="space-y-3 mb-6 pb-6 border-b border-gray-200">
+            <div className="mb-6 space-y-3 border-b border-gray-200 pb-6">
               <div className="flex justify-between">
                 <span className="text-gray-600">Số lượng sản phẩm:</span>
                 <span className="font-semibold text-gray-800">{totalItems}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Thành tiền:</span>
-                <span className="font-bold text-lg text-orange-500">{totalPrice.toLocaleString()}₫</span>
+                <span className="text-lg font-bold text-orange-500">{totalPrice.toLocaleString()}₫</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Vận chuyển:</span>
@@ -349,14 +385,14 @@ export default function Cart() {
               </div>
             </div>
 
-            <div className="flex justify-between mb-4">
+            <div className="mb-4 flex justify-between">
               <span className="font-bold text-gray-800">Tạm tính:</span>
               <span className="font-bold text-gray-800">{totalPrice.toLocaleString()}₫</span>
             </div>
 
-            <div className="flex justify-between mb-6">
-              <span className="font-bold text-xl text-gray-800">Tổng cộng:</span>
-              <span className="font-bold text-2xl text-orange-500">{totalPrice.toLocaleString()}₫</span>
+            <div className="mb-6 flex justify-between">
+              <span className="text-xl font-bold text-gray-800">Tổng cộng:</span>
+              <span className="text-2xl font-bold text-orange-500">{totalPrice.toLocaleString()}₫</span>
             </div>
 
             <OrangeButton
@@ -383,6 +419,13 @@ export default function Cart() {
             </button>
           </div>
         </div>
+
+        <CompactBookSidebar
+          title="Sách bán chạy"
+          books={topSellingBooks}
+          emptyText="Chưa có sách bán chạy."
+          className="hidden lg:block"
+        />
       </div>
     </div>
   );

@@ -1,5 +1,3 @@
-import { ChevronLeft, ChevronRight } from 'lucide-react';
-
 interface PaginationProps {
   currentPage: number;
   totalPages: number;
@@ -10,62 +8,61 @@ export default function Pagination({ currentPage, totalPages, onPageChange }: Pa
   if (totalPages <= 1) return null;
 
   const getPageNumbers = () => {
-    const pages = [];
-    const showMax = 5;
-    
-    if (totalPages <= showMax) {
-      for (let i = 1; i <= totalPages; i++) {
-        pages.push(i);
-      }
-    } else {
-      if (currentPage <= 3) {
-        pages.push(1, 2, 3, 4, '...', totalPages);
-      } else if (currentPage >= totalPages - 2) {
-        pages.push(1, '...', totalPages - 3, totalPages - 2, totalPages - 1, totalPages);
-      } else {
-        pages.push(1, '...', currentPage - 1, currentPage, currentPage + 1, '...', totalPages);
-      }
+    const pages: Array<number | string> = [];
+
+    for (let i = 1; i <= totalPages; i++) {
+      const shouldShow = i === 1 || i === totalPages || Math.abs(i - currentPage) <= 1;
+      if (!shouldShow && i !== 2 && i !== totalPages - 1) continue;
+      pages.push(i);
     }
-    
+
     return pages;
   };
 
   return (
-    <div className="flex justify-center items-center space-x-2 my-8">
+    <div className="mt-8 flex items-center justify-center gap-2">
       <button
         onClick={() => onPageChange(currentPage - 1)}
         disabled={currentPage === 1}
-        className={`p-2 rounded-md ${currentPage === 1 ? 'text-gray-400 cursor-not-allowed' : 'text-gray-700 hover:bg-orange-100 hover:text-orange-500'}`}
+        className="px-4 py-2 bg-gray-200 hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed transition"
       >
-        <ChevronLeft className="w-5 h-5" />
+        Trước
       </button>
 
-      <div className="flex space-x-1">
-        {getPageNumbers().map((page, index) => (
-          <button
-            key={index}
-            onClick={() => typeof page === 'number' ? onPageChange(page) : null}
-            disabled={page === '...'}
-            className={`w-10 h-10 rounded-md font-medium transition-colors ${
-              page === currentPage
-                ? 'bg-orange-500 text-white'
-                : page === '...'
-                ? 'text-gray-500 cursor-default'
-                : 'text-gray-700 hover:bg-orange-100 hover:text-orange-500'
-            }`}
-          >
-            {page}
-          </button>
-        ))}
-      </div>
+      {getPageNumbers().map((page, index, pages) => {
+        if (typeof page !== 'number') return null;
+
+        const previousPage = index > 0 ? pages[index - 1] : null;
+        const needsEllipsis = typeof previousPage === 'number' && page - previousPage > 1;
+
+        return (
+          <div key={page} className="flex items-center gap-2">
+            {needsEllipsis && <span className="px-2 text-gray-500">...</span>}
+            <button
+              onClick={() => onPageChange(page)}
+              className={`px-3 py-2 transition ${
+                currentPage === page
+                  ? 'bg-orange-500 text-white font-bold'
+                  : 'bg-gray-200 hover:bg-gray-300'
+              }`}
+            >
+              {page}
+            </button>
+          </div>
+        );
+      })}
 
       <button
         onClick={() => onPageChange(currentPage + 1)}
         disabled={currentPage === totalPages}
-        className={`p-2 rounded-md ${currentPage === totalPages ? 'text-gray-400 cursor-not-allowed' : 'text-gray-700 hover:bg-orange-100 hover:text-orange-500'}`}
+        className="px-4 py-2 bg-gray-200 hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed transition"
       >
-        <ChevronRight className="w-5 h-5" />
+        Sau
       </button>
+
+      <span className="ml-4 text-gray-600 font-medium">
+        Trang {currentPage} / {totalPages}
+      </span>
     </div>
   );
 }

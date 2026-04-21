@@ -113,7 +113,7 @@ namespace BookStore.API.Controllers
         public async Task<IActionResult> GetById(string id)
         {
             var book = await _bookService.GetBookByIdAsync(id);
-            if (book == null) return NotFound(new { message = "Kh�ng t�m th?y s�ch" });
+            if (book == null) return NotFound(new { message = "Không tìm thấy sách" });
             return Ok(book);
         }
 
@@ -125,7 +125,7 @@ namespace BookStore.API.Controllers
             {
                 var product = await _bookService.GetBookDetailAsync(id);
                 if (product == null)
-                    return NotFound(new { message = "S?n ph?m kh�ng t?n t?i" });
+                    return NotFound(new { message = "Sản phẩm không tồn tại" });
 
                 return Ok(product);
             }
@@ -135,7 +135,7 @@ namespace BookStore.API.Controllers
             }
         }
 
-        // POST: api/Books (Ch? Admin)
+        // POST: api/Books (Chỉ Admin)
         [Authorize(Roles = "Admin")]
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] BookCreateDto dto)
@@ -151,7 +151,7 @@ namespace BookStore.API.Controllers
             }
         }
 
-        // PUT: api/Books/5 (Ch? Admin)
+        // PUT: api/Books/5 (Chỉ Admin)
         [Authorize(Roles = "Admin")]
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(string id, [FromBody] BookUpdateDto dto)
@@ -159,8 +159,8 @@ namespace BookStore.API.Controllers
             try
             {
                 var success = await _bookService.UpdateBookAsync(id, dto);
-                if (!success) return NotFound(new { message = "Kh�ng t�m th?y s�ch d? c?p nh?t" });
-                return Ok(new { message = "C?p nh?t s�ch th�nh c�ng!" });
+                if (!success) return NotFound(new { message = "Không tìm thấy sách để cập nhật" });
+                return Ok(new { message = "Cập nhật sách thành công!" });
             }
             catch (Exception ex)
             {
@@ -168,23 +168,23 @@ namespace BookStore.API.Controllers
             }
         }
 
-        // DELETE: api/Books/5 (Ch? Admin)
+        // DELETE: api/Books/5 (Chỉ Admin)
         [Authorize(Roles = "Admin")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(string id)
         {
             var success = await _bookService.DeleteBookAsync(id);
-            if (!success) return NotFound(new { message = "Kh�ng t�m th?y s�ch d? x�a" });
-            return Ok(new { message = "�� ?n s�ch th�nh c�ng!" });
+            if (!success) return NotFound(new { message = "Không tìm thấy sách để xóa" });
+            return Ok(new { message = "Xóa sách thành công!" });
         }
-        // PUT: api/Books/5/restore (Ch? Admin)
+        // PUT: api/Books/5/restore (Chỉ Admin)
         [Authorize(Roles = "Admin")]
         [HttpPut("{id}/restore")]
         public async Task<IActionResult> Restore(string id)
         {
             var success = await _bookService.RestoreBookAsync(id);
-            if (!success) return NotFound(new { message = "Kh�ng t�m th?y s�ch" });
-            return Ok(new { message = "�� kh�i ph?c s�ch th�nh c�ng!" });
+            if (!success) return NotFound(new { message = "Không tìm thấy sách" });
+            return Ok(new { message = "Khôi phục sách thành công!" });
         }
     
         [HttpGet("top-selling")]

@@ -1,4 +1,5 @@
-﻿import { useState, useEffect, useCallback } from 'react';
+﻿/* eslint-disable @typescript-eslint/no-explicit-any */
+import { useState, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { CreditCard, FileText, MapPin, Phone, ShoppingCart, Wallet } from 'lucide-react';
 import { toast } from 'react-toastify';
@@ -7,6 +8,7 @@ import LocationPickerMap from '../../components/LocationPickerMap';
 import Breadcrumb from '../../components/Breadcrumb';
 import OrangeButton from '../../components/OrangeButton';
 import PageTitle from '../../components/PageTitle';
+import Modal from '../../components/ui/Modal';
 
 interface CartItem {
   cartItemId?: string;
@@ -98,6 +100,7 @@ export default function CheckoutPage() {
   const [voucherCode, setVoucherCode] = useState(() => readCheckoutVoucherCode());
   const [appliedVoucher, setAppliedVoucher] = useState<Voucher | null>(null);
   const [appliedDiscount, setAppliedDiscount] = useState(0);
+  const [isVoucherModalOpen, setIsVoucherModalOpen] = useState(false);
 
   const getCheckoutState = useCallback(() => readCheckoutState(location.state), [location.state]);
 
@@ -237,6 +240,51 @@ export default function CheckoutPage() {
 
   const totalPrice = cart.reduce((sum, item) => sum + getPrice(item) * item.quantity, 0);
   const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+
+  const getVoucherPreview = (voucher: Voucher) => {
+    if (totalPrice < voucher.minOrderValue) {
+      return {
+        isEligible: false,
+        discountValue: 0,
+        message: `Cần đơn từ ${voucher.minOrderValue.toLocaleString('vi-VN')}đ`,
+      };
+    }
+
+    let applicableTotal = 0;
+    let hasAlreadyHardcodedVoucher = false;
+
+    cart.forEach(item => {
+      let isApplicable = true;
+      if (item.discountVoucherCode === voucher.code) {
+        isApplicable = false;
+        hasAlreadyHardcodedVoucher = true;
+      }
+
+      if (isApplicable) {
+        applicableTotal += getPrice(item) * item.quantity;
+      }
+    });
+
+    if (applicableTotal === 0) {
+      return {
+        isEligible: false,
+        discountValue: 0,
+        message: hasAlreadyHardcodedVoucher
+          ? 'Sản phẩm trong giỏ đã được admin áp mã này'
+          : 'Mã này không áp dụng cho giỏ hiện tại',
+      };
+    }
+
+    const discountValue = voucher.discountType === 'Percentage'
+      ? applicableTotal * (voucher.discountAmount / 100)
+      : Math.min(voucher.discountAmount, applicableTotal);
+
+    return {
+      isEligible: true,
+      discountValue,
+      message: `Có thể giảm ${discountValue.toLocaleString('vi-VN')}đ`,
+    };
+  };
 
   const appliedVoucherCode = appliedVoucher?.code;
 
@@ -456,7 +504,7 @@ export default function CheckoutPage() {
         {/* Form */}
         <div className="lg:col-span-2">
           <form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg shadow">
-            <h2 className="text-xl font-bold text-gray-800 mb-6">Thông tin giao hàng</h2>
+            <h2 className="mb-6 text-xl font-bold uppercase italic text-orange-500">Thông tin giao hàng</h2>
 
             <div className="space-y-4">
               <div>
@@ -560,7 +608,7 @@ export default function CheckoutPage() {
         {/* Order Summary */}
         <div className="lg:col-span-1">
           <div className="bg-white p-6 rounded-lg shadow sticky top-20">
-            <h2 className="text-xl font-bold text-gray-800 mb-4">Tóm tắt đơn hàng</h2>
+            <h2 className="mb-4 text-xl font-bold uppercase italic text-orange-500">Tóm tắt đơn hàng</h2>
 
             <div className="space-y-3 mb-6 pb-6 border-b border-gray-200 max-h-96 overflow-y-auto">
               {cart.map(item => (
@@ -583,19 +631,20 @@ export default function CheckoutPage() {
               <div className="border-t border-gray-100 pt-3">
                 <label className="block text-sm font-bold text-gray-700 mb-2">Mã giảm giá</label>
                 <div className="flex gap-2">
-                  <select
-                    value={voucherCode}
-                    onChange={(e) => setVoucherCode(e.target.value)}
+                  <button
+                    type="button"
+                    onClick={() => setIsVoucherModalOpen(true)}
                     disabled={!!appliedVoucher || availableVouchers.length === 0 || submitting}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 font-mono cursor-pointer disabled:bg-gray-100 disabled:cursor-not-allowed"
+                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-left text-sm font-mono focus:outline-none focus:ring-2 focus:ring-orange-500 disabled:cursor-not-allowed disabled:bg-gray-100"
                   >
-                    <option value="">{availableVouchers.length > 0 ? '-- Chọn mã giảm giá --' : 'Không có mã giảm giá nào'}</option>
-                    {availableVouchers.map(v => (
-                      <option key={v.code} value={v.code}>
-                        [{v.code}] Giảm {v.discountType === 'Percentage' ? v.discountAmount + '%' : v.discountAmount.toLocaleString('vi-VN') + 'đ'} - Đơn từ {v.minOrderValue.toLocaleString('vi-VN')}đ
-                      </option>
-                    ))}
-                  </select>
+                    {voucherCode
+                      ? `[${voucherCode}] ${availableVouchers.find(v => v.code === voucherCode)?.discountType === 'Percentage'
+                          ? `Giảm ${availableVouchers.find(v => v.code === voucherCode)?.discountAmount}%`
+                          : `Giảm ${(availableVouchers.find(v => v.code === voucherCode)?.discountAmount || 0).toLocaleString('vi-VN')}đ`}`
+                      : availableVouchers.length > 0
+                        ? 'Bấm để chọn mã giảm giá'
+                        : 'Không có mã giảm giá nào'}
+                  </button>
                   {!appliedVoucher ? (
                     <button
                       type="button"
@@ -641,6 +690,73 @@ export default function CheckoutPage() {
           </div>
         </div>
       </div>
+
+      <Modal isOpen={isVoucherModalOpen} onClose={() => setIsVoucherModalOpen(false)} title="Chọn mã giảm giá">
+        <div className="space-y-4">
+          <div className="rounded-lg border border-orange-200 bg-orange-50 px-4 py-3 text-sm text-orange-700">
+            Chọn voucher phù hợp với đơn hiện tại.
+          </div>
+          {availableVouchers.length > 0 ? (
+            availableVouchers.map((voucher) => {
+              const isSelected = voucherCode === voucher.code;
+              const preview = getVoucherPreview(voucher);
+              return (
+                <button
+                  key={voucher.code}
+                  type="button"
+                  onClick={() => {
+                    setVoucherCode(voucher.code);
+                    setIsVoucherModalOpen(false);
+                  }}
+                  className={`w-full rounded-lg border p-4 text-left transition ${
+                    isSelected
+                      ? 'border-orange-500 bg-orange-50'
+                      : 'border-gray-200 bg-white hover:border-orange-300 hover:bg-orange-50/50'
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="font-bold text-gray-800">{voucher.code}</span>
+                        <span className="rounded-full bg-orange-500 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-white">
+                          {voucher.discountType === 'Percentage' ? `Giảm ${voucher.discountAmount}%` : `Giảm ${voucher.discountAmount.toLocaleString('vi-VN')}đ`}
+                        </span>
+                        <span
+                          className={`rounded-full px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide ${
+                            preview.isEligible
+                              ? 'bg-green-100 text-green-700'
+                              : 'bg-gray-100 text-gray-600'
+                          }`}
+                        >
+                          {preview.isEligible ? 'Phù hợp đơn hàng' : 'Chưa áp dụng được'}
+                        </span>
+                      </div>
+                      <div className="mt-3 grid gap-2 text-sm text-gray-600 sm:grid-cols-2">
+                        <div className="rounded-md bg-gray-50 px-3 py-2">
+                          Đơn tối thiểu: <span className="font-semibold text-gray-800">{voucher.minOrderValue.toLocaleString('vi-VN')}đ</span>
+                        </div>
+                        <div className="rounded-md bg-gray-50 px-3 py-2">
+                          Ước tính giảm: <span className="font-semibold text-orange-600">{preview.discountValue.toLocaleString('vi-VN')}đ</span>
+                        </div>
+                      </div>
+                      <div className={`mt-3 text-xs font-semibold ${preview.isEligible ? 'text-green-600' : 'text-gray-500'}`}>
+                        {preview.message}
+                      </div>
+                    </div>
+                    {isSelected && (
+                      <span className="rounded bg-orange-500 px-2 py-1 text-xs font-bold uppercase text-white">
+                        Đã chọn
+                      </span>
+                    )}
+                  </div>
+                </button>
+              );
+            })
+          ) : (
+            <p className="text-sm italic text-gray-500">Hiện chưa có voucher nào khả dụng.</p>
+          )}
+        </div>
+      </Modal>
     </div>
   );
 }

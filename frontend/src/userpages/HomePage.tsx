@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useRef, type CSSProperties } from 'react';
+﻿import { useState, useEffect, useRef } from 'react';
 import { ArrowRight } from 'lucide-react';
 import { toast } from 'react-toastify';
 import axiosClient from '../api/axiosClient';
@@ -48,19 +48,11 @@ export default function HomePage() {
   const [topRated, setTopRated] = useState<Product[]>([]);
   const [topSelling, setTopSelling] = useState<Product[]>([]);
   const [banners, setBanners] = useState<Banner[]>([]);
-  const [activeDragSection, setActiveDragSection] = useState<string | null>(null);
 
   const categoriesRef = useRef<HTMLDivElement>(null);
   const discountedRef = useRef<HTMLDivElement>(null);
   const topRatedRef = useRef<HTMLDivElement>(null);
   const topSellingRef = useRef<HTMLDivElement>(null);
-  const dragStateRef = useRef({
-    isDragging: false,
-    moved: false,
-    pointerId: -1,
-    startX: 0,
-    scrollLeft: 0,
-  });
   const sectionTitleClassName =
     "block w-full bg-orange-500 px-5 py-3 text-2xl sm:text-3xl lg:text-4xl font-bold uppercase italic text-white shadow-sm animate-[homeTitleBlink_1.8s_ease-in-out_infinite]";
 
@@ -70,40 +62,6 @@ export default function HomePage() {
     fetchTopRated();
     fetchTopSelling();
     fetchCategories();
-  }, []);
-
-  useEffect(() => {
-    const handleWheel = (e: WheelEvent, ref: React.RefObject<HTMLDivElement | null>) => {
-      if (!ref.current) return;
-      
-      const scrollWidth = ref.current.scrollWidth;
-      const clientWidth = ref.current.clientWidth;
-      
-      // Only handle horizontal scroll if there's content to scroll
-      if (scrollWidth > clientWidth) {
-        e.preventDefault();
-        // Scroll horizontally based on wheel movement
-        ref.current.scrollLeft += e.deltaY > 0 ? 50 : -50;
-      }
-    };
-
-    const discountedContainer = discountedRef.current;
-    const topRatedContainer = topRatedRef.current;
-    const topSellingContainer = topSellingRef.current;
-
-    const handleWheelDiscounted = (e: WheelEvent) => handleWheel(e, discountedRef);
-    const handleWheelTopRated = (e: WheelEvent) => handleWheel(e, topRatedRef);
-    const handleWheelTopSelling = (e: WheelEvent) => handleWheel(e, topSellingRef);
-
-    discountedContainer?.addEventListener('wheel', handleWheelDiscounted, { passive: false });
-    topRatedContainer?.addEventListener('wheel', handleWheelTopRated, { passive: false });
-    topSellingContainer?.addEventListener('wheel', handleWheelTopSelling, { passive: false });
-
-    return () => {
-      discountedContainer?.removeEventListener('wheel', handleWheelDiscounted);
-      topRatedContainer?.removeEventListener('wheel', handleWheelTopRated);
-      topSellingContainer?.removeEventListener('wheel', handleWheelTopSelling);
-    };
   }, []);
 
   const fetchBanners = async () => {
@@ -160,71 +118,6 @@ export default function HomePage() {
     }
   };
 
-  const startDragScroll = (
-    e: React.PointerEvent<HTMLDivElement>,
-    ref: React.RefObject<HTMLDivElement | null>,
-    sectionKey: string,
-  ) => {
-    if (!ref.current) return;
-    dragStateRef.current = {
-      isDragging: true,
-      moved: false,
-      pointerId: e.pointerId,
-      startX: e.pageX - ref.current.offsetLeft,
-      scrollLeft: ref.current.scrollLeft,
-    };
-    setActiveDragSection(sectionKey);
-    ref.current.setPointerCapture(e.pointerId);
-    ref.current.style.cursor = 'grabbing';
-    ref.current.style.userSelect = 'none';
-  };
-
-  const handleDragScroll = (
-    e: React.PointerEvent<HTMLDivElement>,
-    ref: React.RefObject<HTMLDivElement | null>,
-  ) => {
-    if (!ref.current || !dragStateRef.current.isDragging) return;
-    e.preventDefault();
-    const x = e.pageX - ref.current.offsetLeft;
-    const walk = (x - dragStateRef.current.startX) * 1.25;
-    if (Math.abs(walk) > 6) {
-      dragStateRef.current.moved = true;
-    }
-    ref.current.scrollLeft = dragStateRef.current.scrollLeft - walk;
-  };
-
-  const stopDragScroll = (
-    e: React.PointerEvent<HTMLDivElement>,
-    ref: React.RefObject<HTMLDivElement | null>,
-  ) => {
-    if (!ref.current) return;
-    if (ref.current.hasPointerCapture(e.pointerId)) {
-      ref.current.releasePointerCapture(e.pointerId);
-    }
-    dragStateRef.current.isDragging = false;
-    setActiveDragSection(null);
-    ref.current.style.cursor = 'grab';
-    ref.current.style.removeProperty('user-select');
-    window.setTimeout(() => {
-      dragStateRef.current.moved = false;
-    }, 0);
-  };
-
-  const preventClickAfterDrag = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (dragStateRef.current.moved) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
-  };
-
-  const getDragScrollClassName = (sectionKey: string) =>
-    `flex overflow-x-auto gap-4 pb-4 snap-x ${activeDragSection === sectionKey ? 'cursor-grabbing snap-none' : 'cursor-grab snap-mandatory scroll-smooth'}`;
-
-  const getDragScrollStyle = (sectionKey: string): CSSProperties => ({
-    scrollBehavior: activeDragSection === sectionKey ? 'auto' : 'smooth',
-    touchAction: 'pan-x',
-    WebkitOverflowScrolling: 'touch',
-  });
 
   return (
     <div>
@@ -302,14 +195,8 @@ export default function HomePage() {
           <h2 className={`${sectionTitleClassName} mb-8`}>Danh Mục Sách</h2>
           <div
             ref={categoriesRef}
-            onPointerDown={(e) => startDragScroll(e, categoriesRef, 'categories')}
-            onPointerMove={(e) => handleDragScroll(e, categoriesRef)}
-            onPointerUp={(e) => stopDragScroll(e, categoriesRef)}
-            onPointerCancel={(e) => stopDragScroll(e, categoriesRef)}
-            onPointerLeave={(e) => dragStateRef.current.isDragging && stopDragScroll(e, categoriesRef)}
-            onClickCapture={preventClickAfterDrag}
-            className={`${getDragScrollClassName('categories')} sm:gap-6`}
-            style={getDragScrollStyle('categories')}
+            className="flex overflow-x-auto gap-4 sm:gap-6 snap-x snap-mandatory pb-4 scroll-smooth"
+            style={{ scrollBehavior: 'smooth', touchAction: 'pan-x', WebkitOverflowScrolling: 'touch' }}
           >
             {categories.length > 0 ? (
               categories.map(cat => (
@@ -343,14 +230,8 @@ export default function HomePage() {
           ) : (
             <div
               ref={discountedRef}
-              onPointerDown={(e) => startDragScroll(e, discountedRef, 'discounted')}
-              onPointerMove={(e) => handleDragScroll(e, discountedRef)}
-              onPointerUp={(e) => stopDragScroll(e, discountedRef)}
-              onPointerCancel={(e) => stopDragScroll(e, discountedRef)}
-              onPointerLeave={(e) => dragStateRef.current.isDragging && stopDragScroll(e, discountedRef)}
-              onClickCapture={preventClickAfterDrag}
-              className={getDragScrollClassName('discounted')}
-              style={getDragScrollStyle('discounted')}
+              className="flex overflow-x-auto gap-4 snap-x snap-mandatory pb-4 scroll-smooth"
+              style={{ scrollBehavior: 'smooth', touchAction: 'pan-x', WebkitOverflowScrolling: 'touch' }}
             >
               {discounted.map(product => (
                 <HomeProductCard
@@ -387,14 +268,8 @@ export default function HomePage() {
           ) : (
             <div
               ref={topRatedRef}
-              onPointerDown={(e) => startDragScroll(e, topRatedRef, 'topRated')}
-              onPointerMove={(e) => handleDragScroll(e, topRatedRef)}
-              onPointerUp={(e) => stopDragScroll(e, topRatedRef)}
-              onPointerCancel={(e) => stopDragScroll(e, topRatedRef)}
-              onPointerLeave={(e) => dragStateRef.current.isDragging && stopDragScroll(e, topRatedRef)}
-              onClickCapture={preventClickAfterDrag}
-              className={getDragScrollClassName('topRated')}
-              style={getDragScrollStyle('topRated')}
+              className="flex overflow-x-auto gap-4 snap-x snap-mandatory pb-4 scroll-smooth"
+              style={{ scrollBehavior: 'smooth', touchAction: 'pan-x', WebkitOverflowScrolling: 'touch' }}
             >
               {topRated.map(product => (
                 <HomeProductCard
@@ -431,14 +306,8 @@ export default function HomePage() {
           ) : (
             <div
               ref={topSellingRef}
-              onPointerDown={(e) => startDragScroll(e, topSellingRef, 'topSelling')}
-              onPointerMove={(e) => handleDragScroll(e, topSellingRef)}
-              onPointerUp={(e) => stopDragScroll(e, topSellingRef)}
-              onPointerCancel={(e) => stopDragScroll(e, topSellingRef)}
-              onPointerLeave={(e) => dragStateRef.current.isDragging && stopDragScroll(e, topSellingRef)}
-              onClickCapture={preventClickAfterDrag}
-              className={getDragScrollClassName('topSelling')}
-              style={getDragScrollStyle('topSelling')}
+              className="flex overflow-x-auto gap-4 snap-x snap-mandatory pb-4 scroll-smooth"
+              style={{ scrollBehavior: 'smooth', touchAction: 'pan-x', WebkitOverflowScrolling: 'touch' }}
             >
               {topSelling.map(product => (
                 <HomeProductCard
