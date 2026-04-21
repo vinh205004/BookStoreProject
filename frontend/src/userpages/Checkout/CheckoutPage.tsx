@@ -1,9 +1,12 @@
-import { useState, useEffect, useCallback } from 'react';
+﻿import { useState, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { CreditCard, FileText, MapPin, Phone, ShoppingCart, Wallet } from 'lucide-react';
 import { toast } from 'react-toastify';
 import axiosClient from '../../api/axiosClient';
 import LocationPickerMap from '../../components/LocationPickerMap';
+import Breadcrumb from '../../components/Breadcrumb';
+import OrangeButton from '../../components/OrangeButton';
+import PageTitle from '../../components/PageTitle';
 
 interface CartItem {
   cartItemId?: string;
@@ -419,12 +422,20 @@ export default function CheckoutPage() {
   if (cart.length === 0) {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <Breadcrumb
+          items={[
+            { label: 'Trang chủ', to: '/' },
+            { label: 'Giỏ hàng', to: '/cart' },
+            { label: 'Thanh toán' }
+          ]}
+        />
+        <PageTitle title="Thanh Toán" />
         <div className="text-center">
           <ShoppingCart size={64} className="mx-auto text-gray-300 mb-4" />
           <h1 className="text-2xl font-bold text-gray-800 mb-4">Giỏ hàng trống</h1>
-          <a href="/products" className="inline-block bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-6 rounded-lg">
+          <OrangeButton to="/products" className="rounded-lg px-6 py-2 normal-case">
             Quay lại mua sắm
-          </a>
+          </OrangeButton>
         </div>
       </div>
     );
@@ -432,7 +443,14 @@ export default function CheckoutPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <h1 className="text-3xl font-bold mb-8 text-gray-800">Thanh toán</h1>
+      <Breadcrumb
+        items={[
+          { label: 'Trang chủ', to: '/' },
+          { label: 'Giỏ hàng', to: '/cart' },
+          { label: 'Thanh toán' }
+        ]}
+      />
+      <PageTitle title="Thanh Toán" />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Form */}
@@ -533,13 +551,9 @@ export default function CheckoutPage() {
               </div>
             </div>
 
-            <button
-              type="submit"
-              disabled={submitting}
-              className="w-full mt-6 bg-orange-500 hover:bg-orange-600 disabled:bg-gray-400 text-white font-bold py-3 rounded-lg transition"
-            >
+            <OrangeButton type="submit" disabled={submitting} className="mt-6 w-full rounded-lg py-3 normal-case disabled:bg-gray-400">
               {submitting ? 'Đang xử lý...' : paymentMethod === 'vnpay' ? 'Thanh toán qua VNPAY' : 'Xác nhận đơn hàng'}
-            </button>
+            </OrangeButton>
           </form>
         </div>
 
@@ -630,3 +644,6 @@ export default function CheckoutPage() {
     </div>
   );
 }
+
+
+

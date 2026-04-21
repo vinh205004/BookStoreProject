@@ -1,8 +1,11 @@
 ﻿import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { ArrowLeft, ChevronDown, Download, Package, XCircle } from 'lucide-react';
+import { ChevronDown, Download, Package, XCircle } from 'lucide-react';
 import { toast } from 'react-toastify';
 import axiosClient from '../../api/axiosClient';
+import Breadcrumb from '../../components/Breadcrumb';
+import OrangeButton from '../../components/OrangeButton';
+import PageTitle from '../../components/PageTitle';
 
 interface OrderItem {
   bookId: string;
@@ -169,13 +172,20 @@ export default function MyOrders() {
   if (orders.length === 0) {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <Breadcrumb
+          items={[
+            { label: 'Trang chủ', to: '/' },
+            { label: 'Đơn hàng của tôi' }
+          ]}
+        />
+        <PageTitle title="Đơn Hàng Của Tôi" />
         <div className="text-center">
           <Package size={64} className="mx-auto text-gray-300 mb-4" />
           <h1 className="text-2xl font-bold text-gray-800 mb-4">Chưa có đơn hàng</h1>
           <p className="text-gray-600 mb-8">Bạn chưa có đơn hàng nào trong hệ thống</p>
-          <a href="/products" className="inline-block bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-6 rounded-lg">
+          <OrangeButton to="/products" className="rounded-lg px-6 py-2 normal-case">
             Tiếp tục mua sắm
-          </a>
+          </OrangeButton>
         </div>
       </div>
     );
@@ -183,16 +193,14 @@ export default function MyOrders() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="text-3xl font-bold text-gray-800">Đơn hàng của tôi</h1>
-        <button
-          onClick={() => navigate('/profile')}
-          className="flex items-center gap-2 text-gray-600 hover:text-gray-800 transition"
-        >
-          <ArrowLeft size={20} />
-          <span className="hidden sm:inline">Quay lại</span>
-        </button>
-      </div>
+      <Breadcrumb
+        items={[
+          { label: 'Trang chủ', to: '/' },
+          { label: 'Tài khoản', to: '/profile' },
+          { label: 'Đơn hàng của tôi' }
+        ]}
+      />
+      <PageTitle title="Đơn Hàng Của Tôi" />
 
       <div className="space-y-4">
         {orders.map(order => (
@@ -336,5 +344,7 @@ export default function MyOrders() {
     </div>
   );
 }
+
+
 
 

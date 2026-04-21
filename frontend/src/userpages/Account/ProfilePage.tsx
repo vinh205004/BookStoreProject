@@ -1,10 +1,13 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
+﻿/* eslint-disable @typescript-eslint/no-unused-vars */
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User, Mail, Phone, MapPin, Lock, Save, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'react-toastify';
 import axiosClient from '../../api/axiosClient';
 import LocationPickerMap from '../../components/LocationPickerMap';
+import Breadcrumb from '../../components/Breadcrumb';
+import OrangeButton from '../../components/OrangeButton';
+import PageTitle from '../../components/PageTitle';
 
 interface UserProfile {
   userId: string;
@@ -141,7 +144,13 @@ export default function ProfilePage() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <h1 className="text-3xl font-bold mb-8 text-gray-800">Thông tin tài khoản</h1>
+      <Breadcrumb
+        items={[
+          { label: 'Trang chủ', to: '/' },
+          { label: 'Tài khoản' }
+        ]}
+      />
+      <PageTitle title="Thông Tin Tài Khoản" />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Sidebar */}
@@ -158,9 +167,9 @@ export default function ProfilePage() {
           </div>
 
           <nav className="mt-6 space-y-2">
-            <a href="/orders" className="block px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition text-center font-semibold">
+            <OrangeButton to="/orders" className="flex w-full rounded-lg px-4 py-2 normal-case">
               Đơn hàng của tôi
-            </a>
+            </OrangeButton>
           </nav>
         </div>
 
@@ -251,13 +260,10 @@ export default function ProfilePage() {
                 </div>
 
                 <div className="flex gap-2">
-                  <button
-                    type="submit"
-                    className="flex-1 bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 rounded-lg flex items-center justify-center gap-2 transition"
-                  >
+                  <OrangeButton type="submit" className="flex-1 gap-2 rounded-lg py-2 normal-case">
                     <Save size={20} />
                     Lưu
-                  </button>
+                  </OrangeButton>
                   <button
                     type="button"
                     onClick={() => setEditing(false)}
@@ -400,3 +406,5 @@ export default function ProfilePage() {
     </div>
   );
 }
+
+

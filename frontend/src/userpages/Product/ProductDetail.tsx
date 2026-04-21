@@ -2,10 +2,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, BookOpen, Building2, Star, ShoppingCart, UserCircle, X } from 'lucide-react';
+import { BookOpen, Building2, Star, ShoppingCart, UserCircle, X } from 'lucide-react';
 import { toast } from 'react-toastify';
 import axiosClient from '../../api/axiosClient';
 import { getCurrentUserId, getUserRole } from '../../utils/tokenUtils';
+import Breadcrumb from '../../components/Breadcrumb';
+import OrangeButton from '../../components/OrangeButton';
 
 interface ProductDetail {
   bookId: string;
@@ -396,15 +398,21 @@ export default function ProductDetail() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* Back Button */}
-      <button
-        onClick={() => navigate(-1)}
-        className="flex items-center gap-2 text-orange-500 hover:text-orange-600 mb-6 transition"
-      >
-        <ArrowLeft size={20} />
-        Quay lại
-      </button>
+    <>
+      <style>{`
+        @keyframes relatedTitleBlink {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.68; }
+        }
+      `}</style>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <Breadcrumb
+        items={[
+          { label: 'Trang chủ', to: '/' },
+          { label: product.categoryName || 'Danh mục', to: `/products?categoryId=${product.categoryId}` },
+          { label: product.title }
+        ]}
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
         <div className="lg:col-span-3">
@@ -438,7 +446,7 @@ export default function ProductDetail() {
 
         {/* Details */}
         <div>
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">{product.title}</h1>
+          <h1 className="mb-2 text-2xl font-bold uppercase leading-tight text-gray-800 lg:text-[1.75rem]">{product.title}</h1>
 
           {/* Rating */}
           <div className="flex items-center gap-2 mb-4">
@@ -585,11 +593,11 @@ export default function ProductDetail() {
       {/* Sách cùng tác giả (Right Column) */}
       <div className="lg:col-span-1 border-l border-gray-200 pl-4 hidden lg:block">
         <div className="sticky top-6">
-          <div className="flex justify-between items-center mb-4 border-b pb-2">
-            <h3 className="font-bold text-lg text-gray-800">Sách cùng tác giả</h3>
-            <Link to={`/products?authorId=${product.authorId}`} className="text-sm text-orange-500 hover:text-orange-600 font-semibold border border-orange-500 px-2 py-1 rounded">
+          <div className="flex items-center justify-between gap-2 mb-4 border-b pb-2">
+            <h3 className="text-sm font-bold uppercase italic text-orange-500 whitespace-nowrap animate-[relatedTitleBlink_1.8s_ease-in-out_infinite]">Sách cùng tác giả</h3>
+            <OrangeButton to={`/products?authorId=${product.authorId}`} size="sm">
               Xem tất cả
-            </Link>
+            </OrangeButton>
           </div>
           <div className="flex flex-col gap-4 max-h-[80vh] overflow-y-auto pr-2 custom-scrollbar">
             {authorBooks.length > 0 ? (
@@ -888,10 +896,10 @@ export default function ProductDetail() {
       {/* Sách cùng danh mục (Bottom Scroll) */}
       <div className="mt-16 border-t border-gray-200 pt-8">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-gray-800">Sách cùng danh mục</h2>
-          <Link to={`/products?categoryId=${product.categoryId}`} className="text-orange-500 hover:text-orange-600 font-bold border border-orange-500 px-4 py-2 hover:bg-orange-50 transition border-r-4">
+          <h2 className="text-2xl font-bold uppercase italic text-orange-500 animate-[relatedTitleBlink_1.8s_ease-in-out_infinite]">Sách cùng danh mục</h2>
+          <OrangeButton to={`/products?categoryId=${product.categoryId}`}>
             Xem tất cả
-          </Link>
+          </OrangeButton>
         </div>
         
         <div className="flex overflow-x-auto gap-4 pb-4 custom-scrollbar">
@@ -999,6 +1007,7 @@ export default function ProductDetail() {
         </div>
       )}
     </div>
+    </>
   );
 }
 

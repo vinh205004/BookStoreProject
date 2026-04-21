@@ -1,8 +1,9 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Mail, Lock, User, Phone, MapPin, UserPlus } from 'lucide-react';
 import { toast } from 'react-toastify';
 import axiosClient from '../../api/axiosClient';
+import OrangeButton from '../../components/OrangeButton';
 
 export default function Register() {
   const navigate = useNavigate();
@@ -170,14 +171,10 @@ export default function Register() {
               </div>
             </div>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-orange-500 hover:bg-orange-600 disabled:bg-gray-400 text-white font-bold py-2 rounded-lg transition flex items-center justify-center gap-2"
-            >
+            <OrangeButton type="submit" disabled={loading} className="w-full gap-2 rounded-lg py-2 normal-case disabled:bg-gray-400">
               <UserPlus size={20} />
               {loading ? 'Đang xử lý...' : 'Đăng Ký'}
-            </button>
+            </OrangeButton>
           </form>
 
           <div className="mt-6 text-center">
@@ -193,3 +190,5 @@ export default function Register() {
     </div>
   );
 }
+
+

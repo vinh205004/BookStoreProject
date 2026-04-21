@@ -1,9 +1,12 @@
-/* eslint-disable prefer-const */
+﻿/* eslint-disable prefer-const */
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { Star, ShoppingCart, Filter } from 'lucide-react';
 import { toast } from 'react-toastify';
 import axiosClient from '../../api/axiosClient';
+import Breadcrumb from '../../components/Breadcrumb';
+import OrangeButton from '../../components/OrangeButton';
+import PageTitle from '../../components/PageTitle';
 
 import { addToGuestCart } from '../../utils/cartUtils';
 import React from 'react';
@@ -276,133 +279,144 @@ export default function ProductCatalog() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <h1 className="text-3xl font-bold mb-8 text-gray-800">Sản Phẩm</h1>
+      <Breadcrumb
+        items={[
+          { label: "Trang chủ", to: "/" },
+          { label: "Tất cả sách" }
+        ]}
+      />
+      <PageTitle title="Sản Phẩm" />
 
       <div className="flex gap-6">
         {/* Filters - Desktop */}
-          <aside className="hidden lg:block w-64 flex-shrink-0 sticky top-24 self-start max-h-[calc(100vh-6rem)] overflow-y-auto z-10 custom-scrollbar">
-          <div className={`bg-white p-6 shadow transition-opacity duration-300 ${loading ? 'opacity-70' : 'opacity-100'}`}>
-            <div className="flex items-center justify-between sm:hidden mb-4">
-              <h2 className="font-bold">Bộ lọc</h2>
-              <button onClick={() => setShowFilters(!showFilters)}>
-                <Filter size={20} />
-              </button>
+        <aside className="hidden lg:block w-64 flex-shrink-0 sticky top-24 self-start max-h-[calc(100vh-6rem)] overflow-y-auto z-10 custom-scrollbar">
+          <div className={`bg-white shadow transition-opacity duration-300 ${loading ? 'opacity-70' : 'opacity-100'}`}>
+            <div className="bg-orange-500 px-4 py-4">
+              <h2 className="text-lg font-bold uppercase text-white">{"Bộ lọc sách"}</h2>
             </div>
+            <div className="p-6">
+              <div className="flex items-center justify-between sm:hidden mb-4">
+                <h2 className="font-bold">{"Bộ lọc"}</h2>
+                <button onClick={() => setShowFilters(!showFilters)}>
+                  <Filter size={20} />
+                </button>
+              </div>
 
-            {/* Search */}
-            <div className="mb-6">
-              <label className="block text-sm font-bold text-gray-700 mb-2">Tìm kiếm</label>
-              <input
-                type="text"
-                value={filters.search}
-                onChange={(e) => handleFilterChange('search', e.target.value)}
-                placeholder="Tên sách..."
-                className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-500"
-              />
-            </div>
-
-            {/* Categories */}
-            <div className="mb-6">
-              <label className="block text-sm font-bold text-gray-700 mb-2">Danh mục</label>
-              <select
-                value={filters.categoryId}
-                onChange={(e) => handleFilterChange('categoryId', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-500"
-              >
-                <option value="">Tất cả</option>
-                {categories.map(cat => (
-                  <option key={cat.categoryId} value={cat.categoryId}>{cat.name}</option>
-                ))}
-              </select>
-            </div>
-
-            {/* Authors */}
-            <div className="mb-6">
-              <label className="block text-sm font-bold text-gray-700 mb-2">Tác giả</label>
-              <select
-                value={filters.authorId}
-                onChange={(e) => handleFilterChange('authorId', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-500"
-              >
-                <option value="">Tất cả</option>
-                {authors.map(author => (
-                  <option key={author.authorId} value={author.authorId}>{author.name}</option>
-                ))}
-              </select>
-            </div>
-
-            {/* Publishers */}
-            <div className="mb-6">
-              <label className="block text-sm font-bold text-gray-700 mb-2">Nhà xuất bản</label>
-              <select
-                value={filters.publisherId}
-                onChange={(e) => handleFilterChange('publisherId', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-500"
-              >
-                <option value="">Tất cả</option>
-                {publishers.map(publisher => (
-                  <option key={publisher.publisherId} value={publisher.publisherId}>{publisher.name}</option>
-                ))}
-              </select>
-            </div>
-
-            {/* Target Audience */}
-            <div className="mb-6">
-              <label className="block text-sm font-bold text-gray-700 mb-2">Đối tượng độc giả</label>
-              <select
-                value={filters.targetAudience}
-                onChange={(e) => handleFilterChange('targetAudience', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-500"
-              >
-                <option value="">Tất cả</option>
-                {audiences.map(audience => (
-                  <option key={audience} value={audience}>{audience}</option>
-                ))}
-              </select>
-            </div>
-
-            {/* Price Range */}
-            <div className="mb-6">
-              <label className="block text-sm font-bold text-gray-700 mb-2">Giá</label>
-              <div className="space-y-2">
+              {/* Search */}
+              <div className="mb-6">
+                <label className="mb-2 block bg-orange-50 px-4 py-3 text-lg font-bold text-slate-900">{"Tìm kiếm"}</label>
                 <input
-                  type="number"
-                  value={filters.minPrice}
-                  onChange={(e) => handleFilterChange('minPrice', parseFloat(e.target.value))}
-                  placeholder="Từ"
-                  className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-500"
-                />
-                <input
-                  type="number"
-                  value={filters.maxPrice}
-                  onChange={(e) => handleFilterChange('maxPrice', parseFloat(e.target.value))}
-                  placeholder="Đến"
+                  type="text"
+                  value={filters.search}
+                  onChange={(e) => handleFilterChange('search', e.target.value)}
+                  placeholder={"Tên sách..."}
                   className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-500"
                 />
               </div>
-            </div>
 
-            {/* Discount Filter */}
-            <div className="mb-6">
-              <label className="block text-sm font-bold text-gray-700 mb-2">Lọc</label>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={filters.hasDiscount}
-                  onChange={(e) => handleFilterChange('hasDiscount', e.target.checked)}
-                  className="w-4 h-4 accent-orange-500"
-                />
-                <span className="text-sm text-gray-700">Sản phẩm giảm giá</span>
-              </label>
-            </div>
+              {/* Categories */}
+              <div className="mb-6">
+                <label className="mb-2 block bg-orange-50 px-4 py-3 text-lg font-bold text-slate-900">{"Danh mục"}</label>
+                <select
+                  value={filters.categoryId}
+                  onChange={(e) => handleFilterChange('categoryId', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                >
+                  <option value="">{"Tất cả"}</option>
+                  {categories.map(cat => (
+                    <option key={cat.categoryId} value={cat.categoryId}>{cat.name}</option>
+                  ))}
+                </select>
+              </div>
 
-            {/* Reset Button */}
-            <button
-              onClick={handleResetFilters}
-              className="w-full bg-gray-500 hover:bg-gray-600 text-white py-2 px-3 font-semibold transition\"
-            >
-              Đặt lại bộ lọc
-            </button>
+              {/* Authors */}
+              <div className="mb-6">
+                <label className="mb-2 block bg-orange-50 px-4 py-3 text-lg font-bold text-slate-900">{"Tác giả"}</label>
+                <select
+                  value={filters.authorId}
+                  onChange={(e) => handleFilterChange('authorId', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                >
+                  <option value="">{"Tất cả"}</option>
+                  {authors.map(author => (
+                    <option key={author.authorId} value={author.authorId}>{author.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Publishers */}
+              <div className="mb-6">
+                <label className="mb-2 block bg-orange-50 px-4 py-3 text-lg font-bold text-slate-900">{"Nhà xuất bản"}</label>
+                <select
+                  value={filters.publisherId}
+                  onChange={(e) => handleFilterChange('publisherId', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                >
+                  <option value="">{"Tất cả"}</option>
+                  {publishers.map(publisher => (
+                    <option key={publisher.publisherId} value={publisher.publisherId}>{publisher.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Target Audience */}
+              <div className="mb-6">
+                <label className="mb-2 block bg-orange-50 px-4 py-3 text-lg font-bold text-slate-900">{"Đối tượng độc giả"}</label>
+                <select
+                  value={filters.targetAudience}
+                  onChange={(e) => handleFilterChange('targetAudience', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                >
+                  <option value="">{"Tất cả"}</option>
+                  {audiences.map(audience => (
+                    <option key={audience} value={audience}>{audience}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Price Range */}
+              <div className="mb-6">
+                <label className="mb-2 block bg-orange-50 px-4 py-3 text-lg font-bold text-slate-900">{"Giá"}</label>
+                <div className="space-y-2">
+                  <input
+                    type="number"
+                    value={filters.minPrice}
+                    onChange={(e) => handleFilterChange('minPrice', parseFloat(e.target.value))}
+                    placeholder={"Từ"}
+                    className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  />
+                  <input
+                    type="number"
+                    value={filters.maxPrice}
+                    onChange={(e) => handleFilterChange('maxPrice', parseFloat(e.target.value))}
+                    placeholder={"Đến"}
+                    className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  />
+                </div>
+              </div>
+
+              {/* Discount Filter */}
+              <div className="mb-6">
+                <label className="mb-2 block bg-orange-50 px-4 py-3 text-lg font-bold text-slate-900">{"Lọc"}</label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={filters.hasDiscount}
+                    onChange={(e) => handleFilterChange('hasDiscount', e.target.checked)}
+                    className="w-4 h-4 accent-orange-500"
+                  />
+                  <span className="text-sm text-gray-700">{"Sản phẩm giảm giá"}</span>
+                </label>
+              </div>
+
+              {/* Reset Button */}
+              <button
+                onClick={handleResetFilters}
+                className="w-full bg-gray-500 hover:bg-gray-600 text-white py-2 px-3 font-semibold transition"
+              >
+                {"Đặt lại bộ lọc"}
+              </button>
+            </div>
           </div>
         </aside>
 
@@ -494,18 +508,18 @@ export default function ProductCatalog() {
                       >
                         Chi tiết
                       </Link>
-                      <button
+                      <OrangeButton
                         onClick={(e: React.MouseEvent) => {
                           e.preventDefault();
                           e.stopPropagation();
                           handleAddToCart(product);
                         }}
                         disabled={product.stock <= 0}
-                        className="flex-1 bg-orange-500 hover:bg-orange-600 disabled:bg-gray-400 text-white py-1 flex items-center justify-center gap-1 transition text-xs font-semibold"
+                        className="flex-1 gap-1 py-1 text-xs normal-case disabled:bg-gray-400"
                       >
                         <ShoppingCart size={14} />
                         <span className="hidden sm:inline">Thêm</span>
-                      </button>
+                      </OrangeButton>
                     </div>
                   </div>
                 </Link>
@@ -581,3 +595,5 @@ export default function ProductCatalog() {
     </div>
   );
 }
+
+

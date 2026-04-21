@@ -1,9 +1,10 @@
-﻿import { useState, useEffect, useRef } from 'react';
+﻿import { useState, useEffect, useRef, type CSSProperties } from 'react';
 import { ArrowRight } from 'lucide-react';
 import { toast } from 'react-toastify';
 import axiosClient from '../api/axiosClient';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay, EffectFade, Pagination } from 'swiper/modules';
+import HomeProductCard from '../components/HomeProductCard';
 import 'swiper/css';
 import 'swiper/css/effect-fade';
 import 'swiper/css/pagination';
@@ -47,10 +48,21 @@ export default function HomePage() {
   const [topRated, setTopRated] = useState<Product[]>([]);
   const [topSelling, setTopSelling] = useState<Product[]>([]);
   const [banners, setBanners] = useState<Banner[]>([]);
+  const [activeDragSection, setActiveDragSection] = useState<string | null>(null);
 
+  const categoriesRef = useRef<HTMLDivElement>(null);
   const discountedRef = useRef<HTMLDivElement>(null);
   const topRatedRef = useRef<HTMLDivElement>(null);
   const topSellingRef = useRef<HTMLDivElement>(null);
+  const dragStateRef = useRef({
+    isDragging: false,
+    moved: false,
+    pointerId: -1,
+    startX: 0,
+    scrollLeft: 0,
+  });
+  const sectionTitleClassName =
+    "block w-full bg-orange-500 px-5 py-3 text-2xl sm:text-3xl lg:text-4xl font-bold uppercase italic text-white shadow-sm animate-[homeTitleBlink_1.8s_ease-in-out_infinite]";
 
   useEffect(() => {
     fetchBanners();
@@ -148,24 +160,80 @@ export default function HomePage() {
     }
   };
 
-  const renderStars = (rating?: number, reviewCount?: number) => {
-    if (rating === undefined || rating === null) return null;
-    const stars = [];
-    for (let i = 1; i <= 5; i++) {
-        stars.push(
-            <span key={i} className={"text-sm " + (i <= rating ? 'text-yellow-400' : 'text-gray-300')}>
-                ★
-            </span>
-        );
-    }
-    return <div className="flex mt-1 items-center gap-2">
-        <div className="flex">{stars}</div>
-        {reviewCount !== undefined && <span className="text-xs text-gray-500">({reviewCount})</span>}
-    </div>;
+  const startDragScroll = (
+    e: React.PointerEvent<HTMLDivElement>,
+    ref: React.RefObject<HTMLDivElement | null>,
+    sectionKey: string,
+  ) => {
+    if (!ref.current) return;
+    dragStateRef.current = {
+      isDragging: true,
+      moved: false,
+      pointerId: e.pointerId,
+      startX: e.pageX - ref.current.offsetLeft,
+      scrollLeft: ref.current.scrollLeft,
+    };
+    setActiveDragSection(sectionKey);
+    ref.current.setPointerCapture(e.pointerId);
+    ref.current.style.cursor = 'grabbing';
+    ref.current.style.userSelect = 'none';
   };
+
+  const handleDragScroll = (
+    e: React.PointerEvent<HTMLDivElement>,
+    ref: React.RefObject<HTMLDivElement | null>,
+  ) => {
+    if (!ref.current || !dragStateRef.current.isDragging) return;
+    e.preventDefault();
+    const x = e.pageX - ref.current.offsetLeft;
+    const walk = (x - dragStateRef.current.startX) * 1.25;
+    if (Math.abs(walk) > 6) {
+      dragStateRef.current.moved = true;
+    }
+    ref.current.scrollLeft = dragStateRef.current.scrollLeft - walk;
+  };
+
+  const stopDragScroll = (
+    e: React.PointerEvent<HTMLDivElement>,
+    ref: React.RefObject<HTMLDivElement | null>,
+  ) => {
+    if (!ref.current) return;
+    if (ref.current.hasPointerCapture(e.pointerId)) {
+      ref.current.releasePointerCapture(e.pointerId);
+    }
+    dragStateRef.current.isDragging = false;
+    setActiveDragSection(null);
+    ref.current.style.cursor = 'grab';
+    ref.current.style.removeProperty('user-select');
+    window.setTimeout(() => {
+      dragStateRef.current.moved = false;
+    }, 0);
+  };
+
+  const preventClickAfterDrag = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (dragStateRef.current.moved) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  };
+
+  const getDragScrollClassName = (sectionKey: string) =>
+    `flex overflow-x-auto gap-4 pb-4 snap-x ${activeDragSection === sectionKey ? 'cursor-grabbing snap-none' : 'cursor-grab snap-mandatory scroll-smooth'}`;
+
+  const getDragScrollStyle = (sectionKey: string): CSSProperties => ({
+    scrollBehavior: activeDragSection === sectionKey ? 'auto' : 'smooth',
+    touchAction: 'pan-x',
+    WebkitOverflowScrolling: 'touch',
+  });
 
   return (
     <div>
+      <style>{`
+        @keyframes homeTitleBlink {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.68; }
+        }
+      `}</style>
       {/* Banner Section */}
       <section className="relative bg-orange-500 overflow-hidden">
         {banners.length > 0 ? (
@@ -231,8 +299,18 @@ export default function HomePage() {
       {/* Categories Section */}
       <section className="py-12 sm:py-16 lg:py-20 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl sm:text-4xl font-bold mb-8 text-gray-800">Danh Mục Sách</h2>
-          <div className="flex overflow-x-auto gap-4 sm:gap-6 snap-x snap-mandatory pb-4 scroll-smooth" style={{ scrollBehavior: 'smooth', touchAction: 'pan-x', WebkitOverflowScrolling: 'touch' }}>
+          <h2 className={`${sectionTitleClassName} mb-8`}>Danh Mục Sách</h2>
+          <div
+            ref={categoriesRef}
+            onPointerDown={(e) => startDragScroll(e, categoriesRef, 'categories')}
+            onPointerMove={(e) => handleDragScroll(e, categoriesRef)}
+            onPointerUp={(e) => stopDragScroll(e, categoriesRef)}
+            onPointerCancel={(e) => stopDragScroll(e, categoriesRef)}
+            onPointerLeave={(e) => dragStateRef.current.isDragging && stopDragScroll(e, categoriesRef)}
+            onClickCapture={preventClickAfterDrag}
+            className={`${getDragScrollClassName('categories')} sm:gap-6`}
+            style={getDragScrollStyle('categories')}
+          >
             {categories.length > 0 ? (
               categories.map(cat => (
                 <a key={cat.categoryId} href={"/products?categoryId=" + cat.categoryId} className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition text-center flex-none w-64 snap-start shrink-0">
@@ -250,8 +328,8 @@ export default function HomePage() {
       {/* Discounted Products */}
       <section id="discounted" className="py-12 sm:py-16 lg:py-20 bg-orange-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between mb-8">
-            <h2 className="text-3xl sm:text-4xl font-bold text-gray-800">Sản phẩm giảm giá</h2>
+          <div className="mb-8 space-y-4">
+            <h2 className={sectionTitleClassName}>Sản phẩm giảm giá</h2>
             <a href="/products?discount=true" className="text-orange-500 hover:text-orange-600 font-bold flex items-center gap-2 transition">
               Xem tất cả sản phẩm giảm giá
               <ArrowRight size={20} />
@@ -263,51 +341,32 @@ export default function HomePage() {
               <p className="text-gray-500">Đang tải sản phẩm...</p>
             </div>
           ) : (
-            <div ref={discountedRef} className="flex overflow-x-auto gap-4 snap-x snap-mandatory pb-4 scroll-smooth" style={{ scrollBehavior: 'smooth', touchAction: 'pan-x', WebkitOverflowScrolling: 'touch' }}>
+            <div
+              ref={discountedRef}
+              onPointerDown={(e) => startDragScroll(e, discountedRef, 'discounted')}
+              onPointerMove={(e) => handleDragScroll(e, discountedRef)}
+              onPointerUp={(e) => stopDragScroll(e, discountedRef)}
+              onPointerCancel={(e) => stopDragScroll(e, discountedRef)}
+              onPointerLeave={(e) => dragStateRef.current.isDragging && stopDragScroll(e, discountedRef)}
+              onClickCapture={preventClickAfterDrag}
+              className={getDragScrollClassName('discounted')}
+              style={getDragScrollStyle('discounted')}
+            >
               {discounted.map(product => (
-                <a
+                <HomeProductCard
                   key={product.bookId}
-                  href={"/product/" + product.bookId}
-                  className="bg-white shadow-md hover:shadow-lg transition group flex-none w-64 relative block snap-start shrink-0 flex flex-col border-2 border-orange-500"
-                >
-                  {product.discountBadge && (
-                    <div className="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-1 z-10 shadow-sm pointer-events-none">
-                      {product.discountBadge}
-                    </div>
-                  )}
-
-                  <div className="aspect-square bg-gray-100 overflow-hidden border-2 border-orange-500">
-                    <img src={product.mainImageUrl || '/placeholder.jpg'} alt={product.title} className="w-full h-full object-cover group-hover:scale-105 transition" />
-                  </div>
-
-                  <div className="p-2 flex flex-col flex-1 justify-between gap-1">
-                    <div>
-                        <div className="mb-1">
-                          <h3 className="font-bold text-sm leading-5 min-h-[2.5rem] text-gray-800 break-words group-hover:text-orange-500 transition">
-                            {product.title}
-                          </h3>
-                          <p className="text-xs text-gray-600 line-clamp-1">{product.authorName}</p>
-                        </div>
-                        {renderStars(product.rating, product.reviewCount)}
-                    </div>
-                    <div className="flex flex-col mt-auto">
-                      {product.discountedPrice ? (
-                        <div className="flex flex-col">
-                          <span className="text-sm font-bold text-orange-500">{product.discountedPrice.toLocaleString()}₫</span>
-                          <span className="text-xs line-through text-gray-400">{product.price.toLocaleString()}₫</span>
-                        </div>
-                      ) : (
-                        <span className="text-sm font-bold text-orange-500">{product.price.toLocaleString()}₫</span>
-                      )}
-                    </div>
-                    <div className="flex items-end justify-between mt-1 text-xs text-gray-500">
-                      <span>{product.soldQuantity ?? 0} đã bán</span>
-                      <span className={"px-2 py-0.5 " + (product.stock > 0 ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700")}>
-                        {product.stock > 0 ? "Có hàng" : "Hết"}
-                      </span>
-                    </div>
-                  </div>
-                </a>
+                  bookId={product.bookId}
+                  title={product.title}
+                  price={product.price}
+                  stock={product.stock}
+                  authorName={product.authorName}
+                  mainImageUrl={product.mainImageUrl}
+                  discountBadge={product.discountBadge}
+                  discountedPrice={product.discountedPrice}
+                  rating={product.rating}
+                  reviewCount={product.reviewCount}
+                  soldQuantity={product.soldQuantity}
+                />
               ))}
             </div>
           )}
@@ -317,8 +376,8 @@ export default function HomePage() {
       {/* Top Rated Products */}
       <section className="py-12 sm:py-16 lg:py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center mb-8">
-            <h2 className="text-3xl sm:text-4xl font-bold text-gray-800">Top 10 Sách Đánh Giá Cao Nhất</h2>
+          <div className="mb-8">
+            <h2 className={sectionTitleClassName}>Top 10 Sách Đánh Giá Cao Nhất</h2>
           </div>
 
           {!topRated || topRated.length === 0 ? (
@@ -326,51 +385,32 @@ export default function HomePage() {
               <p className="text-gray-500">Đang tải sản phẩm...</p>
             </div>
           ) : (
-            <div ref={topRatedRef} className="flex overflow-x-auto gap-4 snap-x snap-mandatory pb-4 scroll-smooth" style={{ scrollBehavior: 'smooth', touchAction: 'pan-x', WebkitOverflowScrolling: 'touch' }}>
+            <div
+              ref={topRatedRef}
+              onPointerDown={(e) => startDragScroll(e, topRatedRef, 'topRated')}
+              onPointerMove={(e) => handleDragScroll(e, topRatedRef)}
+              onPointerUp={(e) => stopDragScroll(e, topRatedRef)}
+              onPointerCancel={(e) => stopDragScroll(e, topRatedRef)}
+              onPointerLeave={(e) => dragStateRef.current.isDragging && stopDragScroll(e, topRatedRef)}
+              onClickCapture={preventClickAfterDrag}
+              className={getDragScrollClassName('topRated')}
+              style={getDragScrollStyle('topRated')}
+            >
               {topRated.map(product => (
-                <a
+                <HomeProductCard
                   key={product.bookId}
-                  href={"/product/" + product.bookId}
-                  className="bg-white shadow-md hover:shadow-lg transition group flex-none w-64 snap-start relative border-2 border-orange-500 flex flex-col"
-                >
-                  {product.discountBadge && (
-                    <div className="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-1 z-10 shadow-sm pointer-events-none">
-                      {product.discountBadge}
-                    </div>
-                  )}
-                  <div className="aspect-square bg-gray-100 overflow-hidden border-2 border-orange-500">
-                    <img src={product.mainImageUrl || '/placeholder.jpg'} alt={product.title} className="w-full h-full object-cover group-hover:scale-105 transition" />
-                  </div>
-
-                  <div className="p-2 flex flex-col flex-1 justify-between gap-1">
-                    <div>
-                      <div className="mb-1">
-                        <h3 className="font-bold text-sm leading-5 min-h-[2.5rem] text-gray-800 break-words group-hover:text-orange-500 transition">
-                          {product.title}
-                        </h3>
-                        <p className="text-xs text-gray-600 line-clamp-1">{product.authorName}</p>
-                      </div>
-                      {renderStars(product.rating, product.reviewCount)}
-                    </div>
-
-                    <div className="flex flex-col mt-auto">
-                      {product.discountedPrice ? (
-                        <div className="flex flex-col">
-                          <span className="text-sm font-bold text-orange-500">{product.discountedPrice.toLocaleString()}₫</span>
-                          <span className="text-xs line-through text-gray-400">{product.price.toLocaleString()}₫</span>
-                        </div>
-                      ) : (
-                        <span className="text-sm font-bold text-orange-500">{product.price.toLocaleString()}₫</span>
-                      )}
-                    </div>
-                    <div className="flex items-end justify-between mt-1 text-xs text-gray-500">
-                      <span>{product.soldQuantity ?? 0} đã bán</span>
-                      <span className={"px-2 py-0.5 " + (product.stock > 0 ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700")}>
-                        {product.stock > 0 ? "Có hàng" : "Hết"}
-                      </span>
-                    </div>
-                  </div>
-                </a>
+                  bookId={product.bookId}
+                  title={product.title}
+                  price={product.price}
+                  stock={product.stock}
+                  authorName={product.authorName}
+                  mainImageUrl={product.mainImageUrl}
+                  discountBadge={product.discountBadge}
+                  discountedPrice={product.discountedPrice}
+                  rating={product.rating}
+                  reviewCount={product.reviewCount}
+                  soldQuantity={product.soldQuantity}
+                />
               ))}
             </div>
           )}
@@ -380,8 +420,8 @@ export default function HomePage() {
       {/* Top Selling Products */}
       <section className="py-12 sm:py-16 lg:py-20 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center mb-8">
-            <h2 className="text-3xl sm:text-4xl font-bold text-gray-800">Top 10 Sách Bán Chạy Nhất Tháng</h2>
+          <div className="mb-8">
+            <h2 className={sectionTitleClassName}>Top 10 Sách Bán Chạy Nhất Tháng</h2>
           </div>
 
           {!topSelling || topSelling.length === 0 ? (
@@ -389,51 +429,32 @@ export default function HomePage() {
               <p className="text-gray-500">Đang tải sản phẩm...</p>
             </div>
           ) : (
-            <div ref={topSellingRef} className="flex overflow-x-auto gap-4 snap-x snap-mandatory pb-4 scroll-smooth" style={{ scrollBehavior: 'smooth', touchAction: 'pan-x', WebkitOverflowScrolling: 'touch' }}>
+            <div
+              ref={topSellingRef}
+              onPointerDown={(e) => startDragScroll(e, topSellingRef, 'topSelling')}
+              onPointerMove={(e) => handleDragScroll(e, topSellingRef)}
+              onPointerUp={(e) => stopDragScroll(e, topSellingRef)}
+              onPointerCancel={(e) => stopDragScroll(e, topSellingRef)}
+              onPointerLeave={(e) => dragStateRef.current.isDragging && stopDragScroll(e, topSellingRef)}
+              onClickCapture={preventClickAfterDrag}
+              className={getDragScrollClassName('topSelling')}
+              style={getDragScrollStyle('topSelling')}
+            >
               {topSelling.map(product => (
-                <a
+                <HomeProductCard
                   key={product.bookId}
-                  href={"/product/" + product.bookId}
-                  className="bg-white shadow-md hover:shadow-lg transition group flex-none w-64 snap-start relative border-2 border-orange-500 flex flex-col"
-                >
-                  {product.discountBadge && (
-                    <div className="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-1 z-10 shadow-sm pointer-events-none">
-                      {product.discountBadge}
-                    </div>
-                  )}
-                  <div className="aspect-square bg-gray-100 overflow-hidden border-2 border-orange-500">
-                    <img src={product.mainImageUrl || '/placeholder.jpg'} alt={product.title} className="w-full h-full object-cover group-hover:scale-105 transition" />
-                  </div>
-
-                  <div className="p-2 flex flex-col flex-1 justify-between gap-1">
-                    <div>
-                      <div className="mb-1">
-                        <h3 className="font-bold text-sm leading-5 min-h-[2.5rem] text-gray-800 break-words group-hover:text-orange-500 transition">
-                          {product.title}
-                        </h3>
-                        <p className="text-xs text-gray-600 line-clamp-1">{product.authorName}</p>
-                      </div>
-                      {renderStars(product.rating, product.reviewCount)}
-                    </div>
-
-                    <div className="flex flex-col mt-auto">
-                      {product.discountedPrice ? (
-                        <div className="flex flex-col">
-                          <span className="text-sm font-bold text-orange-500">{product.discountedPrice.toLocaleString()}₫</span>
-                          <span className="text-xs line-through text-gray-400">{product.price.toLocaleString()}₫</span>
-                        </div>
-                      ) : (
-                        <span className="text-sm font-bold text-orange-500">{product.price.toLocaleString()}₫</span>
-                      )}
-                    </div>
-                    <div className="flex items-end justify-between mt-1 text-xs text-gray-500">
-                      <span>{product.soldQuantity ?? 0} đã bán</span>
-                      <span className={"px-2 py-0.5 " + (product.stock > 0 ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700")}>
-                        {product.stock > 0 ? "Có hàng" : "Hết"}
-                      </span>
-                    </div>
-                  </div>
-                </a>
+                  bookId={product.bookId}
+                  title={product.title}
+                  price={product.price}
+                  stock={product.stock}
+                  authorName={product.authorName}
+                  mainImageUrl={product.mainImageUrl}
+                  discountBadge={product.discountBadge}
+                  discountedPrice={product.discountedPrice}
+                  rating={product.rating}
+                  reviewCount={product.reviewCount}
+                  soldQuantity={product.soldQuantity}
+                />
               ))}
             </div>
           )}
@@ -445,3 +466,4 @@ export default function HomePage() {
     </div>
   );
 }
+

@@ -1,17 +1,19 @@
-import { Outlet, Link, useNavigate } from 'react-router-dom';
-import { ShoppingCart, User, LogOut, Home, BookOpen } from 'lucide-react';
+﻿import { Outlet, Link, useNavigate } from 'react-router-dom';
+import { ShoppingCart, User, LogOut, Home, BookOpen, ChevronDown } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { useState, useEffect } from 'react';
 import axiosClient from '../api/axiosClient';
 import SearchDropdown from '../components/SearchDropdown';
 import CategoryMenu from '../components/CategoryMenu';
 import ChatWidget from '../components/ChatWidget';
+import HeaderDropdown, { type HeaderDropdownItem } from '../components/HeaderDropdown';
 import { getGuestCart } from '../utils/cartUtils';
 import { getUserRole } from '../utils/tokenUtils';
 
 export default function UserLayout() {
   const navigate = useNavigate();
   const [cartCount, setCartCount] = useState(0);
+  const navLinkClassName = "flex items-center gap-2 px-3 py-2 text-sm font-semibold uppercase tracking-wide text-white transition whitespace-nowrap hover:bg-orange-700";
   const isAdmin = getUserRole() === 'Admin';
 
   const updateCartCount = async () => {
@@ -32,7 +34,7 @@ export default function UserLayout() {
       setCartCount(count);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
-      // Nếu 401 (token expired), logout
+      // Náº¿u 401 (token expired), logout
       if (error?.response?.status === 401) {
         localStorage.removeItem('token');
         setCartCount(0);
@@ -48,7 +50,7 @@ export default function UserLayout() {
     updateCartCount();
   }, []);
 
-  // Listen for custom cart-updated event (CHỈ update nếu đã login)
+  // Listen for custom cart-updated event (chỉ update nếu đã login)
   useEffect(() => {
 
     // Callback
@@ -74,6 +76,30 @@ export default function UserLayout() {
     toast.info('Đã đăng xuất khỏi hệ thống!');
     navigate('/login');
   };
+
+  const accountMenuItems: HeaderDropdownItem[] = [
+    {
+      key: 'profile',
+      label: 'Thông tin cá nhân',
+      to: '/profile',
+      bordered: true,
+    },
+    {
+      key: 'orders',
+      label: 'Đơn hàng của tôi',
+      to: '/orders',
+      bordered: isAdmin,
+    },
+    ...(isAdmin
+      ? [
+          {
+            key: 'admin',
+            label: 'Trang quản lý',
+            to: '/admin',
+          },
+        ]
+      : []),
+  ];
 
   return (
     <div className="flex flex-col min-h-screen bg-white">
@@ -106,42 +132,18 @@ export default function UserLayout() {
               </Link>
 
               {/* User Dropdown */}
-              <div className="relative group">
-                <Link
-                  to="/profile"
-                  className="p-2 hover:bg-orange-600 rounded-none transition flex items-center"
-                  title="Tài khoản"
-                >
-                  <User size={24} />
-                </Link>
-                
-                {/* Invisible spacer to maintain hover */}
-                <div className="absolute top-full right-0 w-full h-2 bg-transparent z-[99]"></div>
-
-                {/* Dropdown Menu - invisible by default, visible on hover */}
-                <div className="absolute right-0 top-[calc(100%+0.5rem)] w-48 bg-white rounded-md shadow-xl py-2 invisible opacity-0 translate-y-1 group-hover:visible group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-200 z-[100] border border-gray-100">
-                  <Link
-                    to="/profile"
-                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-500 transition-colors"
-                  >
-                    Thông tin cá nhân
-                  </Link>
-                  <Link
-                    to="/orders"
-                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-500 transition-colors"
-                  >
-                    Đơn hàng của tôi
-                  </Link>
-                  {isAdmin && (
-                    <Link
-                      to="/admin"
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-500 transition-colors border-t border-gray-100"
-                    >
-                      Trang quản lý
-                    </Link>
-                  )}
-                </div>
-              </div>
+              <HeaderDropdown
+                align="right"
+                widthClassName="w-52"
+                triggerClassName="gap-1 p-2 hover:bg-orange-600"
+                trigger={
+                  <>
+                    <User size={24} />
+                    <ChevronDown size={16} />
+                  </>
+                }
+                items={accountMenuItems}
+              />
 
               <button
                 onClick={handleLogout}
@@ -162,20 +164,14 @@ export default function UserLayout() {
         <nav className="border-t border-orange-600 bg-orange-600 relative">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
             <div className="flex items-center gap-4 sm:gap-8 h-12 overflow-visible">
-              <Link
-                to="/"
-                className="flex items-center gap-2 text-white hover:bg-orange-700 px-3 py-2 rounded-none transition whitespace-nowrap"
-              >
+              <Link to="/" className={navLinkClassName}>
                 <Home size={18} />
-                <span className="hidden sm:inline">Trang chủ</span>
+                <span className="hidden sm:inline">{'Trang chủ'}</span>
               </Link>
               <CategoryMenu />
-              <Link
-                to="/products"
-                className="flex items-center gap-2 text-white hover:bg-orange-700 px-3 py-2 rounded-none transition whitespace-nowrap"
-              >
+              <Link to="/products" className={navLinkClassName}>
                 <BookOpen size={18} />
-                <span className="hidden sm:inline">Tất cả sách</span>
+                <span className="hidden sm:inline">{'Tất cả sách'}</span>
               </Link>
             </div>
           </div>

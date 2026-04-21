@@ -1,4 +1,4 @@
-/* eslint-disable prefer-const */
+﻿/* eslint-disable prefer-const */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect } from 'react';
@@ -7,6 +7,9 @@ import { Trash2, ShoppingBag, ArrowLeft } from 'lucide-react';
 import { toast } from 'react-toastify';
 import axiosClient from '../../api/axiosClient';
 import { getGuestCart, removeFromGuestCart, updateGuestCartQuantity, clearGuestCart } from '../../utils/cartUtils';
+import Breadcrumb from '../../components/Breadcrumb';
+import OrangeButton from '../../components/OrangeButton';
+import PageTitle from '../../components/PageTitle';
 
 interface CartItem {
   cartItemId?: string; // Added for API reference
@@ -202,16 +205,20 @@ export default function Cart() {
   if (cart.items.length === 0) {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <Breadcrumb
+          items={[
+            { label: 'Trang chủ', to: '/' },
+            { label: 'Giỏ hàng' }
+          ]}
+        />
+        <PageTitle title="Giỏ Hàng" />
         <div className="text-center">
           <ShoppingBag size={64} className="mx-auto text-gray-300 mb-4" />
           <h1 className="text-2xl font-bold text-gray-800 mb-4">Giỏ hàng trống</h1>
           <p className="text-gray-600 mb-8">Bạn chưa thêm sản phẩm nào vào giỏ hàng</p>
-          <a
-            href="/products"
-            className="inline-block bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-6 rounded-lg transition"
-          >
+          <OrangeButton to="/products" className="rounded-lg px-6 py-2 normal-case">
             Tiếp tục mua sắm
-          </a>
+          </OrangeButton>
         </div>
       </div>
     );
@@ -219,7 +226,13 @@ export default function Cart() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <h1 className="text-3xl font-bold mb-8 text-gray-800">Giỏ hàng</h1>
+      <Breadcrumb
+        items={[
+          { label: 'Trang chủ', to: '/' },
+          { label: 'Giỏ hàng' }
+        ]}
+      />
+      <PageTitle title="Giỏ Hàng" />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Cart Items */}
@@ -346,7 +359,7 @@ export default function Cart() {
               <span className="font-bold text-2xl text-orange-500">{totalPrice.toLocaleString()}₫</span>
             </div>
 
-            <button
+            <OrangeButton
               onClick={() => {
                 const checkoutState = {
                   selectedItems
@@ -356,10 +369,10 @@ export default function Cart() {
                 navigate('/checkout', { state: checkoutState });
               }}
               disabled={selectedItems.length === 0 || loading}
-              className="w-full bg-orange-500 hover:bg-orange-600 disabled:bg-gray-400 text-white font-bold py-3 rounded-lg transition mb-3"
+              className="mb-3 w-full rounded-lg py-3 normal-case disabled:bg-gray-400"
             >
               Thanh toán
-            </button>
+            </OrangeButton>
 
             <button
               onClick={() => navigate('/products')}
@@ -374,3 +387,5 @@ export default function Cart() {
     </div>
   );
 }
+
+
