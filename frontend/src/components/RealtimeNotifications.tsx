@@ -2,8 +2,7 @@ import { useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import * as signalR from '@microsoft/signalr';
 import { toast } from 'react-toastify';
-
-const API_ORIGIN = 'https://localhost:7087';
+import { API_ORIGIN } from '../config/api';
 
 type OrderNotification = {
   orderId: string;
@@ -54,7 +53,7 @@ export default function RealtimeNotifications() {
 
       const connection = new signalR.HubConnectionBuilder()
         .withUrl(`${API_ORIGIN}/hubs/notifications`, {
-          accessTokenFactory: () => localStorage.getItem('token') || ''
+          accessTokenFactory: () => localStorage.getItem('token') || '',
         })
         .withAutomaticReconnect()
         .build();
@@ -76,9 +75,9 @@ export default function RealtimeNotifications() {
         window.dispatchEvent(new CustomEvent('order-status-changed', { detail: payload }));
       });
 
-      connection.on('ReviewReplied', (payload: ReviewNotification) => {
+      connection.on('ReviewReplied', (_payload: ReviewNotification) => {
         toast.info('Admin vừa phản hồi đánh giá của bạn.');
-        window.dispatchEvent(new CustomEvent('review-replied', { detail: payload }));
+        window.dispatchEvent(new CustomEvent('review-replied'));
       });
 
       connection.on('NewOrderCreated', (payload: OrderNotification) => {
@@ -108,7 +107,7 @@ export default function RealtimeNotifications() {
       });
 
       connection.on('ReviewDeletedByCustomer', (payload: ReviewNotification) => {
-        toast.info('Khách hàng vừa xóa một đánh giá.');
+        toast.info(`${payload.userName || 'Khách hàng'} vừa xóa một đánh giá.`);
         window.dispatchEvent(new CustomEvent('admin-reviews-updated', { detail: payload }));
       });
 
@@ -118,7 +117,7 @@ export default function RealtimeNotifications() {
       });
 
       connection.on('ReviewReplyDeletedByCustomer', (payload: ReviewNotification) => {
-        toast.info('Khách hàng vừa xóa một phản hồi đánh giá.');
+        toast.info(`${payload.userName || 'Khách hàng'} vừa xóa một phản hồi đánh giá.`);
         window.dispatchEvent(new CustomEvent('admin-reviews-updated', { detail: payload }));
       });
 

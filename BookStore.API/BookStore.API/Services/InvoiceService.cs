@@ -22,8 +22,7 @@ namespace BookStore.API.Services
             if (order == null)
                 return null;
 
-            var vouchers = await GetActiveVouchersAsync();
-            return BuildInvoice(order, vouchers);
+            return BuildInvoice(order);
         }
 
         public async Task<InvoicePdfResult?> GenerateUserInvoiceAsync(string userId, string orderId)
@@ -32,8 +31,7 @@ namespace BookStore.API.Services
             if (order == null)
                 return null;
 
-            var vouchers = await GetActiveVouchersAsync();
-            return BuildInvoice(order, vouchers);
+            return BuildInvoice(order);
         }
 
         private async Task<Order?> GetOrderAsync(string orderId, string? userId = null)
@@ -52,15 +50,7 @@ namespace BookStore.API.Services
             return await query.FirstOrDefaultAsync(o => o.OrderId == orderId && o.Status != "PaymentPending");
         }
 
-        private async Task<List<Voucher>> GetActiveVouchersAsync()
-        {
-            var now = DateTime.UtcNow;
-            return await _context.Vouchers
-                .Where(v => v.IsActive && v.StartDate <= now && v.ExpirationDate >= now)
-                .ToListAsync();
-        }
-
-        private static InvoicePdfResult BuildInvoice(Order order, IReadOnlyCollection<Voucher> activeVouchers)
+        private static InvoicePdfResult BuildInvoice(Order order)
         {
             if (order.Status == "Cancelled")
             {
@@ -163,18 +153,10 @@ namespace BookStore.API.Services
                             foreach (var item in order.OrderItems)
                             {
                                 var lineTotal = item.Quantity * item.UnitPrice;
-                                var hardcodedVoucher = item.Book == null ? null : FindHardcodedVoucher(item.Book, activeVouchers);
-                                var hasHardcodedDiscount = item.Book != null && hardcodedVoucher != null && item.UnitPrice < item.Book.Price;
+                                var hasHardcodedDiscount = item.Book != null && item.UnitPrice < item.Book.Price;
 
                                 table.Cell().Element(BodyCell).Text(index.ToString());
-                                table.Cell().Element(BodyCell).Column(bookColumn =>
-                                {
-                                    bookColumn.Item().Text(item.Book?.Title ?? "Sách không tồn tại");
-                                    if (hasHardcodedDiscount)
-                                    {
-                                        bookColumn.Item().Text($"Ưu đãi áp cứng: {hardcodedVoucher!.Code}").FontSize(8).FontColor(Colors.Green.Darken2);
-                                    }
-                                });
+                                table.Cell().Element(BodyCell).Text(item.Book?.Title ?? "Sách không tồn tại");
                                 table.Cell().Element(BodyCell).AlignRight().Text(item.Quantity.ToString());
                                 table.Cell().Element(BodyCell).AlignRight().Column(priceColumn =>
                                 {
@@ -240,7 +222,7 @@ namespace BookStore.API.Services
             return new InvoicePdfResult
             {
                 Content = pdf,
-                FileName = $"{filePrefix}-{order.OrderId}.pdf"
+                FileName = $"{filePrefix}-{order.OrderId}.pdf",
             };
         }
 
@@ -260,36 +242,6 @@ namespace BookStore.API.Services
                 .BorderColor(Colors.Grey.Lighten2)
                 .PaddingVertical(7)
                 .PaddingHorizontal(5);
-        }
-
-        private static Voucher? FindHardcodedVoucher(Book book, IEnumerable<Voucher> vouchers)
-        {
-            return vouchers
-                .Where(v => IsVoucherApplicable(book, v))
-                .OrderByDescending(v => CalculateDiscountValue(book.Price, v))
-                .FirstOrDefault();
-        }
-
-        private static bool IsVoucherApplicable(Book book, Voucher voucher)
-        {
-            if (book.Price < voucher.MinOrderValue)
-            {
-                return false;
-            }
-
-            var appliesToProduct = !string.IsNullOrWhiteSpace(voucher.ApplicableProductId) &&
-                                   ("," + voucher.ApplicableProductId.Trim(',') + ",").Contains("," + book.BookId + ",");
-            var appliesToCategory = !string.IsNullOrWhiteSpace(voucher.ApplicableCategoryId) &&
-                                    voucher.ApplicableCategoryId == book.CategoryId;
-
-            return appliesToProduct || appliesToCategory;
-        }
-
-        private static decimal CalculateDiscountValue(decimal price, Voucher voucher)
-        {
-            return voucher.DiscountType == "Percentage"
-                ? price * voucher.DiscountAmount / 100m
-                : Math.Min(price, voucher.DiscountAmount);
         }
 
         private static string FormatCurrency(decimal amount)
@@ -335,7 +287,7 @@ namespace BookStore.API.Services
                 "Shipped" => "Đang giao hàng",
                 "Delivered" => "Đã giao",
                 "Cancelled" => "Đã hủy",
-                _ => status
+                _ => status,
             };
         }
     }

@@ -34,7 +34,7 @@ export default function UserLayout() {
       setCartCount(count);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
-      // Náº¿u 401 (token expired), logout
+      // Nếu 401 (token expired), logout
       if (error?.response?.status === 401) {
         localStorage.removeItem('token');
         setCartCount(0);

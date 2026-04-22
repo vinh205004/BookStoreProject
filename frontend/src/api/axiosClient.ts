@@ -1,4 +1,5 @@
 import axios, { AxiosError } from 'axios';
+import { API_BASE_URL } from '../config/api';
 
 interface ApiError extends Error {
   response?: {
@@ -9,7 +10,7 @@ interface ApiError extends Error {
 }
 
 const axiosClient = axios.create({
-  baseURL: 'https://localhost:7087/api',
+  baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },

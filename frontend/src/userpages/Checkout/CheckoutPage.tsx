@@ -432,18 +432,6 @@ export default function CheckoutPage() {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const response: any = await axiosClient.post('/Orders', orderData);
       
-      // Remove only the purchased items from cart, not all items
-      try {
-        for (const item of cart) {
-          if (item.cartItemId) {
-            await axiosClient.delete(`/cart/items/${item.cartItemId}`);
-          }
-        }
-      } catch (error) {
-        console.error('Error removing items from cart:', error);
-        // If deletion fails, still proceed
-      }
-      
       // Dispatch custom event to update badge
       window.dispatchEvent(new Event('cart-updated'));
       persistCheckoutVoucherCode('');
@@ -760,6 +748,5 @@ export default function CheckoutPage() {
     </div>
   );
 }
-
 
 
