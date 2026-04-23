@@ -19,11 +19,22 @@ interface LocationPickerMapProps {
 }
 
 export default function LocationPickerMap({ onLocationSelect, defaultAddress }: LocationPickerMapProps) {
-  const [position, setPosition] = useState<[number, number]>([21.028511, 105.804817]); // Default Hanoi
+  const [position, setPosition] = useState<[number, number]>([21.028511, 105.804817]);
   const [address, setAddress] = useState(defaultAddress || '');
   const [loading, setLoading] = useState(false);
+  const [mapKey, setMapKey] = useState(0);
 
-  // Component to handle map clicks
+  useEffect(() => {
+    const handlePageShow = (event: PageTransitionEvent) => {
+      if (event.persisted) {
+        setMapKey((current) => current + 1);
+      }
+    };
+
+    window.addEventListener('pageshow', handlePageShow);
+    return () => window.removeEventListener('pageshow', handlePageShow);
+  }, []);
+
   const LocationMarker = () => {
     useMapEvents({
       click(e) {
@@ -32,16 +43,16 @@ export default function LocationPickerMap({ onLocationSelect, defaultAddress }: 
       },
     });
 
-    return position === null ? null : (
-      <Marker position={position}></Marker>
-    );
+    return <Marker position={position} />;
   };
 
   const MapUpdater = ({ center }: { center: [number, number] }) => {
     const map = useMap();
+
     useEffect(() => {
       map.flyTo(center, map.getZoom());
     }, [center, map]);
+
     return null;
   };
 
@@ -86,21 +97,27 @@ export default function LocationPickerMap({ onLocationSelect, defaultAddress }: 
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col sm:flex-row gap-2 sm:items-center justify-between">
+      <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-center">
         <label className="block text-sm font-bold text-gray-700">Chọn vị trí trên bản đồ</label>
         <button
           type="button"
           onClick={handleGetCurrentLocation}
           disabled={loading}
-          className="flex items-center justify-center gap-2 px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition disabled:opacity-50 text-sm font-medium"
+          className="flex items-center justify-center gap-2 rounded-lg bg-blue-50 px-3 py-1.5 text-sm font-medium text-blue-600 transition hover:bg-blue-100 disabled:opacity-50"
         >
           <Navigation size={16} />
           {loading ? 'Đang lấy vị trí...' : 'Lấy vị trí hiện tại'}
         </button>
       </div>
-      
-      <div className="h-[250px] w-full rounded-lg overflow-hidden border border-gray-300 relative z-0">
-        <MapContainer center={position} zoom={13} scrollWheelZoom={true} style={{ height: '100%', width: '100%', zIndex: 0 }}>
+
+      <div className="relative z-0 h-[250px] w-full overflow-hidden rounded-lg border border-gray-300">
+        <MapContainer
+          key={mapKey}
+          center={position}
+          zoom={13}
+          scrollWheelZoom
+          style={{ height: '100%', width: '100%', zIndex: 0 }}
+        >
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -109,10 +126,11 @@ export default function LocationPickerMap({ onLocationSelect, defaultAddress }: 
           <MapUpdater center={position} />
         </MapContainer>
       </div>
-      
+
       {address && (
-        <div className="text-sm text-gray-600 bg-gray-50 p-2 rounded-lg border border-gray-100">
-           <span className="font-semibold">Vị trí đã chọn: </span> {address}
+        <div className="rounded-lg border border-gray-100 bg-gray-50 p-2 text-sm text-gray-600">
+          <span className="font-semibold">Vị trí đã chọn: </span>
+          {address}
         </div>
       )}
     </div>

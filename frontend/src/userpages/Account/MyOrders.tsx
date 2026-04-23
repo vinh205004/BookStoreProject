@@ -36,6 +36,19 @@ export default function MyOrders() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
+  const [activeStatus, setActiveStatus] = useState<'All' | 'Pending' | 'Processing' | 'Shipped' | 'Delivered' | 'Cancelled'>('All');
+
+  const statusTabs: Array<{
+    key: 'All' | 'Pending' | 'Processing' | 'Shipped' | 'Delivered' | 'Cancelled';
+    label: string;
+  }> = [
+    { key: 'All', label: 'Tất cả' },
+    { key: 'Pending', label: 'Chờ xác nhận' },
+    { key: 'Processing', label: 'Đang xử lý' },
+    { key: 'Shipped', label: 'Đang giao hàng' },
+    { key: 'Delivered', label: 'Đã giao thành công' },
+    { key: 'Cancelled', label: 'Đã hủy' },
+  ];
 
   useEffect(() => {
     fetchOrders();
@@ -124,6 +137,10 @@ export default function MyOrders() {
     return method === 'VNPAY' ? 'Đã thanh toán qua VNPAY' : 'Thanh toán khi nhận hàng';
   };
 
+  const filteredOrders = activeStatus === 'All'
+    ? orders
+    : orders.filter((order) => order.status === activeStatus);
+
   const canCancelOrder = (status: string) => status === 'Pending' || status === 'Processing';
   const canDownloadInvoice = (status: string) => status !== 'Cancelled';
 
@@ -202,8 +219,38 @@ export default function MyOrders() {
       />
       <PageTitle title="Đơn Hàng Của Tôi" />
 
+      <div className="mb-6 overflow-x-auto border-b border-gray-200 bg-white">
+        <div className="flex min-w-max items-center gap-8 px-2">
+          {statusTabs.map((tab) => {
+            const isActive = activeStatus === tab.key;
+            return (
+              <button
+                key={tab.key}
+                type="button"
+                onClick={() => {
+                  setActiveStatus(tab.key);
+                  setExpandedOrder(null);
+                }}
+                className={`border-b-2 px-2 py-4 text-base whitespace-nowrap transition ${
+                  isActive
+                    ? 'border-orange-500 font-semibold text-orange-500'
+                    : 'border-transparent text-gray-700 hover:text-orange-500'
+                }`}
+              >
+                {tab.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {filteredOrders.length === 0 ? (
+        <div className="rounded-lg bg-white px-6 py-10 text-center text-gray-500 shadow">
+          Chưa có đơn hàng ở trạng thái này.
+        </div>
+      ) : (
       <div className="space-y-4">
-        {orders.map(order => (
+        {filteredOrders.map(order => (
           <div key={order.orderId} className="bg-white rounded-lg shadow overflow-hidden">
             {/* Order Header */}
             <button
@@ -341,6 +388,7 @@ export default function MyOrders() {
           </div>
         ))}
       </div>
+      )}
     </div>
   );
 }

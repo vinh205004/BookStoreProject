@@ -1,38 +1,12 @@
-[2m8:19:05 PM[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m [2m[console.error] [22m[2026-04-22T13:19:04.984Z] Error: Failed to complete negotiation with the server: Error: : Status code '401'
-[2m8:19:05 PM[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m [2m[console.error] [22m[2026-04-22T13:19:04.985Z] Error: Failed to start the connection: Error: Failed to complete negotiation with the server: Error: : Status code '401'
-[2m8:19:05 PM[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m [2m[console.error] [22mKhông thể kết nối realtime: Error: Failed to complete negotiation with the server: Error: : Status code '401'
-    at HttpConnection._getNegotiationResponse (http://localhost:5173/node_modules/.vite/deps/@microsoft_signalr.js?v=ba437488:2009:26)
-    at async HttpConnection._startInternal (http://localhost:5173/node_modules/.vite/deps/@microsoft_signalr.js?v=ba437488:1953:26)
-    at async HttpConnection.start (http://localhost:5173/node_modules/.vite/deps/@microsoft_signalr.js?v=ba437488:1891:3)
-    at async HubConnection._startInternal (http://localhost:5173/node_modules/.vite/deps/@microsoft_signalr.js?v=ba437488:858:3)
-    at async HubConnection._startWithStateTransitions (http://localhost:5173/node_modules/.vite/deps/@microsoft_signalr.js?v=ba437488:840:4)
-    at async startConnection (http://localhost:5173/src/components/RealtimeNotifications.tsx:85:5)
-[2m8:19:05 PM[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m [2m[console.error] [22m[2026-04-22T13:19:04.990Z] Error: Failed to complete negotiation with the server: Error: : Status code '401'
-[2m8:19:05 PM[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m [2m[console.error] [22m[2026-04-22T13:19:04.990Z] Error: Failed to start the connection: Error: Failed to complete negotiation with the server: Error: : Status code '401'
-[2m8:19:05 PM[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m [2m[console.error] [22mKhông thể kết nối realtime: Error: Failed to complete negotiation with the server: Error: : Status code '401'
-    at HttpConnection._getNegotiationResponse (http://localhost:5173/node_modules/.vite/deps/@microsoft_signalr.js?v=ba437488:2009:26)
-    at async HttpConnection._startInternal (http://localhost:5173/node_modules/.vite/deps/@microsoft_signalr.js?v=ba437488:1953:26)
-    at async HttpConnection.start (http://localhost:5173/node_modules/.vite/deps/@microsoft_signalr.js?v=ba437488:1891:3)
-    at async HubConnection._startInternal (http://localhost:5173/node_modules/.vite/deps/@microsoft_signalr.js?v=ba437488:858:3)
-    at async HubConnection._startWithStateTransitions (http://localhost:5173/node_modules/.vite/deps/@microsoft_signalr.js?v=ba437488:840:4)
-    at async startConnection (http://localhost:5173/src/components/RealtimeNotifications.tsx:85:5)
-[2m8:19:14 PM[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mThe width(-1) and height(-1) of chart should be greater than 0,
+[2m12:04:54 PM[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mThe width(-1) and height(-1) of chart should be greater than 0,
        please check the style of container, or the props width(100%) and height(100%),
        or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
        height and width.
-[2m8:19:14 PM[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mThe width(-1) and height(-1) of chart should be greater than 0,
+[2m12:04:54 PM[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mThe width(-1) and height(-1) of chart should be greater than 0,
        please check the style of container, or the props width(100%) and height(100%),
        or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
        height and width.
-[2m8:19:36 PM[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mThe width(-1) and height(-1) of chart should be greater than 0,
-       please check the style of container, or the props width(100%) and height(100%),
-       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
-       height and width.
-[2m8:19:36 PM[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mThe width(-1) and height(-1) of chart should be greater than 0,
-       please check the style of container, or the props width(100%) and height(100%),
-       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
-       height and width.
-[2m8:20:26 PM[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m [2m[console.error] [22mIn HTML, <a> cannot be a descendant of <a>.
+[2m12:07:50 PM[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m [2m[console.error] [22mIn HTML, <a> cannot be a descendant of <a>.
 This will cause a hydration error.
 
   ...
@@ -82,9 +56,82 @@ This will cause a hydration error.
                         ...
         ...
 
-[2m8:20:26 PM[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m [2m[console.error] [22m<a> cannot contain a nested <a>.
+[2m12:07:50 PM[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m [2m[console.error] [22m<a> cannot contain a nested <a>.
 See this log for the ancestor stack trace.
-[2m8:25:22 PM[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m [2m[console.error] [22mIn HTML, <a> cannot be a descendant of <a>.
+[2m12:09:20 PM[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m [2m[console.error] [22mInvalid hook call. Hooks can only be called inside of the body of a function component. This could happen for one of the following reasons:
+1. You might have mismatching versions of React and the renderer (such as React DOM)
+2. You might be breaking the Rules of Hooks
+3. You might have more than one copy of React in the same app
+See https://react.dev/link/invalid-hook-call for tips about how to debug and fix this problem.
+[2m12:09:20 PM[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m [2m[console.error] [22mInvalid hook call. Hooks can only be called inside of the body of a function component. This could happen for one of the following reasons:
+1. You might have mismatching versions of React and the renderer (such as React DOM)
+2. You might be breaking the Rules of Hooks
+3. You might have more than one copy of React in the same app
+See https://react.dev/link/invalid-hook-call for tips about how to debug and fix this problem.
+[2m12:09:21 PM[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m [31m[Unhandled error] [1mTypeError[22m: Cannot read properties of null (reading 'useContext')
+[39m > exports.useContext node_modules/react/cjs/react.development.js:1212:24
+ > useOutlet node_modules/react-router/dist/development/chunk-UVKPFVEO.mjs:5726:22
+ > Outlet node_modules/react-router/dist/development/chunk-UVKPFVEO.mjs:6708:9
+ > Object.react_stack_bottom_frame ../../node_modules/.vite/deps/react-dom_client.js?v=ca845360:12868:12
+ > renderWithHooks ../../node_modules/.vite/deps/react-dom_client.js?v=ca845360:4213:19
+ > updateFunctionComponent ../../node_modules/.vite/deps/react-dom_client.js?v=ca845360:5569:16
+ > beginWork ../../node_modules/.vite/deps/react-dom_client.js?v=ca845360:6140:20
+ > runWithFiberInDEV ../../node_modules/.vite/deps/react-dom_client.js?v=ca845360:851:66
+ > performUnitOfWork ../../node_modules/.vite/deps/react-dom_client.js?v=ca845360:8429:92
+ > workLoopSync ../../node_modules/.vite/deps/react-dom_client.js?v=ca845360:8325:37
+
+[2m12:09:21 PM[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mAn error occurred in the <Outlet> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+
+[2m12:16:11 PM[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mThe width(-1) and height(-1) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width.
+[2m12:16:11 PM[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mThe width(-1) and height(-1) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width.
+[2m12:16:23 PM[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mThe width(-1) and height(-1) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width.
+[2m12:16:23 PM[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mThe width(-1) and height(-1) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width.
+[2m12:16:30 PM[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mThe width(-1) and height(-1) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width.
+[2m12:16:30 PM[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mThe width(-1) and height(-1) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width.
+[2m12:16:34 PM[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mThe width(-1) and height(-1) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width.
+[2m12:16:34 PM[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mThe width(-1) and height(-1) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width.
+[2m12:20:40 PM[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m [2m[console.error] [22m[2026-04-23T05:20:40.197Z] Error: Connection disconnected with error 'Error: WebSocket closed with status code: 1006 (no reason given).'.
+[2m12:20:40 PM[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m [2m[console.error] [22m[2026-04-23T05:20:40.209Z] Error: Connection disconnected with error 'Error: WebSocket closed with status code: 1006 (no reason given).'.
+[2m12:20:42 PM[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22m[2026-04-23T05:20:42.566Z] Warning: Error from HTTP request. TypeError: Failed to fetch.
+[2m12:20:42 PM[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m [2m[console.error] [22m[2026-04-23T05:20:42.567Z] Error: Failed to complete negotiation with the server: TypeError: Failed to fetch
+[2m12:20:42 PM[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m [2m[console.error] [22m[2026-04-23T05:20:42.568Z] Error: Failed to start the connection: Error: Failed to complete negotiation with the server: TypeError: Failed to fetch
+[2m12:20:42 PM[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22m[2026-04-23T05:20:42.566Z] Warning: Error from HTTP request. TypeError: Failed to fetch.
+[2m12:20:42 PM[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m [2m[console.error] [22m[2026-04-23T05:20:42.567Z] Error: Failed to complete negotiation with the server: TypeError: Failed to fetch
+[2m12:20:42 PM[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m [2m[console.error] [22m[2026-04-23T05:20:42.568Z] Error: Failed to start the connection: Error: Failed to complete negotiation with the server: TypeError: Failed to fetch
+[2m12:20:47 PM[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22m[2026-04-23T05:20:47.627Z] Warning: Error from HTTP request. TypeError: Failed to fetch.
+[2m12:20:47 PM[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m [2m[console.error] [22m[2026-04-23T05:20:47.628Z] Error: Failed to complete negotiation with the server: TypeError: Failed to fetch
+[2m12:20:47 PM[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m [2m[console.error] [22m[2026-04-23T05:20:47.628Z] Error: Failed to start the connection: Error: Failed to complete negotiation with the server: TypeError: Failed to fetch
+[2m12:20:47 PM[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22m[2026-04-23T05:20:47.628Z] Warning: Error from HTTP request. TypeError: Failed to fetch.
+[2m12:20:47 PM[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m [2m[console.error] [22m[2026-04-23T05:20:47.628Z] Error: Failed to complete negotiation with the server: TypeError: Failed to fetch
+[2m12:20:47 PM[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m [2m[console.error] [22m[2026-04-23T05:20:47.628Z] Error: Failed to start the connection: Error: Failed to complete negotiation with the server: TypeError: Failed to fetch
+[2m12:21:45 PM[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m [2m[console.error] [22mIn HTML, <a> cannot be a descendant of <a>.
 This will cause a hydration error.
 
   ...
@@ -134,16 +181,17 @@ This will cause a hydration error.
                         ...
         ...
 
-[2m8:25:22 PM[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m [2m[console.error] [22m<a> cannot contain a nested <a>.
+[2m12:21:45 PM[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m [2m[console.error] [22m<a> cannot contain a nested <a>.
 See this log for the ancestor stack trace.
-[2m8:25:57 PM[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m [2m[console.error] [22mAPI Error: {"status":400,"data":{"error":"Ngày hết hạn phải lớn hơn ngày hiện tại!"},"message":"Request failed with status code 400"}
-[2m8:25:57 PM[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m [2m[console.error] [22mVoucher submit error: Error: Request failed with status code 400
-    at http://localhost:5173/src/api/axiosClient.ts:31:19
-    at async Axios$1.request (http://localhost:5173/node_modules/.vite/deps/axios.js?v=bdbfb9f5:2514:11)
-    at async handleSubmit (http://localhost:5173/src/pages/Vouchers.tsx:106:5)
-    at Axios$1.request (http://localhost:5173/node_modules/.vite/deps/axios.js?v=bdbfb9f5:2518:37)
-    at async handleSubmit (http://localhost:5173/src/pages/Vouchers.tsx:106:5)
-[2m8:27:06 PM[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m [2m[console.error] [22mIn HTML, <a> cannot be a descendant of <a>.
+[2m12:25:01 PM[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mThe width(-1) and height(-1) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width.
+[2m12:25:01 PM[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mThe width(-1) and height(-1) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width.
+[2m12:27:35 PM[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m [2m[console.error] [22mIn HTML, <a> cannot be a descendant of <a>.
 This will cause a hydration error.
 
   ...
@@ -193,9 +241,9 @@ This will cause a hydration error.
                         ...
         ...
 
-[2m8:27:06 PM[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m [2m[console.error] [22m<a> cannot contain a nested <a>.
+[2m12:27:35 PM[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m [2m[console.error] [22m<a> cannot contain a nested <a>.
 See this log for the ancestor stack trace.
-[2m8:27:24 PM[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m [2m[console.error] [22mIn HTML, <a> cannot be a descendant of <a>.
+[2m12:34:14 PM[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m [2m[console.error] [22mIn HTML, <a> cannot be a descendant of <a>.
 This will cause a hydration error.
 
   ...
@@ -245,47 +293,5 @@ This will cause a hydration error.
                         ...
         ...
 
-[2m8:27:24 PM[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m [2m[console.error] [22m<a> cannot contain a nested <a>.
+[2m12:34:14 PM[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m [2m[console.error] [22m<a> cannot contain a nested <a>.
 See this log for the ancestor stack trace.
-[2m8:27:42 PM[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mThe width(-1) and height(-1) of chart should be greater than 0,
-       please check the style of container, or the props width(100%) and height(100%),
-       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
-       height and width.
-[2m8:27:42 PM[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mThe width(-1) and height(-1) of chart should be greater than 0,
-       please check the style of container, or the props width(100%) and height(100%),
-       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
-       height and width.
-[2m8:34:37 PM[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mThe width(-1) and height(-1) of chart should be greater than 0,
-       please check the style of container, or the props width(100%) and height(100%),
-       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
-       height and width.
-[2m8:34:37 PM[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mThe width(-1) and height(-1) of chart should be greater than 0,
-       please check the style of container, or the props width(100%) and height(100%),
-       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
-       height and width.
-[2m8:35:15 PM[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mThe width(-1) and height(-1) of chart should be greater than 0,
-       please check the style of container, or the props width(100%) and height(100%),
-       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
-       height and width.
-[2m8:35:15 PM[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mThe width(-1) and height(-1) of chart should be greater than 0,
-       please check the style of container, or the props width(100%) and height(100%),
-       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
-       height and width.
-[2m8:35:19 PM[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mThe width(-1) and height(-1) of chart should be greater than 0,
-       please check the style of container, or the props width(100%) and height(100%),
-       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
-       height and width.
-[2m8:35:19 PM[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mThe width(-1) and height(-1) of chart should be greater than 0,
-       please check the style of container, or the props width(100%) and height(100%),
-       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
-       height and width.
-[2m10:19:56 PM[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m [2m[console.error] [22m[2026-04-22T15:19:56.874Z] Error: Connection disconnected with error 'Error: Server returned an error on close: Connection closed with an error.'.
-[2m11:04:49 PM[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mThe width(-1) and height(-1) of chart should be greater than 0,
-       please check the style of container, or the props width(100%) and height(100%),
-       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
-       height and width.
-[2m11:04:49 PM[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mThe width(-1) and height(-1) of chart should be greater than 0,
-       please check the style of container, or the props width(100%) and height(100%),
-       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
-       height and width.
-^C

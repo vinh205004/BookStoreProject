@@ -52,16 +52,20 @@ namespace BookStore.API.Services
 
                 if (order != null)
                 {
-                    order.PaymentMethod = "VNPAY";
-
                     if (isSuccess)
                     {
+                        order.PaymentMethod = "VNPAY";
                         await _orderService.CompletePendingVnpayOrderAsync(order.OrderId);
                     }
                     else
                     {
-                        if (order.Status != "PaymentPending" && order.Status != "Cancelled")
+                        if (order.Status == "PaymentPending")
                         {
+                            await DeletePendingVnpayOrderAsync(order);
+                        }
+                        else if (order.Status != "Cancelled")
+                        {
+                            order.PaymentMethod = "VNPAY";
                             foreach (var item in order.OrderItems)
                             {
                                 if (item.Book != null)
@@ -85,6 +89,17 @@ namespace BookStore.API.Services
             }
 
             return _vnpayService.GetClientReturnUrl(orderId, isSuccess, responseCode);
+        }
+
+        private async Task DeletePendingVnpayOrderAsync(BookStore.API.Models.Order order)
+        {
+            if (order.OrderItems.Any())
+            {
+                _context.OrderItems.RemoveRange(order.OrderItems);
+            }
+
+            _context.Orders.Remove(order);
+            await _context.SaveChangesAsync();
         }
     }
 }
