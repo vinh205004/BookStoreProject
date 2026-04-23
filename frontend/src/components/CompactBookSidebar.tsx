@@ -8,6 +8,8 @@ interface CompactBookSidebarItem {
   soldQuantity?: number;
   imageUrls?: string[];
   mainImageUrl?: string;
+  imageUrl?: string;
+  img?: string;
 }
 
 interface CompactBookSidebarProps {
@@ -23,6 +25,9 @@ export default function CompactBookSidebar({
   emptyText,
   className = '',
 }: CompactBookSidebarProps) {
+  const getBookImage = (book: CompactBookSidebarItem) =>
+    book.imageUrls?.[0] || book.mainImageUrl || book.imageUrl || book.img || '/placeholder.jpg';
+
   return (
     <div className={`border-l border-gray-200 pl-4 ${className}`.trim()}>
       <div className="sticky top-6">
@@ -36,9 +41,12 @@ export default function CompactBookSidebar({
               <div key={book.bookId} className="group relative flex gap-3">
                 <Link to={`/product/${book.bookId}`} className="h-28 w-20 flex-shrink-0 border border-gray-200 bg-gray-100">
                   <img
-                    src={book.imageUrls?.[0] || book.mainImageUrl || '/placeholder.jpg'}
+                    src={getBookImage(book)}
                     alt={book.title}
                     className="h-full w-full object-cover"
+                    onError={(event) => {
+                      event.currentTarget.src = '/placeholder.jpg';
+                    }}
                   />
                 </Link>
                 <div className="min-w-0 flex-1">

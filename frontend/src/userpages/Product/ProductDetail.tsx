@@ -71,6 +71,9 @@ export default function ProductDetail() {
   const [authorBooks, setAuthorBooks] = useState<any[]>([]);
   const [categoryBooks, setCategoryBooks] = useState<any[]>([]);
 
+  const getBookImage = (book: any) =>
+    book?.imageUrls?.[0] || book?.mainImageUrl || book?.imageUrl || book?.img || '/placeholder.jpg';
+
   useEffect(() => {
     const loadProduct = async () => {
       try {
@@ -419,11 +422,11 @@ export default function ProductDetail() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {/* Images */}
           <div>
-            <div className="aspect-square bg-gray-100 rounded-none overflow-hidden mb-4">
+            <div className="aspect-square bg-white rounded-none overflow-hidden mb-4 border border-gray-200 p-4 flex items-center justify-center">
             <img
               src={product.imageUrls[selectedImageIndex] || '/placeholder.jpg'}
               alt={product.title}
-              className="w-full h-full object-cover"
+              className="max-h-full max-w-full object-contain"
             />
           </div>
 
@@ -433,11 +436,11 @@ export default function ProductDetail() {
                 <button
                   key={idx}
                   onClick={() => setSelectedImageIndex(idx)}
-                  className={`aspect-square rounded-none overflow-hidden border-2 transition ${
+                  className={`aspect-square rounded-none overflow-hidden border-2 bg-white p-1 transition ${
                     selectedImageIndex === idx ? 'border-orange-500' : 'border-gray-300'
                   }`}
                 >
-                  <img src={img} alt={`Preview ${idx}`} className="w-full h-full object-cover" />
+                  <img src={img} alt={`Preview ${idx}`} className="w-full h-full object-contain" />
                 </button>
               ))}
             </div>
@@ -605,9 +608,12 @@ export default function ProductDetail() {
                 <div key={book.bookId} className="flex gap-3 relative group">
                   <Link to={`/product/${book.bookId}`} className="w-20 h-28 flex-shrink-0 bg-gray-100 border border-gray-200">
                     <img
-                      src={book.imageUrls?.[0] || '/placeholder.jpg'}
+                      src={getBookImage(book)}
                       alt={book.title}
                       className="w-full h-full object-cover"
+                      onError={(event) => {
+                        event.currentTarget.src = '/placeholder.jpg';
+                      }}
                     />
                   </Link>
                   <div className="flex-1 min-w-0">
@@ -905,25 +911,28 @@ export default function ProductDetail() {
         <div className="flex overflow-x-auto gap-4 pb-4 custom-scrollbar">
           {categoryBooks.length > 0 ? (
             categoryBooks.map(book => (
-              <Link to={`/product/${book.bookId}`} key={book.bookId} className="w-48 flex-shrink-0 group flex flex-col items-center bg-white p-3 rounded-none border border-gray-100 shadow-sm hover:shadow-md transition-shadow relative">
+              <Link to={`/product/${book.bookId}`} key={book.bookId} className="h-[520px] w-52 flex-shrink-0 group flex flex-col items-center bg-white p-4 rounded-none border border-gray-100 shadow-sm hover:shadow-md transition-shadow relative">
                 {book.discountBadge && (
                   <div className="absolute top-2 left-2 z-10 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded">
                     {book.discountBadge}
                   </div>
                 )}
-                <div className="w-full aspect-square bg-white flex items-center justify-center p-2 mb-3">
+                <div className="mb-4 flex h-64 w-full items-center justify-center bg-white p-2">
                   <img
-                    src={book.imageUrls?.[0] || '/placeholder.jpg'}
+                    src={getBookImage(book)}
                     alt={book.title}
-                    className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
+                    className="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-300"
+                    onError={(event) => {
+                      event.currentTarget.src = '/placeholder.jpg';
+                    }}
                   />
                 </div>
                 
-                <h3 className="font-bold text-gray-800 text-center mb-2 leading-5 min-h-[2.5rem] w-full break-words group-hover:text-orange-500 transition-colors">
+                <h3 className="mb-3 flex h-12 w-full items-center justify-center overflow-hidden break-words text-center text-base font-bold leading-6 text-gray-800 group-hover:text-orange-500 transition-colors">
                   {book.title}
                 </h3>
   
-                <div className="flex flex-col items-center gap-1 w-full">
+                <div className="flex h-16 w-full flex-col items-center justify-start gap-1">
                   {book.discountedPrice ? (
                     <>
                       <span className="text-orange-500 font-bold text-lg">{book.discountedPrice.toLocaleString()}đ</span>
