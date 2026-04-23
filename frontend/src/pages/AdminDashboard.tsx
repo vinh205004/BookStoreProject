@@ -4,6 +4,7 @@ import { Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContainer,
 import { DollarSign, BookOpen, ShoppingBag, Users, TrendingUp, TrendingDown, Calendar, Star, MessageSquare } from 'lucide-react';
 import axiosClient from '../api/axiosClient';
 import { toast } from 'react-toastify';
+import Pagination from '../components/Pagination';
 
 // Random colors for pie chart
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#ffc658', '#a4de6c'];
@@ -147,6 +148,7 @@ export default function AdminDashboard() {
   const [expandedBookId, setExpandedBookId] = useState<number | null>(null);
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [topRatedCurrentPage, setTopRatedCurrentPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [initialLoad, setInitialLoad] = useState(true);
 
@@ -267,6 +269,11 @@ export default function AdminDashboard() {
   }, [fetchDashboardData]);
 
   useEffect(() => {
+    setTopRatedCurrentPage(1);
+    setExpandedBookId(null);
+  }, [topRatedProducts, selectedMonth, selectedYear]);
+
+  useEffect(() => {
     const handleDashboardRealtimeUpdated = () => {
       fetchDashboardData();
     };
@@ -285,6 +292,12 @@ export default function AdminDashboard() {
   const hasMonthlyRevenue = monthlyRevenue.some(item => item.revenue > 0);
   const totalStatusOrders = statusSummary.reduce((sum, item) => sum + item.count, 0);
   const statusChartData = statusSummary.filter(item => item.count > 0);
+  const topRatedItemsPerPage = 10;
+  const topRatedTotalPages = Math.ceil(topRatedProducts.length / topRatedItemsPerPage);
+  const paginatedTopRatedProducts = topRatedProducts.slice(
+    (topRatedCurrentPage - 1) * topRatedItemsPerPage,
+    topRatedCurrentPage * topRatedItemsPerPage
+  );
   const currentDate = new Date();
   const setCurrentMonthFilter = () => {
     setSelectedMonth(currentDate.getMonth() + 1);
@@ -688,13 +701,13 @@ export default function AdminDashboard() {
           <div className="p-5 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
             <h3 className="font-bold text-slate-800">Đánh Giá Nổi Bật {selectedMonth}/{selectedYear}</h3>
           </div>
-          <div className="divide-y divide-slate-100 p-2">
+          <div className={`divide-y divide-slate-100 p-2 ${topRatedProducts.length > 5 ? 'max-h-[460px] overflow-y-auto custom-scrollbar' : ''}`}>
             {topRatedProducts.length > 0 ? (
-              topRatedProducts.map((p, index) => (
+              paginatedTopRatedProducts.map((p, index) => (
                 <div key={p.id} className="flex flex-col p-3 border-b border-slate-100 last:border-b-0 hover:bg-slate-50 transition-colors rounded-none group cursor-pointer" onClick={() => setExpandedBookId(expandedBookId === p.id ? null : p.id)}>
                   <div className="flex items-center">
-                    <div className={`w-8 h-8 rounded-none flex items-center justify-center font-bold text-sm mr-4 ${index === 0 ? 'bg-yellow-100 text-yellow-600' : index === 1 ? 'bg-slate-200 text-slate-600' : index === 2 ? 'bg-orange-100 text-orange-800' : 'bg-gray-50 text-gray-400'} group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors`}>
-                      #{index + 1}
+                    <div className={`w-8 h-8 rounded-none flex items-center justify-center font-bold text-sm mr-4 ${((topRatedCurrentPage - 1) * topRatedItemsPerPage + index) === 0 ? 'bg-yellow-100 text-yellow-600' : ((topRatedCurrentPage - 1) * topRatedItemsPerPage + index) === 1 ? 'bg-slate-200 text-slate-600' : ((topRatedCurrentPage - 1) * topRatedItemsPerPage + index) === 2 ? 'bg-orange-100 text-orange-800' : 'bg-gray-50 text-gray-400'} group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors`}>
+                      #{(topRatedCurrentPage - 1) * topRatedItemsPerPage + index + 1}
                     </div>
                     <img
                       src={p.img || buildBookPlaceholder(p.title)}
@@ -880,6 +893,15 @@ export default function AdminDashboard() {
                 </div>
             )}
           </div>
+          {topRatedProducts.length > 10 && (
+            <div className="px-4 pb-4">
+              <Pagination
+                currentPage={topRatedCurrentPage}
+                totalPages={topRatedTotalPages}
+                onPageChange={setTopRatedCurrentPage}
+              />
+            </div>
+          )}
         </div>
 
       </div>

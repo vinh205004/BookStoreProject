@@ -197,7 +197,6 @@ namespace BookStore.API.Repositories
                 })
                 .OrderByDescending(x => x.rating)
                 .ThenByDescending(x => x.reviews)
-                .Take(5)
                 .ToList();
 
             return new
