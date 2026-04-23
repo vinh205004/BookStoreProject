@@ -10,6 +10,8 @@ interface HomeProductCardProps {
   rating?: number;
   reviewCount?: number;
   soldQuantity?: number;
+  className?: string;
+  imageFit?: 'cover' | 'contain';
 }
 
 export default function HomeProductCard({
@@ -24,6 +26,8 @@ export default function HomeProductCard({
   rating,
   reviewCount,
   soldQuantity,
+  className = '',
+  imageFit = 'contain',
 }: HomeProductCardProps) {
   const renderStars = () => {
     if (rating === undefined || rating === null) return null;
@@ -48,7 +52,7 @@ export default function HomeProductCard({
   return (
     <a
       href={`/product/${bookId}`}
-      className="group relative block flex-none w-64 snap-start border-2 border-orange-500 bg-white shadow-md transition hover:shadow-lg"
+      className={`group relative block flex-none w-64 snap-start border-2 border-orange-500 bg-white shadow-md transition hover:shadow-lg ${className}`.trim()}
     >
       {discountBadge && (
         <div className="pointer-events-none absolute left-2 top-2 z-10 bg-red-500 px-2 py-1 text-xs font-bold text-white shadow-sm">
@@ -56,11 +60,14 @@ export default function HomeProductCard({
         </div>
       )}
 
-      <div className="aspect-square overflow-hidden border-2 border-orange-500 bg-gray-100">
+      <div className="aspect-square overflow-hidden border-2 border-orange-500 bg-white p-2">
         <img
           src={mainImageUrl || '/placeholder.jpg'}
           alt={title}
-          className="h-full w-full object-cover transition group-hover:scale-105"
+          className={`h-full w-full transition group-hover:scale-105 ${imageFit === 'contain' ? 'object-contain' : 'object-cover'}`}
+          onError={(event) => {
+            event.currentTarget.src = '/placeholder.jpg';
+          }}
         />
       </div>
 
@@ -78,11 +85,11 @@ export default function HomeProductCard({
         <div className="mt-auto flex flex-col">
           {discountedPrice ? (
             <div className="flex flex-col">
-              <span className="text-sm font-bold text-orange-500">{discountedPrice.toLocaleString()}₫</span>
-              <span className="text-xs text-gray-400 line-through">{price.toLocaleString()}₫</span>
+              <span className="text-sm font-bold text-orange-500">{discountedPrice.toLocaleString('vi-VN')}đ</span>
+              <span className="text-xs text-gray-400 line-through">{price.toLocaleString('vi-VN')}đ</span>
             </div>
           ) : (
-            <span className="text-sm font-bold text-orange-500">{price.toLocaleString()}₫</span>
+            <span className="text-sm font-bold text-orange-500">{price.toLocaleString('vi-VN')}đ</span>
           )}
         </div>
 

@@ -8,6 +8,7 @@ import axiosClient from '../../api/axiosClient';
 import { getCurrentUserId, getUserRole } from '../../utils/tokenUtils';
 import Breadcrumb from '../../components/Breadcrumb';
 import OrangeButton from '../../components/OrangeButton';
+import HomeProductCard from '../../components/HomeProductCard';
 
 interface ProductDetail {
   bookId: string;
@@ -911,38 +912,22 @@ export default function ProductDetail() {
         <div className="flex overflow-x-auto gap-4 pb-4 custom-scrollbar">
           {categoryBooks.length > 0 ? (
             categoryBooks.map(book => (
-              <Link to={`/product/${book.bookId}`} key={book.bookId} className="h-[520px] w-52 flex-shrink-0 group flex flex-col items-center bg-white p-4 rounded-none border border-gray-100 shadow-sm hover:shadow-md transition-shadow relative">
-                {book.discountBadge && (
-                  <div className="absolute top-2 left-2 z-10 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded">
-                    {book.discountBadge}
-                  </div>
-                )}
-                <div className="mb-4 flex h-64 w-full items-center justify-center bg-white p-2">
-                  <img
-                    src={getBookImage(book)}
-                    alt={book.title}
-                    className="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-300"
-                    onError={(event) => {
-                      event.currentTarget.src = '/placeholder.jpg';
-                    }}
-                  />
-                </div>
-                
-                <h3 className="mb-3 flex h-12 w-full items-center justify-center overflow-hidden break-words text-center text-base font-bold leading-6 text-gray-800 group-hover:text-orange-500 transition-colors">
-                  {book.title}
-                </h3>
-  
-                <div className="flex h-16 w-full flex-col items-center justify-start gap-1">
-                  {book.discountedPrice ? (
-                    <>
-                      <span className="text-orange-500 font-bold text-lg">{book.discountedPrice.toLocaleString()}đ</span>
-                      <span className="text-gray-400 line-through text-sm">{book.price.toLocaleString()}đ</span>
-                    </>
-                  ) : (
-                    <span className="text-orange-500 font-bold text-lg">{book.price.toLocaleString()}đ</span>
-                  )}
-                </div>
-              </Link>
+              <HomeProductCard
+                key={book.bookId}
+                bookId={book.bookId}
+                title={book.title}
+                price={book.price}
+                stock={book.stock ?? 0}
+                authorName={book.authorName || ''}
+                mainImageUrl={getBookImage(book)}
+                discountBadge={book.discountBadge}
+                discountedPrice={book.discountedPrice}
+                rating={book.rating}
+                reviewCount={book.reviewCount}
+                soldQuantity={book.soldQuantity}
+                className="w-48"
+                imageFit="contain"
+              />
             ))
           ) : (
             <p className="text-gray-500 italic">Không có sách nào cùng danh mục.</p>

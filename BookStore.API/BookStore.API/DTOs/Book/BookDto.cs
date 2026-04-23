@@ -23,5 +23,6 @@
         public decimal? DiscountedPrice { get; set; }
         public string? DiscountBadge { get; set; } 
         public string? DiscountVoucherCode { get; set; }
+        public int SoldQuantity { get; set; }
     }
 }

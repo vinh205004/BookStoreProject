@@ -22,6 +22,7 @@ namespace BookStore.API.Services
         {
             var books = await _bookRepo.GetAllAsync();
             var vouchers = await GetActiveVouchersAsync();
+            var soldQuantities = await _bookRepo.GetSoldQuantitiesAsync();
             var bookDtos = books.Select(b => new BookDto
             {
                 BookId = b.BookId,
@@ -41,7 +42,8 @@ namespace BookStore.API.Services
                 Length = b.Length,
                 Width = b.Width,
                 LengthUnit = b.LengthUnit ?? "cm",
-                PageCount = b.PageCount
+                PageCount = b.PageCount,
+                SoldQuantity = soldQuantities.TryGetValue(b.BookId, out var soldQuantity) ? soldQuantity : 0
             })
             .Select(dto =>
             {

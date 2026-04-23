@@ -8,6 +8,7 @@ namespace BookStore.API.Repositories
         // Admin CRUD
         Task<IEnumerable<Book>> GetAllAsync();
         Task<Book?> GetByIdAsync(string id);
+        Task<Dictionary<string, int>> GetSoldQuantitiesAsync();
         Task AddAsync(Book book);
         Task UpdateAsync(Book book);
 

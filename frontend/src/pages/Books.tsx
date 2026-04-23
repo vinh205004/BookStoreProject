@@ -24,7 +24,7 @@ import Pagination from '../components/Pagination';
 import SortableHeader, { type SortDirection } from '../components/SortableHeader';
 
 const ITEMS_PER_PAGE = 10;
-type BookSortKey = 'price' | 'stock';
+type BookSortKey = 'price' | 'stock' | 'sold';
 type DiscountFilterValue = 'discounted' | 'none';
 
 const roundDimension = (value: number) => Math.round(value * 10) / 10;
@@ -339,8 +339,8 @@ export default function Books() {
 
   const displayData = showTrash ? filteredTrash : filteredActive;
   const sortedData = [...displayData].sort((a, b) => {
-    const aValue = sortKey === 'price' ? a.price : a.stock;
-    const bValue = sortKey === 'price' ? b.price : b.stock;
+    const aValue = sortKey === 'price' ? a.price : sortKey === 'sold' ? (a.soldQuantity ?? 0) : a.stock;
+    const bValue = sortKey === 'price' ? b.price : sortKey === 'sold' ? (b.soldQuantity ?? 0) : b.stock;
     return sortDirection === 'asc' ? aValue - bValue : bValue - aValue;
   });
   const totalPages = Math.ceil(sortedData.length / ITEMS_PER_PAGE);
@@ -467,13 +467,16 @@ export default function Books() {
               <SortableHeader active={sortKey === 'stock'} direction={sortDirection} onClick={() => handleSort('stock')}>
                 Kho
               </SortableHeader>
+              <SortableHeader active={sortKey === 'sold'} direction={sortDirection} onClick={() => handleSort('sold')}>
+                Đã bán
+              </SortableHeader>
               <th className="p-3 sm:p-4 font-semibold text-center">Thao tác</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-200 text-slate-700">
             {displayData.length === 0 ? (
               <tr>
-                <td colSpan={7} className="p-8 text-center text-slate-500">Trống.</td>
+                <td colSpan={8} className="p-8 text-center text-slate-500">Trống.</td>
               </tr>
             ) : (
               paginatedData.map((book) => (
@@ -511,6 +514,7 @@ export default function Books() {
                     </div>
                   </td>
                   <td className="p-3 sm:p-4 text-xs sm:text-base">{book.stock} cuốn</td>
+                  <td className="p-3 sm:p-4 text-xs sm:text-base font-semibold text-slate-800">{book.soldQuantity ?? 0} cuốn</td>
                   <td className="p-3 sm:p-4 flex justify-center gap-2 sm:gap-3">
                     {!showTrash ? (
                       <>

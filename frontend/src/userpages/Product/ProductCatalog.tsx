@@ -586,11 +586,14 @@ export default function ProductCatalog() {
                     key={product.bookId}
                     className="bg-white shadow-md overflow-hidden hover:shadow-lg transition flex flex-col h-full border-2 border-orange-500 cursor-pointer"
                   >
-                    <div className="aspect-square bg-gray-100 overflow-hidden relative flex-shrink-0 border-2 border-orange-500">
+                    <div className="aspect-square bg-white overflow-hidden relative flex-shrink-0 border-2 border-orange-500 p-2">
                       <img
                         src={product.mainImageUrl || '/placeholder.jpg'}
                         alt={product.title}
-                        className="w-full h-full object-cover hover:scale-105 transition"
+                        className="w-full h-full object-contain hover:scale-105 transition"
+                        onError={(event) => {
+                          event.currentTarget.src = '/placeholder.jpg';
+                        }}
                       />
                       {product.discountBadge && (
                         <div className="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 text-xs font-bold">

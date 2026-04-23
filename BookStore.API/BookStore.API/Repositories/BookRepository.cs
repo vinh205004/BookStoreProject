@@ -17,6 +17,15 @@ namespace BookStore.API.Repositories
                 .Include(b => b.Reviews).Include(b => b.Publisher).ToListAsync();
         }
 
+        public async Task<Dictionary<string, int>> GetSoldQuantitiesAsync()
+        {
+            return await _context.OrderItems
+                .Where(oi => oi.Order != null && oi.Order.Status != "Cancelled")
+                .GroupBy(oi => oi.BookId)
+                .Select(g => new { BookId = g.Key, TotalQuantity = g.Sum(oi => oi.Quantity) })
+                .ToDictionaryAsync(x => x.BookId, x => x.TotalQuantity);
+        }
+
         public async Task<Book?> GetByIdAsync(string id)
         {
             return await _context.Books.Include(b => b.Category).Include(b => b.Author).Include(b => b.BookImages)
