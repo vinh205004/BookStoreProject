@@ -72,10 +72,19 @@ export default function Users() {
   }, [fetchUsers, fetchOrders]);
 
   const normalizedSearch = searchQuery.toLowerCase();
-  const filteredUsers = users.filter((user) =>
-    user.username.toLowerCase().includes(normalizedSearch) ||
-    user.fullName.toLowerCase().includes(normalizedSearch) ||
-    user.email.toLowerCase().includes(normalizedSearch)
+  const filteredUsers = useMemo(
+    () =>
+      users
+        .filter((user) =>
+          user.username.toLowerCase().includes(normalizedSearch) ||
+          user.fullName.toLowerCase().includes(normalizedSearch) ||
+          user.email.toLowerCase().includes(normalizedSearch)
+        )
+        .sort((a, b) => {
+          if (a.isLocked === b.isLocked) return 0;
+          return a.isLocked ? -1 : 1;
+        }),
+    [normalizedSearch, users]
   );
   const totalPages = Math.ceil(filteredUsers.length / ITEMS_PER_PAGE);
   const paginatedUsers = filteredUsers.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
