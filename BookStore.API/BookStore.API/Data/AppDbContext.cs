@@ -29,6 +29,81 @@ namespace BookStore.API.Data
             modelBuilder.Entity<Order>()
                 .Property(o => o.PaymentMethod)
                 .HasDefaultValue("COD");
+
+            modelBuilder.Entity<User>()
+                .HasIndex(u => u.Username)
+                .IsUnique();
+
+            modelBuilder.Entity<User>()
+                .HasIndex(u => u.Email)
+                .IsUnique();
+
+            modelBuilder.Entity<User>()
+                .HasIndex(u => new { u.Role, u.IsLocked });
+
+            modelBuilder.Entity<User>()
+                .HasIndex(u => u.CreatedAt);
+
+            modelBuilder.Entity<Book>()
+                .HasIndex(b => new { b.IsHidden, b.CategoryId });
+
+            modelBuilder.Entity<Book>()
+                .HasIndex(b => new { b.IsHidden, b.AuthorId });
+
+            modelBuilder.Entity<Book>()
+                .HasIndex(b => new { b.IsHidden, b.PublisherId });
+
+            modelBuilder.Entity<Book>()
+                .HasIndex(b => new { b.IsHidden, b.TargetAudience });
+
+            modelBuilder.Entity<Book>()
+                .HasIndex(b => new { b.IsHidden, b.CreatedAt });
+
+            modelBuilder.Entity<Order>()
+                .HasIndex(o => new { o.UserId, o.OrderDate });
+
+            modelBuilder.Entity<Order>()
+                .HasIndex(o => new { o.UserId, o.Status });
+
+            modelBuilder.Entity<Order>()
+                .HasIndex(o => new { o.Status, o.OrderDate });
+
+            modelBuilder.Entity<Order>()
+                .HasIndex(o => new { o.PaymentMethod, o.Status });
+
+            modelBuilder.Entity<Order>()
+                .HasIndex(o => o.AppliedVoucherCode);
+
+            modelBuilder.Entity<Voucher>()
+                .HasIndex(v => v.Code)
+                .IsUnique();
+
+            modelBuilder.Entity<Voucher>()
+                .HasIndex(v => new { v.IsActive, v.IsHidden, v.StartDate, v.ExpirationDate });
+
+            modelBuilder.Entity<Voucher>()
+                .HasIndex(v => v.ApplicableCategoryId);
+
+            modelBuilder.Entity<Cart>()
+                .HasIndex(c => c.UserId)
+                .IsUnique();
+
+            modelBuilder.Entity<CartItem>()
+                .HasIndex(ci => new { ci.CartId, ci.BookId })
+                .IsUnique();
+
+            modelBuilder.Entity<Review>()
+                .HasIndex(r => new { r.BookId, r.UserId })
+                .IsUnique();
+
+            modelBuilder.Entity<Review>()
+                .HasIndex(r => new { r.BookId, r.CreatedAt });
+
+            modelBuilder.Entity<ReviewReply>()
+                .HasIndex(rr => new { rr.ReviewId, rr.CreatedAt });
+
+            modelBuilder.Entity<Banner>()
+                .HasIndex(b => new { b.IsActive, b.DisplayOrder });
         }
     }
 }

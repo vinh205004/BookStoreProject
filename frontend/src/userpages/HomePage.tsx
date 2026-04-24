@@ -296,7 +296,7 @@ export default function HomePage() {
       <section className="py-12 sm:py-16 lg:py-20 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="mb-8">
-            <h2 className={sectionTitleClassName}>Top 10 Sách Bán Chạy Nhất Tháng</h2>
+            <h2 className={sectionTitleClassName}>Top 10 Sách Bán Chạy Nhất</h2>
           </div>
 
           {!topSelling || topSelling.length === 0 ? (
