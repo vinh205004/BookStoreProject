@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect, useCallback } from 'react';
 import { Plus, Edit, Trash2, ArchiveRestore, List, TicketPercent, Search } from 'lucide-react';

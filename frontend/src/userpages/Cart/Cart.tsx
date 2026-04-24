@@ -295,11 +295,14 @@ export default function Cart() {
                   className="w-5 h-5 text-orange-500 focus:ring-orange-500 border-gray-300 rounded cursor-pointer"
                 />
                 {/* Image */}
-                <div className="w-20 h-20 flex-shrink-0 bg-gray-100 rounded overflow-hidden">
+                <div className="w-20 h-20 flex-shrink-0 bg-white rounded overflow-hidden border border-gray-200 p-1">
                   <img
                     src={item.imageUrl || '/placeholder.jpg'}
                     alt={item.bookTitle}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-contain"
+                    onError={(event) => {
+                      event.currentTarget.src = '/placeholder.jpg';
+                    }}
                   />
                 </div>
 

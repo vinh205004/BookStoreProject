@@ -1,0 +1,128 @@
+[2m2:41:47 PM[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mThe width(-1) and height(-1) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width.
+[2m2:41:47 PM[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mThe width(-1) and height(-1) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width.
+[2m2:44:57 PM[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mThe width(-1) and height(-1) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width.
+[2m2:44:57 PM[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mThe width(-1) and height(-1) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width.
+[2m2:46:14 PM[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m [2m[console.error] [22mIn HTML, <a> cannot be a descendant of <a>.
+This will cause a hydration error.
+
+  ...
+    <UserLayout>
+      <div className="flex flex-...">
+        <header>
+        <main className="flex-1">
+          <Outlet>
+            <RenderedRoute match={{params:{}, ...}} routeContext={{outlet:null, ...}}>
+              <ProductCatalog>
+                <div className="max-w-7xl ...">
+                  <Breadcrumb>
+                  <PageTitle>
+                  <div className="flex gap-6">
+                    <aside>
+                    <div className="flex-1 rel...">
+                      <div>
+                      <div className="transition...">
+                        <div className="grid grid-...">
+                          <LinkWithRef to="/product/0..." className="bg-white s...">
+>                           <a
+>                             className="bg-white shadow-md overflow-hidden hover:shadow-lg transition flex flex-col h..."
+>                             href="/product/002d7d0b-4a4d-49bd-879e-a55dc4f7881b"
+>                             onClick={function handleClick}
+>                             ref={function}
+>                             target={undefined}
+>                             data-discover="true"
+>                           >
+                              <div>
+                              <div className="p-2 flex f...">
+                                <div>
+                                <div>
+                                <div>
+                                <div>
+                                <div className="flex gap-1...">
+                                  <LinkWithRef to="/product/0..." className="flex-1 bg-..." onClick={function onClick}>
+>                                   <a
+>                                     className="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-1 flex items-cente..."
+>                                     href="/product/002d7d0b-4a4d-49bd-879e-a55dc4f7881b"
+>                                     onClick={function handleClick}
+>                                     ref={function}
+>                                     target={undefined}
+>                                     data-discover="true"
+>                                   >
+                                  ...
+                          ...
+                        ...
+        ...
+
+[2m2:46:14 PM[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m [2m[console.error] [22m<a> cannot contain a nested <a>.
+See this log for the ancestor stack trace.
+[2m2:48:28 PM[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mThe width(-1) and height(-1) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width.
+[2m2:48:28 PM[22m [33m[1m[vite][22m[39m [33m[2m(client)[22m[39m [2m[console.warn] [22mThe width(-1) and height(-1) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width.
+[2m2:54:19 PM[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m [2m[console.error] [22mIn HTML, <a> cannot be a descendant of <a>.
+This will cause a hydration error.
+
+  ...
+    <UserLayout>
+      <div className="flex flex-...">
+        <header>
+        <main className="flex-1">
+          <Outlet>
+            <RenderedRoute match={{params:{}, ...}} routeContext={{outlet:null, ...}}>
+              <ProductCatalog>
+                <div className="max-w-7xl ...">
+                  <Breadcrumb>
+                  <PageTitle>
+                  <div className="flex gap-6">
+                    <aside>
+                    <div className="flex-1 rel...">
+                      <div>
+                      <div className="transition...">
+                        <div className="grid grid-...">
+                          <LinkWithRef to="/product/0..." className="bg-white s...">
+>                           <a
+>                             className="bg-white shadow-md overflow-hidden hover:shadow-lg transition flex flex-col h..."
+>                             href="/product/002d7d0b-4a4d-49bd-879e-a55dc4f7881b"
+>                             onClick={function handleClick}
+>                             ref={function}
+>                             target={undefined}
+>                             data-discover="true"
+>                           >
+                              <div>
+                              <div className="p-2 flex f...">
+                                <div>
+                                <div>
+                                <div>
+                                <div>
+                                <div className="flex gap-1...">
+                                  <LinkWithRef to="/product/0..." className="flex-1 bg-..." onClick={function onClick}>
+>                                   <a
+>                                     className="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-1 flex items-cente..."
+>                                     href="/product/002d7d0b-4a4d-49bd-879e-a55dc4f7881b"
+>                                     onClick={function handleClick}
+>                                     ref={function}
+>                                     target={undefined}
+>                                     data-discover="true"
+>                                   >
+                                  ...
+                          ...
+                        ...
+        ...
+
+[2m2:54:19 PM[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m [2m[console.error] [22m<a> cannot contain a nested <a>.
+See this log for the ancestor stack trace.
