@@ -432,19 +432,35 @@ export default function ProductDetail() {
           </div>
 
           {product.imageUrls.length > 1 && (
-            <div className="grid grid-cols-4 gap-2">
-              {product.imageUrls.map((img, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => setSelectedImageIndex(idx)}
-                  className={`aspect-square rounded-none overflow-hidden border-2 bg-white p-1 transition ${
-                    selectedImageIndex === idx ? 'border-orange-500' : 'border-gray-300'
-                  }`}
-                >
-                  <img src={img} alt={`Preview ${idx}`} className="w-full h-full object-contain" />
-                </button>
-              ))}
-            </div>
+            product.imageUrls.length > 4 ? (
+              <div className="flex gap-2 overflow-x-auto pb-2 custom-scrollbar">
+                {product.imageUrls.map((img, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setSelectedImageIndex(idx)}
+                    className={`h-24 w-24 flex-shrink-0 rounded-none overflow-hidden border-2 bg-white p-1 transition ${
+                      selectedImageIndex === idx ? 'border-orange-500' : 'border-gray-300'
+                    }`}
+                  >
+                    <img src={img} alt={`Preview ${idx}`} className="w-full h-full object-contain" />
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <div className="grid grid-cols-4 gap-2">
+                {product.imageUrls.map((img, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setSelectedImageIndex(idx)}
+                    className={`aspect-square rounded-none overflow-hidden border-2 bg-white p-1 transition ${
+                      selectedImageIndex === idx ? 'border-orange-500' : 'border-gray-300'
+                    }`}
+                  >
+                    <img src={img} alt={`Preview ${idx}`} className="w-full h-full object-contain" />
+                  </button>
+                ))}
+              </div>
+            )
           )}
         </div>
 
