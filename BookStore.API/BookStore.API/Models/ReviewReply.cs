@@ -8,7 +8,7 @@ namespace BookStore.API.Models
     public class ReviewReply
     {
         [Key]
-        public string ReplyId { get; set; } = Guid.NewGuid().ToString();
+        public string ReplyId { get; set; } = string.Empty;
 
         [Required]
         public string ReviewId { get; set; } = string.Empty;

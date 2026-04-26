@@ -1,5 +1,6 @@
 using BookStore.API.Models;
 using BookStore.API.Repositories;
+using BookStore.API.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -34,7 +35,7 @@ namespace BookStore.API.Services
             }
 
             if (string.IsNullOrEmpty(banner.BannerId))
-                banner.BannerId = Guid.NewGuid().ToString();
+                banner.BannerId = IdGenerator.GenerateBannerId();
             banner.CreatedAt = DateTime.UtcNow;
             
             await ReorderBannersOnSaveAsync(banner, isNew: true);

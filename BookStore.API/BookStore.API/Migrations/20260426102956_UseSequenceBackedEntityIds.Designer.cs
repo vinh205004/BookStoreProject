@@ -3,6 +3,7 @@ using System;
 using BookStore.API.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace BookStore.API.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260426102956_UseSequenceBackedEntityIds")]
+    partial class UseSequenceBackedEntityIds
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -24,29 +27,11 @@ namespace BookStore.API.Migrations
 
             modelBuilder.HasSequence<int>("author_id_seq");
 
-            modelBuilder.HasSequence<int>("banner_id_seq");
-
             modelBuilder.HasSequence<int>("book_id_seq");
-
-            modelBuilder.HasSequence<int>("cart_id_seq");
-
-            modelBuilder.HasSequence<int>("cart_item_id_seq");
 
             modelBuilder.HasSequence<int>("category_id_seq");
 
-            modelBuilder.HasSequence<int>("image_id_seq");
-
-            modelBuilder.HasSequence<int>("order_id_seq");
-
-            modelBuilder.HasSequence<int>("order_item_id_seq");
-
             modelBuilder.HasSequence<int>("publisher_id_seq");
-
-            modelBuilder.HasSequence<int>("review_id_seq");
-
-            modelBuilder.HasSequence<int>("review_reply_id_seq");
-
-            modelBuilder.HasSequence<int>("user_id_seq");
 
             modelBuilder.HasSequence<int>("voucher_id_seq");
 

@@ -1,6 +1,7 @@
 using BookStore.API.DTOs;
 using BookStore.API.Models;
 using BookStore.API.Repositories;
+using BookStore.API.Utilities;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -85,6 +86,7 @@ namespace BookStore.API.Services
 
             var review = new Review
             {
+                ReviewId = IdGenerator.GenerateReviewId(),
                 BookId = dto.BookId,
                 UserId = userId,
                 Rating = dto.Rating,

@@ -78,3 +78,9 @@ package-lock.json
 
 # Các file build artifacts không cần
 *.patched
+
+# Runtime logs / temp workspace
+*.log
+.tmp/
+**/bin/
+**/obj/

@@ -6,7 +6,7 @@ namespace BookStore.API.Models
     public class Banner
     {
         [Key]
-        public string BannerId { get; set; } = Guid.NewGuid().ToString();
+        public string BannerId { get; set; } = string.Empty;
         [Required]
         public string ImageUrl { get; set; } = string.Empty;
         [Required]

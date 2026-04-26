@@ -1,71 +1,65 @@
 using System;
-using System.Linq;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using System.Data;
 
 namespace BookStore.API.Utilities
 {
     public static class IdGenerator
     {
-        private static int _categoryCounter = 0;
-        private static int _authorCounter = 0;
-        private static int _publisherCounter = 0;
-        private static int _bookCounter = 0;
-        private static int _voucherCounter = 0;
-        private static int _orderCounter = 0;
-        private static int _userCounter = 0;
-        private static int _imageCounter = 0;
-        private static int _cartCounter = 0;
-        private static int _cartItemCounter = 0;
-        private static int _orderItemCounter = 0;
+        private static IServiceProvider? _serviceProvider;
 
-        public static string GenerateCategoryId() => $"C{++_categoryCounter:000}";
-        public static string GenerateAuthorId() => $"A{++_authorCounter:000}";
-        public static string GeneratePublisherId() => $"N{++_publisherCounter:000}";
-        public static string GenerateBookId() => $"S{++_bookCounter:000}";
-        public static string GenerateVoucherId() => $"V{++_voucherCounter:000}";
-        public static string GenerateOrderId() => $"O{++_orderCounter:000}";
-        public static string GenerateUserId() => $"U{++_userCounter:000}";
-        public static string GenerateImageId() => $"I{++_imageCounter:000}";
-        public static string GenerateCartId() => $"CT{++_cartCounter:000}";
-        public static string GenerateCartItemId() => $"CI{++_cartItemCounter:000}";
-        public static string GenerateOrderItemId() => $"OI{++_orderItemCounter:000}";
+        public static string GenerateCategoryId() => GenerateSequenceBackedId("category_id_seq", "C");
+        public static string GenerateAuthorId() => GenerateSequenceBackedId("author_id_seq", "A");
+        public static string GeneratePublisherId() => GenerateSequenceBackedId("publisher_id_seq", "N");
+        public static string GenerateBannerId() => GenerateSequenceBackedId("banner_id_seq", "BA");
+        public static string GenerateBookId() => GenerateSequenceBackedId("book_id_seq", "B");
+        public static string GenerateUserId() => GenerateSequenceBackedId("user_id_seq", "U");
+        public static string GenerateOrderId() => GenerateSequenceBackedId("order_id_seq", "O");
+        public static string GenerateImageId() => GenerateSequenceBackedId("image_id_seq", "I");
+        public static string GenerateCartId() => GenerateSequenceBackedId("cart_id_seq", "CT");
+        public static string GenerateCartItemId() => GenerateSequenceBackedId("cart_item_id_seq", "CI");
+        public static string GenerateOrderItemId() => GenerateSequenceBackedId("order_item_id_seq", "OI");
+        public static string GenerateReviewId() => GenerateSequenceBackedId("review_id_seq", "R");
+        public static string GenerateReviewReplyId() => GenerateSequenceBackedId("review_reply_id_seq", "RR");
+        public static string GenerateVoucherId() => GenerateSequenceBackedId("voucher_id_seq", "V");
 
         public static void Initialize(System.IServiceProvider serviceProvider)
         {
-            using (var scope = serviceProvider.CreateScope())
-            {
-                var context = scope.ServiceProvider.GetRequiredService<BookStore.API.Data.AppDbContext>();
-                
-                _categoryCounter = GetMaxCounter(context.Categories.Select(x => x.CategoryId).ToList(), "C");
-                _authorCounter = GetMaxCounter(context.Authors.Select(x => x.AuthorId).ToList(), "A");
-                _publisherCounter = GetMaxCounter(context.Publishers.Select(x => x.PublisherId).ToList(), "N");
-                _bookCounter = GetMaxCounter(context.Books.Select(x => x.BookId).ToList(), "S");
-                _voucherCounter = GetMaxCounter(context.Vouchers.Select(x => x.VoucherId).ToList(), "V");
-                _orderCounter = GetMaxCounter(context.Orders.Select(x => x.OrderId).ToList(), "O");
-                _userCounter = GetMaxCounter(context.Users.Select(x => x.UserId).ToList(), "U");
-                _imageCounter = GetMaxCounter(context.BookImages.Select(x => x.ImageId).ToList(), "I");
-                _cartCounter = GetMaxCounter(context.Carts.Select(x => x.CartId).ToList(), "CT");
-                _cartItemCounter = GetMaxCounter(context.CartItems.Select(x => x.CartItemId).ToList(), "CI");
-                _orderItemCounter = GetMaxCounter(context.OrderItems.Select(x => x.OrderItemId).ToList(), "OI");
-            }
+            _serviceProvider = serviceProvider;
         }
 
-        private static int GetMaxCounter(System.Collections.Generic.List<string> ids, string prefix)
+        private static string GenerateSequenceBackedId(string sequenceName, string prefix)
         {
-            if (ids == null || ids.Count == 0) return 0;
-            
-            int max = 0;
-            foreach (var id in ids)
+            if (_serviceProvider == null)
             {
-                if (id != null && id.StartsWith(prefix) && id.Length > prefix.Length)
+                throw new InvalidOperationException("IdGenerator chưa được khởi tạo với IServiceProvider.");
+            }
+
+            using var scope = _serviceProvider.CreateScope();
+            var context = scope.ServiceProvider.GetRequiredService<BookStore.API.Data.AppDbContext>();
+            var connection = context.Database.GetDbConnection();
+            var shouldClose = connection.State != ConnectionState.Open;
+            if (shouldClose)
+            {
+                connection.Open();
+            }
+
+            try
+            {
+                using var command = connection.CreateCommand();
+                command.CommandText = $"SELECT nextval('{sequenceName}')::int";
+                var result = command.ExecuteScalar();
+                var nextValue = Convert.ToInt32(result);
+                return $"{prefix}{nextValue:000}";
+            }
+            finally
+            {
+                if (shouldClose)
                 {
-                    if (int.TryParse(id.Substring(prefix.Length), out int num))
-                    {
-                        if (num > max) max = num;
-                    }
+                    connection.Close();
                 }
             }
-            return max;
         }
     }
 }

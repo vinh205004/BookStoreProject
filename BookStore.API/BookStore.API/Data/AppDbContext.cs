@@ -26,6 +26,21 @@ namespace BookStore.API.Data
         {
             base.OnModelCreating(modelBuilder);
 
+            modelBuilder.HasSequence<int>("category_id_seq");
+            modelBuilder.HasSequence<int>("author_id_seq");
+            modelBuilder.HasSequence<int>("banner_id_seq");
+            modelBuilder.HasSequence<int>("publisher_id_seq");
+            modelBuilder.HasSequence<int>("book_id_seq");
+            modelBuilder.HasSequence<int>("user_id_seq");
+            modelBuilder.HasSequence<int>("order_id_seq");
+            modelBuilder.HasSequence<int>("image_id_seq");
+            modelBuilder.HasSequence<int>("cart_id_seq");
+            modelBuilder.HasSequence<int>("cart_item_id_seq");
+            modelBuilder.HasSequence<int>("order_item_id_seq");
+            modelBuilder.HasSequence<int>("review_id_seq");
+            modelBuilder.HasSequence<int>("review_reply_id_seq");
+            modelBuilder.HasSequence<int>("voucher_id_seq");
+
             modelBuilder.Entity<Order>()
                 .Property(o => o.PaymentMethod)
                 .HasDefaultValue("COD");

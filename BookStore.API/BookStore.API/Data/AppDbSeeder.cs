@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using BookStore.API.Models;
+using BookStore.API.Utilities;
 using Microsoft.EntityFrameworkCore;
 using BCrypt.Net;
 
@@ -42,7 +43,7 @@ namespace BookStore.API.Data
             {
                 users.Add(new User
                 {
-                    UserId = Guid.NewGuid().ToString(),
+                    UserId = IdGenerator.GenerateUserId(),
                     Username = $"khachhang{i}",
                     PasswordHash = passwordHash,
                     FullName = $"Khách Hàng {i}",
@@ -57,11 +58,11 @@ namespace BookStore.API.Data
             await _context.Users.AddRangeAsync(users);
 
             var categoryNames = new[] { "Văn Học Việt Nam", "Văn Học Nước Ngoài", "Kỹ Năng Sống", "Kinh Tế - Quản Trị", "Khoa Học - Kỹ Thuật", "Thiếu Nhi", "Lịch Sử - Văn Hóa" };
-            var categories = categoryNames.Select(c => new Category { CategoryId = Guid.NewGuid().ToString(), Name = c, Description = "Sách danh mục " + c }).ToList();
+            var categories = categoryNames.Select(c => new Category { CategoryId = IdGenerator.GenerateCategoryId(), Name = c, Description = "Sách danh mục " + c }).ToList();
             await _context.Categories.AddRangeAsync(categories);
 
             var publishers = new[] { "NXB Trẻ", "NXB Kim Đồng", "Nhã Nam", "Alpha Books", "NXB Phụ Nữ", "NXB Tổng Hợp", "NXB Thế Giới", "First News" }
-                .Select(p => new Publisher { PublisherId = Guid.NewGuid().ToString(), Name = p, Description = p + " Việt Nam" }).ToList();
+                .Select(p => new Publisher { PublisherId = IdGenerator.GeneratePublisherId(), Name = p, Description = p + " Việt Nam" }).ToList();
             await _context.Publishers.AddRangeAsync(publishers);
 
             var authorNames = new[]
@@ -95,7 +96,7 @@ namespace BookStore.API.Data
                 "Ban biên soạn Tiến Thọ - Thiếu nhi",
                 "Ban biên soạn Tiến Thọ - Lịch sử văn hóa"
             };
-            var authors = authorNames.Select(a => new Author { AuthorId = Guid.NewGuid().ToString(), Name = a, Biography = "Một tác giả nổi tiếng." }).ToList();
+            var authors = authorNames.Select(a => new Author { AuthorId = IdGenerator.GenerateAuthorId(), Name = a, Biography = "Một tác giả nổi tiếng." }).ToList();
             await _context.Authors.AddRangeAsync(authors);
             var authorIds = authors.ToDictionary(a => a.Name, a => a.AuthorId);
 
@@ -236,7 +237,7 @@ namespace BookStore.API.Data
 
             foreach(var b in books) 
             {
-                b.BookId = Guid.NewGuid().ToString();
+                b.BookId = IdGenerator.GenerateBookId();
                 var fallbackAuthorName = b.CategoryId switch
                 {
                     var id when id == catVn => "Ban biên soạn Tiến Thọ - Văn học Việt Nam",
@@ -271,12 +272,12 @@ namespace BookStore.API.Data
             
             var vouchers = new List<Voucher>
             {
-                new Voucher { VoucherId = Guid.NewGuid().ToString(), Code = "WELCOME50K", DiscountType = "Direct", DiscountAmount = 50000, MinOrderValue = 200000, Quantity = 500, StartDate = DateTime.UtcNow.AddDays(-5), ExpirationDate = DateTime.UtcNow.AddMonths(1) },
-                new Voucher { VoucherId = Guid.NewGuid().ToString(), Code = "SALE10", DiscountType = "Percentage", DiscountAmount = 10, MinOrderValue = 100000, Quantity = 1000, StartDate = DateTime.UtcNow.AddDays(-2), ExpirationDate = DateTime.UtcNow.AddMonths(2) },
-                new Voucher { VoucherId = Guid.NewGuid().ToString(), Code = "FREESHIPTQ", DiscountType = "Direct", DiscountAmount = 30000, MinOrderValue = 150000, Quantity = 200, StartDate = DateTime.UtcNow.AddDays(-10), ExpirationDate = DateTime.UtcNow.AddMonths(3) },
-                new Voucher { VoucherId = Guid.NewGuid().ToString(), Code = "GIAM20", DiscountType = "Percentage", DiscountAmount = 20, MinOrderValue = 500000, Quantity = 100, StartDate = DateTime.UtcNow, ExpirationDate = DateTime.UtcNow.AddDays(15) },
-                new Voucher { VoucherId = Guid.NewGuid().ToString(), Code = "MUA1TANG1", DiscountType = "Direct", DiscountAmount = 40000, MinOrderValue = 300000, Quantity = 50, StartDate = DateTime.UtcNow.AddDays(-1), ExpirationDate = DateTime.UtcNow.AddDays(7) },
-                new Voucher { VoucherId = Guid.NewGuid().ToString(), Code = "THANGDEALS", DiscountType = "Percentage", DiscountAmount = 15, MinOrderValue = 250000, Quantity = 300, StartDate = DateTime.UtcNow.AddMonths(-1), ExpirationDate = DateTime.UtcNow.AddMonths(1) },
+                new Voucher { VoucherId = IdGenerator.GenerateVoucherId(), Code = "WELCOME50K", DiscountType = "Direct", DiscountAmount = 50000, MinOrderValue = 200000, Quantity = 500, StartDate = DateTime.UtcNow.AddDays(-5), ExpirationDate = DateTime.UtcNow.AddMonths(1) },
+                new Voucher { VoucherId = IdGenerator.GenerateVoucherId(), Code = "SALE10", DiscountType = "Percentage", DiscountAmount = 10, MinOrderValue = 100000, Quantity = 1000, StartDate = DateTime.UtcNow.AddDays(-2), ExpirationDate = DateTime.UtcNow.AddMonths(2) },
+                new Voucher { VoucherId = IdGenerator.GenerateVoucherId(), Code = "FREESHIPTQ", DiscountType = "Direct", DiscountAmount = 30000, MinOrderValue = 150000, Quantity = 200, StartDate = DateTime.UtcNow.AddDays(-10), ExpirationDate = DateTime.UtcNow.AddMonths(3) },
+                new Voucher { VoucherId = IdGenerator.GenerateVoucherId(), Code = "GIAM20", DiscountType = "Percentage", DiscountAmount = 20, MinOrderValue = 500000, Quantity = 100, StartDate = DateTime.UtcNow, ExpirationDate = DateTime.UtcNow.AddDays(15) },
+                new Voucher { VoucherId = IdGenerator.GenerateVoucherId(), Code = "MUA1TANG1", DiscountType = "Direct", DiscountAmount = 40000, MinOrderValue = 300000, Quantity = 50, StartDate = DateTime.UtcNow.AddDays(-1), ExpirationDate = DateTime.UtcNow.AddDays(7) },
+                new Voucher { VoucherId = IdGenerator.GenerateVoucherId(), Code = "THANGDEALS", DiscountType = "Percentage", DiscountAmount = 15, MinOrderValue = 250000, Quantity = 300, StartDate = DateTime.UtcNow.AddMonths(-1), ExpirationDate = DateTime.UtcNow.AddMonths(1) },
             };
             await _context.Vouchers.AddRangeAsync(vouchers);
 
@@ -289,7 +290,7 @@ namespace BookStore.API.Data
                 var user = users[random.Next(users.Count)];
                 var order = new Order
                 {
-                    OrderId = Guid.NewGuid().ToString(),
+                    OrderId = IdGenerator.GenerateOrderId(),
                     UserId = user.UserId,
                     OrderDate = DateTime.UtcNow.AddDays(-random.Next(1, 100)),
                     Status = orderStatuses[random.Next(4)],
@@ -307,7 +308,7 @@ namespace BookStore.API.Data
                     var qty = random.Next(1, 3);
                     orderItems.Add(new OrderItem
                     {
-                        OrderItemId = Guid.NewGuid().ToString(),
+                        OrderItemId = IdGenerator.GenerateOrderItemId(),
                         OrderId = order.OrderId,
                         BookId = b.BookId,
                         Quantity = qty,
