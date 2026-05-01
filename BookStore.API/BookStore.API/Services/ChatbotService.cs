@@ -41,7 +41,8 @@ namespace BookStore.API.Services
 
         private static readonly string[] TopRatedIntentWords =
         {
-            "danh gia cao", "rating cao", "duoc thich", "tot nhat"
+            "danh gia cao", "rating cao", "duoc thich", "tot nhat",
+            "nhieu sao", "sao cao", "5 sao", "nam sao", "sao nhat", "danh gia nhieu sao"
         };
 
         private static readonly string[] ExpensiveIntentWords =
@@ -85,8 +86,8 @@ namespace BookStore.API.Services
             var normalizedMessage = NormalizeVietnamese(userMessage);
             var queryWords = ExtractQueryWords(normalizedMessage);
             var shouldIncludeDescription = DescriptionIntentWords.Any(normalizedMessage.Contains);
-            var wantsTopSellers = TopSellerIntentWords.Any(normalizedMessage.Contains);
-            var wantsTopRated = TopRatedIntentWords.Any(normalizedMessage.Contains);
+            var wantsTopSellers = IsTopSellerIntent(normalizedMessage);
+            var wantsTopRated = IsTopRatedIntent(normalizedMessage);
             var wantsExpensiveBooks = ExpensiveIntentWords.Any(normalizedMessage.Contains);
             var wantsCheapBooks = CheapIntentWords.Any(normalizedMessage.Contains);
             var wantsAuthor = IsAuthorIntent(normalizedMessage);
@@ -147,7 +148,7 @@ namespace BookStore.API.Services
 
             var soldStats = await _context.OrderItems
                 .AsNoTracking()
-                .Where(oi => oi.Order != null && oi.Order.Status == "Delivered")
+                .Where(oi => oi.Order != null && oi.Order.Status != "Cancelled")
                 .GroupBy(oi => oi.BookId)
                 .Select(g => new { BookId = g.Key, Sold = g.Sum(oi => oi.Quantity) })
                 .ToDictionaryAsync(x => x.BookId, x => x.Sold);
@@ -1027,6 +1028,25 @@ namespace BookStore.API.Services
                    normalizedMessage.Contains("khuyen mai") ||
                    normalizedMessage.Contains("sale") ||
                    normalizedMessage.Contains("voucher");
+        }
+
+        private static bool IsTopSellerIntent(string normalizedMessage)
+        {
+            return TopSellerIntentWords.Any(normalizedMessage.Contains) ||
+                   normalizedMessage.Contains("ban chay nhat") ||
+                   normalizedMessage.Contains("nhieu nguoi mua nhat");
+        }
+
+        private static bool IsTopRatedIntent(string normalizedMessage)
+        {
+            return TopRatedIntentWords.Any(normalizedMessage.Contains) ||
+                   normalizedMessage.Contains("nhieu sao nhat") ||
+                   normalizedMessage.Contains("sao nhieu nhat") ||
+                   normalizedMessage.Contains("rating nhat") ||
+                   (normalizedMessage.Contains("sao") &&
+                    (normalizedMessage.Contains("nhieu") ||
+                     normalizedMessage.Contains("cao") ||
+                     normalizedMessage.Contains("tot")));
         }
 
         private static bool IsAdvisoryIntent(string normalizedMessage, IReadOnlyCollection<string> queryWords)

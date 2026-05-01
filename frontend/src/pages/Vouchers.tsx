@@ -46,7 +46,8 @@ export default function Vouchers() {
         axiosClient.get('/Books')
       ]);
       setVouchers(vouchersRes as any);
-      setCategories(categoriesRes as any);
+      const categoryData = categoriesRes as unknown as Category[];
+      setCategories(categoryData.filter(category => category.isActive));
       setBooks(booksRes as any);
     } catch {
       toast.error('Lỗi khi tải dữ liệu voucher!');
