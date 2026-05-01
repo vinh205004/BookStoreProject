@@ -27,12 +27,6 @@ interface Product {
   categoryId?: string;
 }
 
-interface Category {
-  categoryId: string;
-  name: string;
-  isActive: boolean;
-}
-
 interface Banner {
   bannerId: string;
   imageUrl: string;
@@ -43,13 +37,11 @@ interface Banner {
 
 export default function HomePage() {
   const [discounted, setDiscounted] = useState<Product[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [topRated, setTopRated] = useState<Product[]>([]);
   const [topSelling, setTopSelling] = useState<Product[]>([]);
   const [banners, setBanners] = useState<Banner[]>([]);
 
-  const categoriesRef = useRef<HTMLDivElement>(null);
   const discountedRef = useRef<HTMLDivElement>(null);
   const topRatedRef = useRef<HTMLDivElement>(null);
   const topSellingRef = useRef<HTMLDivElement>(null);
@@ -61,7 +53,6 @@ export default function HomePage() {
     fetchDiscounted();
     fetchTopRated();
     fetchTopSelling();
-    fetchCategories();
   }, []);
 
   const fetchBanners = async () => {
@@ -99,25 +90,13 @@ export default function HomePage() {
 
   const fetchTopSelling = async () => {
     try {
-      const date = new Date();
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const response: any = await axiosClient.get('/Books/top-selling?month=' + (date.getMonth() + 1) + '&year=' + date.getFullYear() + '&count=10');
+      const response: any = await axiosClient.get('/Books/top-selling?count=10');
       setTopSelling(response);
     } catch {
       console.error('Lỗi khi tải top selling');
     }
   };
-
-  const fetchCategories = async () => {
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const response: any = await axiosClient.get('/Categories');
-      setCategories(response.filter((c: Category) => c.isActive));
-    } catch {
-        console.error('Lỗi khi tải danh mục');
-    }
-  };
-
 
   return (
     <div>
@@ -187,29 +166,6 @@ export default function HomePage() {
              <div className="text-white font-bold opacity-80">Đang tải banner...</div>
           </div>
         )}
-      </section>
-
-      {/* Categories Section */}
-      <section className="py-12 sm:py-16 lg:py-20 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className={`${sectionTitleClassName} mb-8`}>Danh Mục Sách</h2>
-          <div
-            ref={categoriesRef}
-            className="flex overflow-x-auto gap-4 sm:gap-6 snap-x snap-mandatory pb-4 scroll-smooth"
-            style={{ scrollBehavior: 'smooth', touchAction: 'pan-x', WebkitOverflowScrolling: 'touch' }}
-          >
-            {categories.length > 0 ? (
-              categories.map(cat => (
-                <a key={cat.categoryId} href={"/products?categoryId=" + cat.categoryId} className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition text-center flex-none w-64 snap-start shrink-0">
-                  <div className="text-4xl mb-3">📖</div>
-                  <h3 className="font-bold text-gray-800">{cat.name}</h3>
-                </a>
-              ))
-            ) : (
-              <p className="text-gray-500 w-full text-center">Đang tải danh mục...</p>
-            )}
-          </div>
-        </div>
       </section>
 
       {/* Discounted Products */}
@@ -335,4 +291,3 @@ export default function HomePage() {
     </div>
   );
 }
-

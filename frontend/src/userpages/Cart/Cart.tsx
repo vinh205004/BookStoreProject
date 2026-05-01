@@ -80,10 +80,7 @@ export default function Cart() {
 
   const loadTopSellingBooks = async () => {
     try {
-      const date = new Date();
-      const response: SidebarBook[] = await axiosClient.get(
-        `/Books/top-selling?month=${date.getMonth() + 1}&year=${date.getFullYear()}&count=5`
-      );
+      const response: SidebarBook[] = await axiosClient.get('/Books/top-selling?count=5');
       setTopSellingBooks(response || []);
     } catch {
       setTopSellingBooks([]);

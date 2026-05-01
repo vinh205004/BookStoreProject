@@ -18,7 +18,7 @@ namespace BookStore.API.Repositories
         Task<IEnumerable<string>> GetDistinctTargetAudiencesAsync();
         Task<IEnumerable<ProductSearchDto>> GetFeaturedBooksAsync(int count = 10);
         Task<IEnumerable<ProductSearchDto>> GetDiscountedBooksAsync(int count = 10);
-        Task<IEnumerable<ProductSearchDto>> GetTopSellingBooksAsync(int month, int year, int count = 10);
+        Task<IEnumerable<ProductSearchDto>> GetTopSellingBooksAsync(int? month = null, int? year = null, int count = 10);
         Task<IEnumerable<ProductSearchDto>> GetTopRatedBooksAsync(int count = 10);
         Task<IEnumerable<ProductSearchDto>> GetBooksByCategoryAsync(string categoryId);
     }

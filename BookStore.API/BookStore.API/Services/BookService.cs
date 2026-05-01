@@ -215,7 +215,7 @@ namespace BookStore.API.Services
             return await _bookRepo.GetDiscountedBooksAsync(count);
         }
 
-        public async Task<IEnumerable<ProductSearchDto>> GetTopSellingBooksAsync(int month, int year, int count = 10)
+        public async Task<IEnumerable<ProductSearchDto>> GetTopSellingBooksAsync(int? month = null, int? year = null, int count = 10)
         {
             return await _bookRepo.GetTopSellingBooksAsync(month, year, count);
         }

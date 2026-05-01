@@ -435,26 +435,41 @@ namespace BookStore.API.Repositories
             return result;
         }
 
-        public async Task<IEnumerable<ProductSearchDto>> GetTopSellingBooksAsync(int month, int year, int count)
+        public async Task<IEnumerable<ProductSearchDto>> GetTopSellingBooksAsync(int? month = null, int? year = null, int count = 10)
         {
-            var books = await _context.OrderItems
+            var topSellingQuery = _context.OrderItems
                 .Include(oi => oi.Order)
-                .Where(oi => oi.Order != null && oi.Order.OrderDate.Month == month && oi.Order.OrderDate.Year == year && oi.Order.Status != "Cancelled")
+                .Where(oi => oi.Order != null && oi.Order.Status != "Cancelled");
+
+            if (month.HasValue && year.HasValue)
+            {
+                topSellingQuery = topSellingQuery
+                    .Where(oi => oi.Order!.OrderDate.Month == month.Value && oi.Order.OrderDate.Year == year.Value);
+            }
+
+            var topSellingBookIds = await topSellingQuery
                 .GroupBy(oi => oi.BookId)
                 .Select(g => new { BookId = g.Key, TotalQuantity = g.Sum(oi => oi.Quantity) })
                 .OrderByDescending(x => x.TotalQuantity)
                 .Take(count)
-                .Join(_context.Books
-                    .Include(b => b.Author)
-                    .Include(b => b.Category)
-                    .Include(b => b.Publisher)
-                    .Include(b => b.BookImages)
-                    .Include(b => b.Reviews),
-                    top => top.BookId,
-                    book => book.BookId,
-                    (top, book) => book)
-                .Where(b => !b.IsHidden)
                 .ToListAsync();
+
+            var bookIdOrder = topSellingBookIds
+                .Select((item, index) => new { item.BookId, index })
+                .ToDictionary(item => item.BookId, item => item.index);
+
+            var books = await _context.Books
+                .Where(b => !b.IsHidden && bookIdOrder.Keys.Contains(b.BookId))
+                .Include(b => b.Author)
+                .Include(b => b.Category)
+                .Include(b => b.Publisher)
+                .Include(b => b.BookImages)
+                .Include(b => b.Reviews)
+                .ToListAsync();
+
+            books = books
+                .OrderBy(b => bookIdOrder[b.BookId])
+                .ToList();
 
             return await MapToSearchDto(books);
         }

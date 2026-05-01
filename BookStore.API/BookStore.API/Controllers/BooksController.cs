@@ -190,9 +190,7 @@ namespace BookStore.API.Controllers
         [HttpGet("top-selling")]
         public async Task<IActionResult> GetTopSelling(int? month, int? year, [FromQuery] int count = 10)
         {
-            var targetMonth = month ?? DateTime.Now.Month;
-            var targetYear = year ?? DateTime.Now.Year;
-            var result = await _bookService.GetTopSellingBooksAsync(targetMonth, targetYear, count);
+            var result = await _bookService.GetTopSellingBooksAsync(month, year, count);
             return Ok(result);
         }
 
