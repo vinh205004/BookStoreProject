@@ -18,7 +18,7 @@ namespace BookStore.API.Repositories
 
         public async Task<object> GetDashboardDataAsync(int month, int year, int chartYear)
         {
-            // Calculate previous month and year
+            // Tính toán tháng và năm trước để so sánh
             int prevMonth = month == 1 ? 12 : month - 1;
             int prevYear = month == 1 ? year - 1 : year;
 
@@ -55,7 +55,7 @@ namespace BookStore.API.Repositories
             double revenueTrend = prevMonthRevenue > 0 ? (double)((currentMonthRevenue - prevMonthRevenue) / prevMonthRevenue) * 100 : (currentMonthRevenue > 0 ? 100 : 0);
             double ordersTrend = prevMonthOrders > 0 ? (double)((currentMonthOrders - prevMonthOrders) / (double)prevMonthOrders) * 100 : (currentMonthOrders > 0 ? 100 : 0);
 
-            // 2. Biểu đồ doanh thu theo tháng (của chartYear)
+            // 2. Biểu đồ doanh thu theo tháng 
             var monthlyRevenue = new List<object>();
             int currentYear = DateTime.UtcNow.Year;
             int maxMonth = chartYear == currentYear ? DateTime.UtcNow.Month : 12;
@@ -113,7 +113,7 @@ namespace BookStore.API.Repositories
                 };
             }).ToList();
 
-            // 3. Tỷ lệ Category (Danh mục sách đã bán) - Group by category, then return items with book details
+            // 3. Tỷ lệ Category (Danh mục sách đã bán)
             var categorySalesQuery = await _context.OrderItems
                 .Include(oi => oi.Book)
                     .ThenInclude(b => b!.Category)
@@ -158,7 +158,7 @@ namespace BookStore.API.Repositories
                 .Take(5)
                 .ToList();
 
-            // 5. Top Rated (Thực tế thông qua bảng Reviews, đánh giá trung bình cao nhất, tối thiểu 1 review)
+            // 5. Top Rated (Bảng Reviews, đánh giá trung bình cao nhất, tối thiểu 1 review)
             var topRatedQuery = await _context.Reviews
                 .Where(r => r.CreatedAt.Year == year && r.CreatedAt.Month == month)
                 .Include(r => r.User)

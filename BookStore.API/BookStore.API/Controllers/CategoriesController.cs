@@ -65,7 +65,7 @@ namespace BookStore.API.Controllers
             }
         }
 
-        // Chỉ Admin mới được Xóa (ẩn đi)
+        // Chỉ Admin mới được Xóa (ẩn)
         [Authorize(Roles = "Admin")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(string id)
@@ -74,7 +74,7 @@ namespace BookStore.API.Controllers
             if (!success) return NotFound(new { message = "Không tìm thấy danh mục" });
             return Ok(new { message = "Đã xóa (ẩn) danh mục thành công!" });
         }
-        //Khôi phục danh mục đã xóa (ẩn đi)
+        //Khôi phục danh mục đã xóa (ẩn)
         [Authorize(Roles = "Admin")]
         [HttpPut("{id}/restore")]
         public async Task<IActionResult> Restore(string id)

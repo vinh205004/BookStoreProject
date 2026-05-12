@@ -7,7 +7,7 @@ namespace BookStore.API.DTOs
     {
         public string VoucherId { get; set; } = string.Empty;
         public string Code { get; set; } = string.Empty;
-        public string DiscountType { get; set; } = "Direct"; // "Direct" hoặc "Percentage"
+        public string DiscountType { get; set; } = "Direct"; 
         public decimal DiscountAmount { get; set; }
         public decimal MinOrderValue { get; set; }
         public int Quantity { get; set; }

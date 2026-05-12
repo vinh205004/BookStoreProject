@@ -86,7 +86,7 @@ namespace BookStore.API.Services
             var category = await _repo.GetByIdAsync(id);
             if (category == null) return false;
 
-            //Soft Delete
+            //Xóa mềm, không xóa thật
             category.IsActive = false;
             await _repo.UpdateAsync(category);
             return true;

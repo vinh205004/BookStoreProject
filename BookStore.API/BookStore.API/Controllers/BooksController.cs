@@ -108,7 +108,7 @@ namespace BookStore.API.Controllers
             }
         }
 
-        // GET: api/Books/5 (Admin - returns full BookDto)
+        // GET: api/Books/5 
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(string id)
         {
@@ -117,7 +117,7 @@ namespace BookStore.API.Controllers
             return Ok(book);
         }
 
-        // GET: api/Books/{id}/detail (Customer - returns ProductDetailDto)
+        // GET: api/Books/{id}/detail
         [HttpGet("{id}/detail")]
         public async Task<IActionResult> GetBookDetail(string id)
         {
@@ -135,7 +135,7 @@ namespace BookStore.API.Controllers
             }
         }
 
-        // POST: api/Books (Chỉ Admin)
+        // POST: api/Books
         [Authorize(Roles = "Admin")]
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] BookCreateDto dto)
@@ -151,7 +151,7 @@ namespace BookStore.API.Controllers
             }
         }
 
-        // PUT: api/Books/5 (Chỉ Admin)
+        // PUT: api/Books/5 
         [Authorize(Roles = "Admin")]
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(string id, [FromBody] BookUpdateDto dto)
@@ -168,7 +168,7 @@ namespace BookStore.API.Controllers
             }
         }
 
-        // DELETE: api/Books/5 (Chỉ Admin)
+        // DELETE: api/Books/5 
         [Authorize(Roles = "Admin")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(string id)
@@ -177,7 +177,7 @@ namespace BookStore.API.Controllers
             if (!success) return NotFound(new { message = "Không tìm thấy sách để xóa" });
             return Ok(new { message = "Xóa sách thành công!" });
         }
-        // PUT: api/Books/5/restore (Chỉ Admin)
+        // PUT: api/Books/5/restore 
         [Authorize(Roles = "Admin")]
         [HttpPut("{id}/restore")]
         public async Task<IActionResult> Restore(string id)

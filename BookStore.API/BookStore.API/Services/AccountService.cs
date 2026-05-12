@@ -50,11 +50,11 @@ namespace BookStore.API.Services
             var user = await _userRepository.GetByIdAsync(userId);
             if (user == null) return false;
 
-            // Verify current password
+            // Kiểm tra mật khẩu hiện tại
             if (!BCrypt.Net.BCrypt.Verify(dto.CurrentPassword, user.PasswordHash))
                 throw new Exception("Mật khẩu hiện tại không chính xác!");
 
-            // Update password
+            // Cập nhật mật khẩu
             user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.NewPassword);
             await _userRepository.UpdateAsync(user);
             return true;

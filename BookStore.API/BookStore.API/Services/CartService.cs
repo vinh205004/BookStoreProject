@@ -231,7 +231,7 @@ namespace BookStore.API.Services
             return true;
         }
 
-        // ========== Các trợ giúp trong bộ nhớ (giữ lại để tương thích ngược) ==========
+        // Các trợ giúp trong bộ nhớ (giữ lại để tương thích ngược)
 
         public CartDto AddToCart(CartDto currentCart, CartItemDto item)
         {
@@ -288,7 +288,7 @@ namespace BookStore.API.Services
             return currentCart;
         }
 
-        // ========== Các phương thức trợ giúp ==========
+        // Các phương thức trợ giúp 
 
         private CartDto MapCartToDto(Cart cart)
         {

@@ -40,7 +40,6 @@ namespace BookStore.API.DTOs
         [JsonPropertyName("categoryId")]
         public string CategoryId { get; set; } = string.Empty;
 
-        // New book properties
         [JsonPropertyName("targetAudience")]
         public string? TargetAudience { get; set; }
         

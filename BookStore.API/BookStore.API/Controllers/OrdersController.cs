@@ -20,7 +20,7 @@ namespace BookStore.API.Controllers
             _invoiceService = invoiceService;
         }
 
-        // Customer endpoints
+        //endpoints Khách hàng
         [HttpPost]
         public async Task<IActionResult> CreateOrder([FromBody] CreateOrderDto dto)
         {

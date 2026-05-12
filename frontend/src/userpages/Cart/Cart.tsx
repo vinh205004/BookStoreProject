@@ -1,4 +1,5 @@
-﻿/* eslint-disable prefer-const */
+﻿/* eslint-disable react-hooks/immutability */
+/* eslint-disable prefer-const */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect } from 'react';
@@ -14,7 +15,7 @@ import Pagination from '../../components/Pagination';
 import CompactBookSidebar from '../../components/CompactBookSidebar';
 
 interface CartItem {
-  cartItemId?: string; // Added for API reference
+  cartItemId?: string; // Thêm cartItemId để dễ quản lý khi xóa hoặc cập nhật
   bookId: string;
   bookTitle: string;
   price: number;
@@ -72,7 +73,7 @@ export default function Cart() {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       toast.error('Lỗi khi tải giỏ hàng!');
-      // Set empty cart on error
+      // Gán cart rỗng để hiển thị giao diện giỏ hàng trống thay vì mãi ở trạng thái loading
       setCart({ items: [], totalPrice: 0, totalItems: 0 });
       setLoading(false);
     }
@@ -115,7 +116,7 @@ export default function Cart() {
         totalPrice: cartData.totalPrice || 0,
         totalItems: cartData.totalItems || 0
       });
-      // Dispatch custom event to update badge
+      // Gửi đi sự kiện tùy chỉnh để cập nhật badge
       window.dispatchEvent(new Event('cart-updated'));
       toast.info('Đã xóa sản phẩm khỏi giỏ hàng');
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -166,7 +167,7 @@ export default function Cart() {
         totalPrice: cartData.totalPrice || 0,
         totalItems: cartData.totalItems || 0
       });
-      // Dispatch custom event to update badge
+      // Gửi đi sự kiện tùy chỉnh để cập nhật badge
       window.dispatchEvent(new Event('cart-updated'));
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
@@ -189,7 +190,7 @@ export default function Cart() {
       try {
         await axiosClient.delete('/cart');
         setCart({ items: [], totalPrice: 0, totalItems: 0 });
-        // Dispatch custom event to update badge
+        // Gửi đi sự kiện tùy chỉnh để cập nhật badge
         window.dispatchEvent(new Event('cart-updated'));
         toast.info('Đã xóa tất cả sản phẩm');
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -268,7 +269,7 @@ export default function Cart() {
       <PageTitle title="Giỏ Hàng" />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Cart Items */}
+        {/* Các sản phẩm trong giỏ hàng */}
         <div className="lg:col-span-2">
           {cart.items.length > 0 && (
             <div className="mb-4 flex items-center gap-2 bg-white p-4 rounded-lg shadow">
@@ -291,7 +292,7 @@ export default function Cart() {
                   onChange={() => toggleSelectItem(item.bookId)}
                   className="w-5 h-5 text-orange-500 focus:ring-orange-500 border-gray-300 rounded cursor-pointer"
                 />
-                {/* Image */}
+                {/* Ảnh */}
                 <div className="w-20 h-20 flex-shrink-0 bg-white rounded overflow-hidden border border-gray-200 p-1">
                   <img
                     src={item.imageUrl || '/placeholder.jpg'}
@@ -303,7 +304,7 @@ export default function Cart() {
                   />
                 </div>
 
-                {/* Details */}
+                {/* Chi tiết */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between mb-1">
                     <h3 className="font-bold text-gray-800 leading-5 break-words">{item.bookTitle}</h3>
@@ -320,7 +321,7 @@ export default function Cart() {
                     )}
                   </div>
 
-                  {/* Quantity */}
+                  {/* Số lượng */}
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => updateQuantity(item.cartItemId, item.bookId, item.quantity - 1)}
@@ -346,7 +347,7 @@ export default function Cart() {
                   </div>
                 </div>
 
-                {/* Delete */}
+                {/* Xóa */}
                 <button
                   onClick={() => removeItem(item.cartItemId, item.bookId)}
                   className="text-red-500 hover:text-red-700 transition flex-shrink-0"

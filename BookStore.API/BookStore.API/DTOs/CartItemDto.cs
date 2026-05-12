@@ -4,16 +4,16 @@ namespace BookStore.API.DTOs
 {
     public class CartItemDto
     {
-        public string? CartItemId { get; set; } // Added for API operations
+        public string? CartItemId { get; set; }
         public string BookId { get; set; } = string.Empty;
         public string BookTitle { get; set; } = string.Empty;
         public decimal Price { get; set; }
         public int Quantity { get; set; }
         public string ImageUrl { get; set; } = string.Empty;
-        public decimal? DiscountedPrice { get; set; } // Price after hardcoded voucher
-        public string? DiscountBadge { get; set; } // Badge display (e.g., "-20%", "-50.000đ")
-        public string? DiscountVoucherCode { get; set; } // Code of hardcoded voucher
-        public string? CategoryId { get; set; } // Category ID for voucher matching
+        public decimal? DiscountedPrice { get; set; } 
+        public string? DiscountBadge { get; set; } 
+        public string? DiscountVoucherCode { get; set; }
+        public string? CategoryId { get; set; } 
     }
 
     public class CartDto

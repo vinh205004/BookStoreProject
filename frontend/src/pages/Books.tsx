@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react-hooks/set-state-in-effect */
 import Select from 'react-select';
 import React, { useState, useEffect, useCallback } from 'react';

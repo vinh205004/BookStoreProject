@@ -41,7 +41,7 @@ namespace BookStore.API.Repositories
 
         public async Task UpdateAsync(Book book)
         {
-            // 1. Lấy dữ liệu hiện tại trong DB ra để so sánh
+            // Lấy dữ liệu hiện tại trong DB ra để so sánh
             var existingBook = await _context.Books
                 .Include(b => b.BookImages)
                 .Include(b => b.Reviews)
@@ -49,11 +49,11 @@ namespace BookStore.API.Repositories
 
             if (existingBook == null) return;
 
-            // 2. Cập nhật các trường thông tin cơ bản
+            // Cập nhật các trường thông tin cơ bản
             _context.Entry(existingBook).CurrentValues.SetValues(book);
             existingBook.UpdatedAt = DateTime.UtcNow;
 
-            // 3. Xử lý cập nhật hình ảnh
+            // Xử lý cập nhật hình ảnh
             // Chỉ xử lý nếu danh sách ảnh gửi lên khác null
             if (book.BookImages != null)
             {
@@ -78,7 +78,7 @@ namespace BookStore.API.Repositories
             await _context.SaveChangesAsync();
         }
     
-// Customer search & filter endpoints
+// Tìm kiếm và lọc
         public async Task<IEnumerable<ProductSearchDto>> SearchBooksAsync(
             string? searchQuery = null,
             string? categoryId = null,
@@ -98,7 +98,7 @@ namespace BookStore.API.Repositories
                 .Include(b => b.Reviews)
                 .AsQueryable();
 
-            // Filter by search query (title, author, publisher)
+            // Bộ lọc tìm kiếm chung trên tiêu đề, tên tác giả, tên nhà xuất bản
             if (!string.IsNullOrWhiteSpace(searchQuery))
             {
                 var lowerQuery = searchQuery.ToLower();
@@ -108,31 +108,31 @@ namespace BookStore.API.Repositories
                     b.Publisher!.Name.ToLower().Contains(lowerQuery));
             }
 
-            // Filter by category
+            // Lọc theo danh mục
             if (!string.IsNullOrWhiteSpace(categoryId))
             {
                 query = query.Where(b => b.CategoryId == categoryId);
             }
 
-            // Filter by author
+            // Lọc theo tác giả
             if (!string.IsNullOrWhiteSpace(authorId))
             {
                 query = query.Where(b => b.AuthorId == authorId);
             }
 
-            // Filter by publisher
+            // Lọc theo nhà xuất bản
             if (!string.IsNullOrWhiteSpace(publisherId))
             {
                 query = query.Where(b => b.PublisherId == publisherId);
             }
 
-            // Filter by target audience
+            // Lọc theo đối tượng mục tiêu
             if (!string.IsNullOrWhiteSpace(targetAudience))
             {
                 query = query.Where(b => b.TargetAudience == targetAudience);
             }
 
-            // Filter by price range
+            // Lọc theo khoảng giá
             if (minPrice.HasValue)
             {
                 query = query.Where(b => b.Price >= minPrice.Value);
@@ -145,7 +145,7 @@ namespace BookStore.API.Repositories
 
             var books = await query.ToListAsync();
             
-            // Get sold quantities for all books
+            // Lấy số lượng bán của tất cả sách trong kết quả tìm kiếm
             var soldQuantities = await _context.OrderItems
                 .Where(oi => oi.Order != null && oi.Order.Status != "Cancelled")
                 .GroupBy(oi => oi.BookId)
@@ -157,7 +157,7 @@ namespace BookStore.API.Repositories
                 .Where(v => v.IsActive && v.StartDate <= now && v.ExpirationDate >= now)
                 .ToListAsync();
 
-            // Filter by discount if hasDiscount is true
+            // Lọc sách có giảm giá nếu có yêu cầu
             if (hasDiscount.HasValue && hasDiscount.Value)
             {
                 books = books
@@ -220,7 +220,7 @@ namespace BookStore.API.Repositories
 
             if (book == null) return null;
 
-            // Get sold quantity
+            // Lấy số lượng bán của sách này (tổng số lượng trong các đơn hàng đã hoàn thành)
             var soldQuantity = await _context.OrderItems
                 .Where(oi => oi.BookId == bookId && oi.Order != null && oi.Order.Status != "Cancelled")
                 .SumAsync(oi => oi.Quantity);
@@ -298,7 +298,7 @@ namespace BookStore.API.Repositories
                 .Take(count)
                 .ToListAsync();
 
-            // Get sold quantities
+            // Lấy số lượng bán của tất cả sách trong danh sách nổi bật
             var soldQuantities = await _context.OrderItems
                 .Where(oi => oi.Order != null && oi.Order.Status != "Cancelled")
                 .GroupBy(oi => oi.BookId)
@@ -382,7 +382,7 @@ namespace BookStore.API.Repositories
                 .Take(count)
                 .ToList();
 
-            // Get sold quantities for these books
+            // Lấy số lượng bán của tất cả sách trong danh sách này để hiển thị trên trang chủ và trang danh mục
             var bookIds = filteredBooks.Select(b => b.BookId).ToList();
             var soldQuantities = await _context.OrderItems
                 .Where(oi => bookIds.Contains(oi.BookId) && oi.Order != null && oi.Order.Status != "Cancelled")
@@ -393,7 +393,7 @@ namespace BookStore.API.Repositories
             var result = filteredBooks
                 .Select(b => 
                 {
-                    // Lấy voucher có mức giảm lớn nhất (đơn giản hoá logic giảm giá)
+                    // Lấy voucher có mức giảm lớn nhất áp dụng cho sách này
                     var bestVoucher = activeVouchers
                         .Where(v => (v.ApplicableProductId != null && ("," + v.ApplicableProductId + ",").Contains("," + b.BookId + ",")) || (v.ApplicableCategoryId == b.CategoryId && b.Price >= v.MinOrderValue))
                         .OrderByDescending(v => v.DiscountType == "Percentage" ? b.Price * v.DiscountAmount / 100 : v.DiscountAmount)
@@ -494,7 +494,7 @@ namespace BookStore.API.Repositories
         {
             var bookIds = books.Select(b => b.BookId).ToList();
             
-            // Get sold quantities for these books
+            // Lấy số lượng bán của tất cả sách trong kết quả để hiển thị trên trang chủ và trang danh mục
             var soldQuantities = await _context.OrderItems
                 .Where(oi => bookIds.Contains(oi.BookId) && oi.Order != null && oi.Order.Status != "Cancelled")
                 .GroupBy(oi => oi.BookId)

@@ -78,7 +78,7 @@ namespace BookStore.API.Services
                 throw new InvalidOperationException("Bạn phải mua thành công sản phẩm này mới có thể đánh giá.");
             }
 
-            // Optional: check if user already reviewed
+            // Kiểm tra xem người dùng đã đánh giá sách này chưa
             if (await _reviewRepository.ReviewExistsAsync(dto.BookId, userId))
             {
                 throw new InvalidOperationException("Bạn đã đánh giá sách này rồi.");

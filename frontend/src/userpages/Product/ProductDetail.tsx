@@ -292,7 +292,7 @@ export default function ProductDetail() {
     try {
       await axiosClient.delete(`/Reviews/replies/${replyId}`);
       toast.success('Đã xóa phản hồi!');
-      // Reload reviews
+      // Load lại đánh giá
       const res: any = await axiosClient.get(`/Reviews/book/${id}`);
       setReviews(res || []);
     } catch (error: any) {
@@ -319,7 +319,7 @@ export default function ProductDetail() {
   const handleAddToCart = async () => {
     if (!product) return;
 
-    // Check stock first
+    // Kiểm tra tồn kho trước khi thêm
     if (quantity > product.stock) {
       toast.warning(`Chỉ còn ${product.stock} sản phẩm trong kho!`);
       return;
@@ -339,14 +339,14 @@ export default function ProductDetail() {
     }
 
     try {
-      // Call backend API to add to cart
+      // Gọi API thêm
       console.log('Adding to cart:', { bookId: product.bookId, quantity });
       await axiosClient.post('/cart/items', {
         bookId: product.bookId,
         quantity: quantity
       });
 
-      // Dispatch custom event to update badge
+      // Gửi đi sự kiện tùy chỉnh để cập nhật badge
       window.dispatchEvent(new Event('cart-updated'));
       toast.success('Đã thêm vào giỏ hàng!');
       setQuantity(1);
@@ -464,7 +464,7 @@ export default function ProductDetail() {
           )}
         </div>
 
-        {/* Details */}
+        {/* Chi tiết */}
         <div>
           <h1 className="mb-2 text-2xl font-bold uppercase leading-tight text-gray-800 lg:text-[1.75rem]">{product.title}</h1>
 
@@ -497,7 +497,7 @@ export default function ProductDetail() {
             )}
           </div>
 
-          {/* Price */}
+          {/* Giá */}
           <div className="mb-6">
             {product.discountedPrice ? (
   <div className="mb-2 flex items-center gap-4 flex-wrap">
@@ -520,7 +520,7 @@ export default function ProductDetail() {
             </p>
           </div>
 
-          {/* Basic Info */}
+          {/* Thông tin cơ bản */}
           <div className="grid grid-cols-2 gap-4 mb-6 p-4 bg-gray-50 rounded-none">
             <div>
               <p className="text-sm text-gray-600">Tác giả</p>
@@ -550,7 +550,7 @@ export default function ProductDetail() {
             </div>
           </div>
 
-          {/* Specifications */}
+          {/* Thông số kỹ thuật */}
           <div className="mb-6 p-4 bg-blue-50 rounded-none">
             <h3 className="font-bold text-gray-800 mb-3">Thông số kỹ thuật</h3>
             <div className="grid grid-cols-2 gap-4 text-sm">
@@ -569,7 +569,7 @@ export default function ProductDetail() {
             </div>
           </div>
 
-          {/* Quantity & Add to Cart */}
+          {/* Số lượng và Thêm vào giỏ hàng */}
           <div className="mb-6">
             <label className="block text-sm font-bold text-gray-700 mb-2">Số lượng</label>
             <div className="flex items-center gap-2">
@@ -597,7 +597,7 @@ export default function ProductDetail() {
             </div>
           </div>
 
-          {/* Add to Cart Button */}
+          {/* Nút Thêm vào giỏ hàng */}
           <button
             onClick={handleAddToCart}
             disabled={product.stock <= 0}
@@ -660,7 +660,7 @@ export default function ProductDetail() {
       </div>
       </div>
 
-      {/* Description & Reviews Tabs */}
+      {/* Mô tả & Đánh giá */}
       <div className="mt-12">
         <div className="flex border-b border-gray-200">
           <button
@@ -755,7 +755,7 @@ export default function ProductDetail() {
                             )}
                           </div>
                           
-                          {/* List Replies */}
+                          {/* Danh sách phản hồi */}
                           {review.replies && review.replies.length > 0 && (
                             <div className="mt-4 pl-4 border-l-2 border-gray-200 space-y-3">
                               {review.replies.map((reply: any) => (
@@ -768,7 +768,7 @@ export default function ProductDetail() {
                                       )}
                                       <span className="text-gray-500">{new Date(reply.createdAt).toLocaleDateString('vi-VN')}</span>
                                     </div>
-                                    {/* (Optional) Thêm kiểm tra nếu là người dùng hiện tại hoặc admin thì hiển thị nút xóa */}
+                                    {/* Nếu là người dùng hiện tại hoặc admin thì hiển thị nút xóa */}
                                     <div className="flex gap-2">
                                       {currentUserId === (reply.userId || reply.UserId) && (
                                         <button onClick={() => {
@@ -806,7 +806,7 @@ export default function ProductDetail() {
                             </div>
                           )}
 
-                          {/* Edit Box */}
+                          {/* Hộp chỉnh sửa */}
                           {editingReviewId === review.reviewId && (
                             <div className="mt-4 p-4 border border-blue-200 bg-blue-50 rounded-none">
                               <h4 className="font-bold text-sm mb-2 text-blue-800">Sửa đánh giá</h4>
@@ -835,7 +835,7 @@ export default function ProductDetail() {
                             </div>
                           )}
 
-                          {/* Reply Box */}
+                          {/* Hộp phản hồi */}
                           {replyingTo === review.reviewId && editingReviewId !== review.reviewId && (
                             <div className="mt-4 flex gap-2">
                               <input
@@ -866,7 +866,7 @@ export default function ProductDetail() {
                   )}
                 </div>
 
-                {/* Right side: Write Review */}
+                {/* Cột bên phải: Viết đánh giá */}
                 <div className="md:w-1/3">
                   <div className="bg-white p-6 border border-gray-200 rounded-none shadow-sm sticky top-6">
                     <h3 className="text-lg font-bold text-gray-800 mb-4">Viết đánh giá của bạn</h3>

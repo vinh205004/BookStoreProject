@@ -79,7 +79,7 @@ namespace BookStore.API.Services
             var banner = await _bannerRepo.GetBannerByIdAsync(id);
             if (banner != null) {
                 await _bannerRepo.DeleteBannerAsync(id);
-                // Shift remaining down
+                // Sắp xếp lại thứ tự hiển thị của các banner còn lại
                 var allBanners = (await _bannerRepo.GetAllBannersAsync(false)).Where(b => b.BannerId != id).OrderBy(b => b.DisplayOrder).ToList();
                 bool needUpdate = false;
                 for (int i = 0; i < allBanners.Count; i++) {

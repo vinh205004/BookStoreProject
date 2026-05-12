@@ -50,7 +50,7 @@ export default function UserLayout() {
     updateCartCount();
   }, []);
 
-  // Listen for custom cart-updated event (chỉ update nếu đã login)
+  // Cập nhật giỏ hàng (chỉ update nếu đã login)
   useEffect(() => {
 
     // Callback
@@ -58,10 +58,10 @@ export default function UserLayout() {
       updateCartCount();
     };
 
-    // Call once on mount
+    // Gọi ngay để cập nhật số lượng giỏ hàng khi component mount (VD: sau khi login hoặc logout)
     handleCartUpdate();
 
-    // Custom event from add-to-cart operations
+    // Khách hàng có thể cập nhật giỏ hàng ở nhiều nơi (trang sản phẩm, trang cart, header), nên dùng event để đồng bộ số lượng giỏ hàng giữa các component
     window.addEventListener('cart-updated', handleCartUpdate);
 
     return () => {
@@ -157,7 +157,7 @@ export default function UserLayout() {
           </div>
 
           {/* Mobile Search */}
-          {/* Removed - use SearchDropdown instead */}
+          {/* Xóa dropdown */}
         </div>
 
         {/* Navigation Bar */}
@@ -197,10 +197,10 @@ export default function UserLayout() {
             <div>
               <h3 className="text-white font-bold text-lg mb-4">Danh Mục</h3>
               <ul className="space-y-2 text-sm">
-                <li><Link to="/products?category=fiction" className="hover:text-white transition">Tiểu thuyết</Link></li>
-                <li><Link to="/products?category=education" className="hover:text-white transition">Giáo dục</Link></li>
-                <li><Link to="/products?category=business" className="hover:text-white transition">Kinh doanh</Link></li>
-                <li><Link to="/products?category=selfhelp" className="hover:text-white transition">Kỹ năng sống</Link></li>
+                <li><Link to="/products?categoryIds=C009" className="hover:text-white transition">Lịch Sử</Link></li>
+                <li><Link to="/products?categoryIds=C003" className="hover:text-white transition">Thiếu nhi</Link></li>
+                <li><Link to="/products?categoryIds=C005" className="hover:text-white transition">Kinh doanh</Link></li>
+                <li><Link to="/products?categoryIds=C001" className="hover:text-white transition">Kỹ năng sống</Link></li>
               </ul>
             </div>
 
@@ -208,10 +208,10 @@ export default function UserLayout() {
             <div>
               <h3 className="text-white font-bold text-lg mb-4">Hỗ Trợ</h3>
               <ul className="space-y-2 text-sm">
-                <li><Link to="/faq" className="hover:text-white transition">Câu hỏi thường gặp</Link></li>
-                <li><Link to="/shipping" className="hover:text-white transition">Vận chuyển</Link></li>
-                <li><Link to="/returns" className="hover:text-white transition">Chính sách hoàn trả</Link></li>
-                <li><Link to="/contact" className="hover:text-white transition">Liên hệ</Link></li>
+                <li>Câu hỏi thường gặp</li>
+                <li>Vận chuyển</li>
+                <li>Chính sách hoàn trả</li>
+                <li>Liên hệ</li>
               </ul>
             </div>
 
@@ -219,9 +219,9 @@ export default function UserLayout() {
             <div>
               <h3 className="text-white font-bold text-lg mb-4">Liên Hệ</h3>
               <ul className="space-y-2 text-sm">
-                <li>Email: info@tienthobookstore.vn</li>
-                <li>Điện thoại: (028) 1234 5678</li>
-                <li>Địa chỉ: TP. Hồ Chí Minh</li>
+                <li>Email: vinhlai005@gmail.com</li>
+                <li>Điện thoại: 0347477593</li>
+                <li>Địa chỉ: Hoài Đức - Hà Nội</li>
               </ul>
             </div>
           </div>

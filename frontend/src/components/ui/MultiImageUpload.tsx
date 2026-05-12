@@ -20,7 +20,7 @@ export default function MultiImageUpload({ currentImages, onUploadSuccess }: Mul
     const uploadedUrls: string[] = [...images]; // Sao chép danh sách ảnh cũ
 
     try {
-      // Vì Cloudinary/Backend chỉ nhận 1 file cho mỗi request, ta phải chạy vòng lặp
+      // Duyệt qua từng file được chọn
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
 
@@ -46,7 +46,7 @@ export default function MultiImageUpload({ currentImages, onUploadSuccess }: Mul
 
       toast.success(`Tải lên thành công ${files.length} ảnh!`);
       setImages(uploadedUrls); // Cập nhật danh sách ảnh preview
-      onUploadSuccess(uploadedUrls); // Trả về danh sách mới cho component cha (VD: Books.tsx)
+      onUploadSuccess(uploadedUrls); // Trả về danh sách mới cho component cha sau khi upload xong
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
     } catch (error: any) {

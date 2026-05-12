@@ -105,7 +105,7 @@ namespace BookStore.API.Services
             return true;
         }
 
-        // User-facing methods
+        // Khách hàng endpoints
         public async Task<UserOrderDetailDto> CreateOrderAsync(string userId, CreateOrderDto dto, string paymentMethod = "COD", bool finalizePurchase = true)
         {
             if (dto.Items == null || dto.Items.Count == 0)

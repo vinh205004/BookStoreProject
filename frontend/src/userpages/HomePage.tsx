@@ -168,7 +168,7 @@ export default function HomePage() {
         )}
       </section>
 
-      {/* Discounted Products */}
+      {/* Sản phẩm giảm giá */}
       <section id="discounted" className="py-12 sm:py-16 lg:py-20 bg-orange-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="mb-8 space-y-4">
@@ -210,7 +210,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Top Rated Products */}
+      {/* Sản phẩm đánh giá cao */}
       <section className="py-12 sm:py-16 lg:py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="mb-8">
@@ -248,7 +248,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Top Selling Products */}
+      {/* Sản phẩm bán chạy */}
       <section className="py-12 sm:py-16 lg:py-20 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="mb-8">

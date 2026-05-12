@@ -28,7 +28,7 @@ namespace BookStore.API.Repositories
                 .Include(b => b.BookImages)
                 .AsQueryable();
 
-            // Filter by search query
+            // Lọc theo từ khóa tìm kiếm (tìm trong tiêu đề, tên tác giả, mô tả)
             if (!string.IsNullOrWhiteSpace(searchQuery))
             {
                 var lowerQuery = searchQuery.ToLower();
@@ -38,19 +38,19 @@ namespace BookStore.API.Repositories
                     b.Description.ToLower().Contains(lowerQuery));
             }
 
-            // Filter by category
+            // Lọc theo danh mục
             if (!string.IsNullOrWhiteSpace(categoryId))
             {
                 query = query.Where(b => b.CategoryId == categoryId);
             }
 
-            // Filter by author
+            // Lọc theo tác giả
             if (!string.IsNullOrWhiteSpace(authorId))
             {
                 query = query.Where(b => b.AuthorId == authorId);
             }
 
-            // Filter by price range
+            // Lọc theo khoảng giá
             if (minPrice.HasValue)
             {
                 query = query.Where(b => b.Price >= minPrice.Value);

@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 import React, { useState, useEffect, useCallback } from 'react';
 import { Plus, Edit, Trash2, ArchiveRestore, List, UserCircle, Search, Eye } from 'lucide-react';
 import { toast } from 'react-toastify';

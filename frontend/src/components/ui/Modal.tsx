@@ -13,7 +13,7 @@ export default function Modal({ isOpen, onClose, title, children }: ModalProps) 
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-      {/* THAY ĐỔI 1: Khóa chiều cao tối đa max-h-[90vh] và dùng flex-col */}
+      {/* chiều cao tối đa max-h-[90vh] và dùng flex-col */}
       <div className="bg-white shadow-2xl w-full max-w-xl max-h-[90vh] flex flex-col transform transition-all">
         
         {/* Header (Cố định không cuộn) */}
@@ -24,7 +24,7 @@ export default function Modal({ isOpen, onClose, title, children }: ModalProps) 
           </button>
         </div>
         
-        {/* THAY ĐỔI 2: Thêm overflow-y-auto cho phần Body để cuộn nội dung */}
+        {/*  overflow-y-auto cho phần Body để cuộn nội dung */}
         <div className="p-5 overflow-y-auto custom-scrollbar">
           {children}
         </div>

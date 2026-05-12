@@ -432,7 +432,7 @@ export default function CheckoutPage() {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const response: any = await axiosClient.post('/Orders', orderData);
       
-      // Dispatch custom event to update badge
+      // Gửi đi sự kiện tùy chỉnh để cập nhật badge
       window.dispatchEvent(new Event('cart-updated'));
       persistCheckoutVoucherCode('');
       
@@ -511,7 +511,7 @@ export default function CheckoutPage() {
                 </div>
               </div>
 
-              {/* Location Picker Map */}
+              {/* Map */}
               <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
                 <LocationPickerMap 
                   onLocationSelect={(address) => setFormData(prev => ({ ...prev, shippingAddress: address }))} 
@@ -593,7 +593,7 @@ export default function CheckoutPage() {
           </form>
         </div>
 
-        {/* Order Summary */}
+        {/* Tổng quan đơn hàng */}
         <div className="lg:col-span-1">
           <div className="bg-white p-6 rounded-lg shadow sticky top-20">
             <h2 className="mb-4 text-xl font-bold uppercase italic text-orange-500">Tóm tắt đơn hàng</h2>

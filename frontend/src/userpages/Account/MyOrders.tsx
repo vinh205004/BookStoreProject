@@ -252,7 +252,7 @@ export default function MyOrders() {
       <div className="space-y-4">
         {filteredOrders.map(order => (
           <div key={order.orderId} className="bg-white rounded-lg shadow overflow-hidden">
-            {/* Order Header */}
+            {/* Header đơn hàng */}
             <button
               onClick={() => setExpandedOrder(expandedOrder === order.orderId ? null : order.orderId)}
               className="w-full px-4 sm:px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition"
@@ -284,7 +284,7 @@ export default function MyOrders() {
               />
             </button>
 
-            {/* Order Details */}
+            {/* Chi tiết đơn hàng */}
             {expandedOrder === order.orderId && (
               <div className="border-t border-gray-200 px-4 sm:px-6 py-4 bg-gray-50">
                 {/* Items */}
@@ -321,7 +321,7 @@ export default function MyOrders() {
                   </div>
                 </div>
 
-                {/* Shipping Info */}
+                {/* Thông tin giao hàng */}
                 <div className="mb-6 p-3 bg-white rounded">
                   <h4 className="font-bold text-gray-800 mb-3">Địa chỉ giao hàng</h4>
                   <p className="text-gray-700 mb-2">{order.shippingAddress}</p>
@@ -338,7 +338,7 @@ export default function MyOrders() {
                   {order.note && <p className="text-sm text-gray-600 mt-2">Ghi chú: {order.note}</p>}
                 </div>
 
-                {/* Order Summary */}
+                {/* Tổng quan đơn hàng */}
                 <div className="mb-6 p-3 bg-white rounded">
                   <div className="flex justify-between mb-2">
                     <span className="text-gray-600">Tổng sản phẩm:</span>
@@ -379,7 +379,7 @@ export default function MyOrders() {
                   </div>
                 )}
 
-                {/* Order Timestamp */}
+                {/* Thời gian tạo đơn */}
                 <p className="text-xs text-gray-500 text-right">
                   Tạo lúc: {new Date(order.orderDate).toLocaleString('vi-VN')}
                 </p>

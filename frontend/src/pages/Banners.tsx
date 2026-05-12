@@ -1,4 +1,5 @@
-﻿import React, { useState, useEffect, useCallback } from 'react';
+﻿/* eslint-disable react-hooks/set-state-in-effect */
+import React, { useState, useEffect, useCallback } from 'react';
 import { Plus, Edit, Trash2, Eye, MonitorPlay } from 'lucide-react';
 import { toast } from 'react-toastify';
 import axiosClient from '../api/axiosClient';
@@ -68,7 +69,7 @@ export default function Banners() {
       setSubtitle('');
       setLinkUrl('');
       setIsActive(true);
-      // Auto-increment display order for new banners
+      // Tự động gợi ý displayOrder = max + 1 khi tạo mới
       const nextOrder = banners.length > 0 ? Math.max(...banners.map(x => x.displayOrder)) + 1 : 1;
       setDisplayOrder(nextOrder);
     }

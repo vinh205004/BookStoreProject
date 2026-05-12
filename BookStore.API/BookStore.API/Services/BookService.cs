@@ -8,8 +8,8 @@ namespace BookStore.API.Services
     public class BookService : IBookService
     {
         private readonly IBookRepository _bookRepo;
-        private readonly ICategoryRepository _categoryRepo; // Cần gọi CategoryRepo để kiểm tra danh mục có tồn tại không
-        private readonly IVoucherRepository _voucherRepo; // Để lấy thông tin giảm giá
+        private readonly ICategoryRepository _categoryRepo; // Gọi CategoryRepo để kiểm tra danh mục có tồn tại không
+        private readonly IVoucherRepository _voucherRepo; // Lấy thông tin giảm giá
 
         public BookService(IBookRepository bookRepo, ICategoryRepository categoryRepo, IVoucherRepository voucherRepo)
         {
